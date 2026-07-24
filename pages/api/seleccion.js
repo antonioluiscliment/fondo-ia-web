@@ -36,6 +36,7 @@ import {
   FRECUENCIA_REBALANCEO_DEFECTO,
   DIAS,
 } from "../../lib/motor";
+import { obtenerIndice } from "../../lib/indices";
 
 let yahooFinance;
 let errorInicializacion = null;
@@ -90,7 +91,9 @@ export default async function handler(req, res) {
       throw new Error("El parámetro 'dias' debe ser un número entero entre 5 y 90.");
     }
 
-    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana);
+    const indice = obtenerIndice(req.query.indice);
+
+    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
     const { historico } = calcularSeleccionCompleta(
       fechas,
       datos,
@@ -104,13 +107,17 @@ export default async function handler(req, res) {
 
     const rentabilidadCarteraAnterior = calcularRentabilidadTotalCarteraAnterior(historico);
 
-    // Una sola descarga del índice (^DJI) sirve tanto para el
+    // Una sola descarga del índice de referencia sirve tanto para el
     // incremento diario (comparación día a día y correlación) como
     // para la rentabilidad total del periodo — antes eran dos
     // descargas separadas, lo que en la cadena automática (que ya
     // encadena varias llamadas) sumaba presión extra sobre la API de
     // Yahoo Finance y facilitaba errores de límite de peticiones.
-    const { incrementos: incrementosIndice, cierres: cierresIndice } = await obtenerIncrementosIndice(yahooFinance, fechas);
+    const { incrementos: incrementosIndice, cierres: cierresIndice } = await obtenerIncrementosIndice(
+      yahooFinance,
+      fechas,
+      indice.simboloIndice
+    );
     const historicoConIndice = historico.map((dia) => ({
       ...dia,
       incrementoIndice: incrementosIndice[dia.fecha] ?? null,
@@ -139,6 +146,7 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json({
+      indice: indice.id,
       fechas,
       historico: historicoConIndice,
       factorPenalizacion,

@@ -43,7 +43,6 @@ import {
   calcularRentabilidadTotalCarteraAnterior,
   obtenerRentabilidadIndice,
   elegirTopPorVeces,
-  TICKERS,
   FACTOR_PENALIZACION_DEFECTO,
   N_COMPONENTES,
   PESO_MAXIMO,
@@ -52,6 +51,7 @@ import {
   SESIONES_VECES_DEFECTO,
   DIAS,
 } from "../../lib/motor";
+import { obtenerIndice } from "../../lib/indices";
 
 let yahooFinance;
 let errorInicializacion = null;
@@ -62,7 +62,7 @@ try {
 }
 
 function cortarDatos(datos, desde, hasta) {
-  return Object.fromEntries(TICKERS.map((tk) => [tk, datos[tk].slice(desde, hasta)]));
+  return Object.fromEntries(Object.keys(datos).map((tk) => [tk, datos[tk].slice(desde, hasta)]));
 }
 
 export default async function handler(req, res) {
@@ -70,6 +70,7 @@ export default async function handler(req, res) {
     if (errorInicializacion) throw errorInicializacion;
 
     const modo = req.query.modo === "real" ? "real" : "analisis";
+    const indice = obtenerIndice(req.query.indice);
 
     const factorParam = req.query.factor;
     const factorPenalizacion = factorParam !== undefined ? Number(factorParam) : FACTOR_PENALIZACION_DEFECTO;
@@ -116,7 +117,7 @@ export default async function handler(req, res) {
       // RECIENTES (terminando hoy): sirve para elegir la cartera a
       // invertir, no para medir una estrategia.
       const diasTotal = sesionesVeces + SESIONES_PUNTUACION;
-      const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal);
+      const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal, indice.tickers);
 
       const { contadorApariciones } = calcularSeleccionCompleta(
         fechas,
@@ -129,7 +130,7 @@ export default async function handler(req, res) {
         criterioPuntuacion
       );
 
-      const elegidos = elegirTopPorVeces(contadorApariciones, nComponentes);
+      const elegidos = elegirTopPorVeces(contadorApariciones, nComponentes, indice.tickers);
       const fechaReferencia = fechas[fechas.length - 1];
       const carteraHoy = elegidos.map(({ ticker, veces }) => ({
         ticker,
@@ -139,6 +140,7 @@ export default async function handler(req, res) {
       }));
 
       res.status(200).json({
+        indice: indice.id,
         modo,
         criterioPuntuacion,
         sesionesVeces,
@@ -161,7 +163,7 @@ export default async function handler(req, res) {
     }
 
     const diasTotal = diasVentana + sesionesVeces;
-    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal);
+    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal, indice.tickers);
 
     // Backtest 1: primeras (sesionesVeces + SESIONES_PUNTUACION) sesiones.
     const finBacktest1 = sesionesVeces + SESIONES_PUNTUACION;
@@ -178,7 +180,7 @@ export default async function handler(req, res) {
       criterioPuntuacion
     );
 
-    const elegidos = elegirTopPorVeces(contadorApariciones, nComponentes);
+    const elegidos = elegirTopPorVeces(contadorApariciones, nComponentes, indice.tickers);
     const carteraInicial = elegidos.map(({ ticker }) => ({ ticker, peso: 100 / nComponentes }));
 
     // Backtest 2: desde SESIONES_PUNTUACION sesiones antes del final
@@ -206,10 +208,11 @@ export default async function handler(req, res) {
     if (historico.length > 1) {
       const fechaInicio = historico[0].fecha;
       const fechaFin = historico[historico.length - 1].fecha;
-      rentabilidadIndice = await obtenerRentabilidadIndice(yahooFinance, fechaInicio, fechaFin);
+      rentabilidadIndice = await obtenerRentabilidadIndice(yahooFinance, fechaInicio, fechaFin, indice.simboloIndice);
     }
 
     res.status(200).json({
+      indice: indice.id,
       modo,
       criterioPuntuacion,
       fechas: fechasPrincipal,

@@ -19,6 +19,7 @@ import {
   calcularPuntuacionesSesion,
   DIAS,
 } from "../../lib/motor";
+import { obtenerIndice } from "../../lib/indices";
 
 export default async function handler(req, res) {
   try {
@@ -31,7 +32,8 @@ export default async function handler(req, res) {
     }
 
     const yahooFinance = getYahooFinanceInstance();
-    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana);
+    const indice = obtenerIndice(req.query.indice);
+    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
 
     const resultado = calcularPuntuacionesSesion(fechas, datos, numeroSesion);
     res.status(200).json(resultado);

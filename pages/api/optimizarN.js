@@ -17,6 +17,7 @@ import {
   FACTOR_PENALIZACION_DEFECTO,
   DIAS,
 } from "../../lib/motor";
+import { obtenerIndice } from "../../lib/indices";
 
 let yahooFinance;
 let errorInicializacion = null;
@@ -45,7 +46,8 @@ export default async function handler(req, res) {
       throw new Error("El parámetro 'dias' debe ser un número entero entre 5 y 90.");
     }
 
-    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana);
+    const indice = obtenerIndice(req.query.indice);
+    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
 
     const resultados = [];
     let mejor = null;
