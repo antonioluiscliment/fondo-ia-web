@@ -191,7 +191,7 @@ const T = {
     colAleatorio: "Aleatorio",
 
     analisisCorrelacionTitulo: "Análisis de correlación con el índice",
-    analisisCorrelacionDesc: "Compara precio, volumen y aleatorio a la vez, en varias duraciones de backtest (10, 15, 20, 30, 40 y 60 sesiones), repitiendo cada una en 6 ventanas históricas distintas y sin solape entre sí (y, para \"aleatorio\", además con 10 semillas distintas por ventana, para tener una distribución de referencia y no un único punto). Con eso se calcula, para cada combinación de método y duración: la correlación media con el Dow Jones (con su rango), la rentabilidad media de la cartera (con su rango) y la rentabilidad media del propio índice en esos mismos periodos. Todo el histórico necesario se descarga una sola vez; los cálculos con las distintas ventanas y semillas se hacen en memoria, sin volver a llamar a Yahoo Finance por cada celda.",
+    analisisCorrelacionDesc: "Compara precio, volumen y aleatorio a la vez, en varias duraciones de backtest (20, 30, 50, 80 y 120 sesiones), repitiendo cada una en 6 ventanas históricas distintas y sin solape entre sí (y, para \"aleatorio\", además con 10 semillas distintas por ventana, para tener una distribución de referencia y no un único punto). Con eso se calcula, para cada combinación de método y duración: la correlación media con el Dow Jones (con su rango), la rentabilidad media de la cartera (con su rango) y la rentabilidad media del propio índice en esos mismos periodos. Todo el histórico necesario se descarga una sola vez; los cálculos con las distintas ventanas y semillas se hacen en memoria, sin volver a llamar a Yahoo Finance por cada celda.",
     analisisCorrelacionBotonCargando: "Calculando (puede tardar bastante)...",
     analisisCorrelacionBoton: "Ejecutar análisis de correlación",
     colMetodo: "Método",
@@ -348,7 +348,7 @@ const T = {
     colAleatorio: "Random",
 
     analisisCorrelacionTitulo: "Correlation analysis vs. the index",
-    analisisCorrelacionDesc: "Compares price, volume and random all at once, across several backtest durations (10, 15, 20, 30, 40 and 60 sessions), repeating each one over 6 distinct, non-overlapping historical windows (and, for \"random\", also with 10 different seeds per window, to get a reference distribution instead of a single point). From that, for each method/duration combination it computes: the average correlation with the Dow Jones (with its range), the average portfolio return (with its range), and the average return of the index itself over those same periods. All the needed history is downloaded once; the calculations across the different windows and seeds are done in memory, without calling Yahoo Finance again for each cell.",
+    analisisCorrelacionDesc: "Compares price, volume and random all at once, across several backtest durations (20, 30, 50, 80 and 120 sessions), repeating each one over 6 distinct, non-overlapping historical windows (and, for \"random\", also with 10 different seeds per window, to get a reference distribution instead of a single point). From that, for each method/duration combination it computes: the average correlation with the Dow Jones (with its range), the average portfolio return (with its range), and the average return of the index itself over those same periods. All the needed history is downloaded once; the calculations across the different windows and seeds are done in memory, without calling Yahoo Finance again for each cell.",
     analisisCorrelacionBotonCargando: "Calculating (this can take a while)...",
     analisisCorrelacionBoton: "Run correlation analysis",
     colMetodo: "Method",
@@ -1190,7 +1190,7 @@ export default function Home() {
       <p>
         {t.diasUsado}{" "}
         <select value={diasVentana} onChange={(e) => setDiasVentana(Number(e.target.value))}>
-          {[10, 15, 20, 30, 40, 60].map((d) => (
+          {[20, 30, 50, 80, 120].map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
         </select>
