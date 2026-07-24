@@ -38,7 +38,7 @@ try {
   errorInicializacion = e;
 }
 
-const DURACIONES = [10, 15, 20, 30, 40, 60];
+const DURACIONES = [20, 30, 50, 80, 120];
 const MAX_REPETICIONES = 6; // ventanas históricas distintas, sin solape, por duración
 const SEMILLAS_ALEATORIO = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // semillas de control, distintas de la semilla por defecto (42) de la app
 
