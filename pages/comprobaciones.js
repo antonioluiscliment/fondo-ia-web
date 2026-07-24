@@ -27,6 +27,10 @@ export default function Comprobaciones() {
   const [cargandoPuntuaciones, setCargandoPuntuaciones] = useState(false);
   const [errorPuntuaciones, setErrorPuntuaciones] = useState(null);
 
+  const [variacionIndices, setVariacionIndices] = useState(null);
+  const [cargandoVariacionIndices, setCargandoVariacionIndices] = useState(false);
+  const [errorVariacionIndices, setErrorVariacionIndices] = useState(null);
+
   async function consultar() {
     setCargando(true);
     setError(null);
@@ -56,6 +60,22 @@ export default function Comprobaciones() {
       setErrorPuntuaciones(e.message);
     } finally {
       setCargandoPuntuaciones(false);
+    }
+  }
+
+  async function consultarVariacionIndices() {
+    setCargandoVariacionIndices(true);
+    setErrorVariacionIndices(null);
+    setVariacionIndices(null);
+    try {
+      const resp = await fetch(`/api/variacionIndices?dias=${diasVentana}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setVariacionIndices(json);
+    } catch (e) {
+      setErrorVariacionIndices(e.message);
+    } finally {
+      setCargandoVariacionIndices(false);
     }
   }
 
@@ -157,6 +177,42 @@ export default function Comprobaciones() {
             </tbody>
           </table>
         </>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.variacionIndicesTitulo}</h2>
+      <p>{t.variacionIndicesDesc}</p>
+
+      <button onClick={consultarVariacionIndices} disabled={cargandoVariacionIndices}>
+        {cargandoVariacionIndices ? t.variacionIndicesBotonCargando : t.variacionIndicesBoton}
+      </button>
+
+      {errorVariacionIndices && <p style={{ color: "crimson" }}>{t.error}: {errorVariacionIndices}</p>}
+
+      {variacionIndices && (
+        <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+          <thead>
+            <tr>
+              <th>{t.colFecha}</th>
+              <th>Dow Jones</th>
+              <th>{t.colIncremento}</th>
+              <th>IBEX 35</th>
+              <th>{t.colIncremento}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {variacionIndices.filas.map((f) => (
+              <tr key={f.fecha}>
+                <td>{f.fecha.slice(0, 10)}</td>
+                <td>{f.dowJones.toLocaleString()}</td>
+                <td>{f.incrementoDowJones !== null ? `${f.incrementoDowJones.toFixed(3)}%` : "-"}</td>
+                <td>{f.ibex35.toLocaleString()}</td>
+                <td>{f.incrementoIbex35 !== null ? `${f.incrementoIbex35.toFixed(3)}%` : "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </MenuLayout>
   );
