@@ -22,13 +22,13 @@ import {
   calcularSeleccionCompleta,
   calcularRentabilidadTotalCarteraAnterior,
   calcularCorrelacion,
-  TICKERS,
   FACTOR_PENALIZACION_DEFECTO,
   N_COMPONENTES,
   PESO_MAXIMO,
   FRECUENCIA_REBALANCEO_DEFECTO,
   SESIONES_PUNTUACION,
 } from "../../lib/motor";
+import { obtenerIndice } from "../../lib/indices";
 
 let yahooFinance;
 let errorInicializacion = null;
@@ -43,7 +43,7 @@ const MAX_REPETICIONES = 6; // ventanas históricas distintas, sin solape, por d
 const SEMILLAS_ALEATORIO = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // semillas de control, distintas de la semilla por defecto (42) de la app
 
 function cortarDatos(datos, desde, hasta) {
-  return Object.fromEntries(TICKERS.map((tk) => [tk, datos[tk].slice(desde, hasta)]));
+  return Object.fromEntries(Object.keys(datos).map((tk) => [tk, datos[tk].slice(desde, hasta)]));
 }
 
 // Devuelve las ventanas [inicio, fin) no solapadas de tamaño
@@ -146,7 +146,7 @@ function rango(valores) {
 // la media y desviación típica de "aleatorio" en esa misma duración
 // mediante una puntuación z), y si las correlaciones de los tres
 // métodos son o no parecidas entre sí.
-function generarConclusion(filas) {
+function generarConclusion(filas, nombreIndice, numComponentes) {
   const porDuracion = {};
   for (const fila of filas) {
     if (!porDuracion[fila.duracion]) porDuracion[fila.duracion] = {};
@@ -211,7 +211,7 @@ function generarConclusion(filas) {
   if (diferenciaMediaCorrelacion !== null) {
     if (diferenciaMediaCorrelacion < 0.1) {
       partes.push(
-        `La correlación con el índice es, además, muy parecida entre los tres métodos (diferencia media de solo ${diferenciaMediaCorrelacion.toFixed(3)} frente al azar) — un indicio de que ese comovimiento es sobre todo un efecto de pertenecer al mismo universo de 30 valores del Dow Jones, no del criterio de selección en sí.`
+        `La correlación con el índice es, además, muy parecida entre los tres métodos (diferencia media de solo ${diferenciaMediaCorrelacion.toFixed(3)} frente al azar) — un indicio de que ese comovimiento es sobre todo un efecto de pertenecer al mismo universo de ${numComponentes} valores del ${nombreIndice}, no del criterio de selección en sí.`
       );
     } else {
       partes.push(
@@ -236,10 +236,15 @@ export default async function handler(req, res) {
         ? FRECUENCIA_REBALANCEO_DEFECTO
         : Number(frecuenciaParam);
     const params = { factor, n, max, frecuencia };
+    const indice = obtenerIndice(req.query.indice);
 
     const diasTotal = Math.max(...DURACIONES) * MAX_REPETICIONES + SESIONES_PUNTUACION + 20;
-    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal);
-    const { incrementos: incrementosIndice, cierres: cierresIndice } = await obtenerIncrementosIndice(yahooFinance, fechas);
+    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal, indice.tickers);
+    const { incrementos: incrementosIndice, cierres: cierresIndice } = await obtenerIncrementosIndice(
+      yahooFinance,
+      fechas,
+      indice.simboloIndice
+    );
 
     const filas = [];
 
@@ -294,9 +299,10 @@ export default async function handler(req, res) {
       });
     }
 
-    const conclusion = generarConclusion(filas);
+    const conclusion = generarConclusion(filas, indice.nombre.es, indice.tickers.length);
 
     res.status(200).json({
+      indice: indice.id,
       duraciones: DURACIONES,
       maxRepeticiones: MAX_REPETICIONES,
       numSemillas: SEMILLAS_ALEATORIO.length,

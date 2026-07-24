@@ -18,7 +18,8 @@
 //
 // Además, calcula la rentabilidad total compuesta de las carteras
 // "anteriores" (la parte del modelo realmente alcanzable) y la
-// compara con la rentabilidad del propio Dow Jones en ese periodo,
+// compara con la rentabilidad del propio índice de referencia en ese
+// periodo (Dow Jones, IBEX 35, ... según el índice elegido),
 // además del coeficiente de correlación de Pearson entre el
 // beneficio diario de la cartera seleccionada y el incremento diario
 // del propio índice.
