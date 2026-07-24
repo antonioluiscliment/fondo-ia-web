@@ -2,6 +2,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAppConfig } from "../lib/appConfig";
+import { obtenerIndice } from "../lib/indices";
 
 const ENLACES = [
   { href: "/", labelKey: "menuGeneral" },
@@ -24,7 +25,8 @@ function IconoMenu() {
 }
 
 export default function MenuLayout({ children }) {
-  const { idioma, setIdioma, t } = useAppConfig();
+  const { idioma, setIdioma, t, indiceId } = useAppConfig();
+  const nombreIndice = obtenerIndice(indiceId).nombre[idioma];
   const [menuAbierto, setMenuAbierto] = useState(false);
   const router = useRouter();
 
@@ -56,6 +58,8 @@ export default function MenuLayout({ children }) {
           </select>
         </div>
       </div>
+
+      <p style={{ margin: "4px 0 0 46px", color: "#555", fontSize: "0.9em" }}>{nombreIndice}</p>
 
       {menuAbierto && (
         <nav
