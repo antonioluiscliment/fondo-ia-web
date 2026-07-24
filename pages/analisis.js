@@ -10,7 +10,8 @@ import { obtenerIndice } from "../lib/indices";
 // generales".
 export default function Analisis() {
   const { t, idioma, indiceId, factorPenalizacion, nComponentes, pesoMaximo, frecuenciaRebalanceo } = useAppConfig();
-  const nombreIndice = obtenerIndice(indiceId).nombre[idioma];
+  const indice = obtenerIndice(indiceId);
+  const nombreIndice = indice.nombre[idioma];
 
   const [analisisCorrelacion, setAnalisisCorrelacion] = useState(null);
   const [cargandoAnalisisCorrelacion, setCargandoAnalisisCorrelacion] = useState(false);
@@ -57,7 +58,7 @@ export default function Analisis() {
                 <th>{t.colRepeticiones}</th>
                 <th>{t.colCorrelacionMedia}</th>
                 <th>{t.colRentCarteraMedia}</th>
-                <th>{t.colRentIndiceMedia}</th>
+                <th>{t.colRentIndiceMedia(indice.abreviatura)}</th>
               </tr>
             </thead>
             <tbody>
