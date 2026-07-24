@@ -1,7 +1,8 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
-import { NOMBRES, FACTOR_PENALIZACION_DEFECTO_DISPLAY } from "../lib/i18n";
+import { FACTOR_PENALIZACION_DEFECTO_DISPLAY } from "../lib/i18n";
+import { obtenerIndice, tickerVisible } from "../lib/indices";
 
 // Grupo 3: Formas de seleccionar los valores — cadena, penalización,
 // número de componentes, diversificación, rebalanceo, ventana de
@@ -11,6 +12,8 @@ import { NOMBRES, FACTOR_PENALIZACION_DEFECTO_DISPLAY } from "../lib/i18n";
 export default function SeleccionValores() {
   const {
     t,
+    idioma,
+    indiceId,
     factorPenalizacion,
     setFactorPenalizacion,
     nComponentes,
@@ -22,6 +25,9 @@ export default function SeleccionValores() {
     diasVentana,
     setDiasVentana,
   } = useAppConfig();
+  const indice = obtenerIndice(indiceId);
+  const { nombresEmpresas } = indice;
+  const nombreIndice = indice.nombre[idioma];
 
   const [seleccion, setSeleccion] = useState(null);
   const [cargandoSeleccion, setCargandoSeleccion] = useState(false);
@@ -79,7 +85,7 @@ export default function SeleccionValores() {
     setSeleccion(null);
     setMostrarResumen(false);
     try {
-      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}`);
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setSeleccion(json);
@@ -96,7 +102,7 @@ export default function SeleccionValores() {
     setErrorSeleccionVeces(null);
     setSeleccionVeces(null);
     try {
-      const params = `factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&sesionesVeces=${sesionesVeces}&modo=${modoVeces}`;
+      const params = `factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&sesionesVeces=${sesionesVeces}&modo=${modoVeces}&indice=${indiceId}`;
       const url = modoVeces === "real" ? `/api/seleccionVeces?${params}` : `/api/seleccionVeces?${params}&dias=${diasVentana}`;
       const resp = await fetch(url);
       const json = await resp.json();
@@ -114,7 +120,7 @@ export default function SeleccionValores() {
     setErrorSeleccionVolumen(null);
     setSeleccionVolumen(null);
     try {
-      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=volumen`);
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=volumen&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setSeleccionVolumen(json);
@@ -130,7 +136,7 @@ export default function SeleccionValores() {
     setErrorSeleccionFlujo(null);
     setSeleccionFlujo(null);
     try {
-      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=flujo`);
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=flujo&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setSeleccionFlujo(json);
@@ -146,7 +152,7 @@ export default function SeleccionValores() {
     setErrorSeleccionVecesVolumen(null);
     setSeleccionVecesVolumen(null);
     try {
-      const params = `factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&sesionesVeces=${sesionesVecesVolumen}&modo=${modoVecesVolumen}&criterio=volumen`;
+      const params = `factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&sesionesVeces=${sesionesVecesVolumen}&modo=${modoVecesVolumen}&criterio=volumen&indice=${indiceId}`;
       const url = modoVecesVolumen === "real" ? `/api/seleccionVeces?${params}` : `/api/seleccionVeces?${params}&dias=${diasVentana}`;
       const resp = await fetch(url);
       const json = await resp.json();
@@ -164,7 +170,7 @@ export default function SeleccionValores() {
     setErrorSeleccionAleatoria(null);
     setSeleccionAleatoria(null);
     try {
-      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=aleatorio`);
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=aleatorio&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setSeleccionAleatoria(json);
@@ -180,7 +186,7 @@ export default function SeleccionValores() {
     setErrorOptimizacion(null);
     setResultadosOptimizacion(null);
     try {
-      const resp = await fetch(`/api/optimizar?dias=${diasVentana}`);
+      const resp = await fetch(`/api/optimizar?dias=${diasVentana}&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadosOptimizacion(json);
@@ -197,7 +203,7 @@ export default function SeleccionValores() {
     setErrorOptimizacionN(null);
     setResultadosOptimizacionN(null);
     try {
-      const resp = await fetch(`/api/optimizarN?factor=${factorPenalizacion}&dias=${diasVentana}`);
+      const resp = await fetch(`/api/optimizarN?factor=${factorPenalizacion}&dias=${diasVentana}&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadosOptimizacionN(json);
@@ -214,7 +220,7 @@ export default function SeleccionValores() {
     setErrorOptimizacionMax(null);
     setResultadosOptimizacionMax(null);
     try {
-      const resp = await fetch(`/api/optimizarMax?factor=${factorPenalizacion}&n=${nComponentes}&dias=${diasVentana}`);
+      const resp = await fetch(`/api/optimizarMax?factor=${factorPenalizacion}&n=${nComponentes}&dias=${diasVentana}&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadosOptimizacionMax(json);
@@ -231,7 +237,7 @@ export default function SeleccionValores() {
     setErrorOptimizacionFrecuencia(null);
     setResultadosOptimizacionFrecuencia(null);
     try {
-      const resp = await fetch(`/api/optimizarFrecuencia?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&dias=${diasVentana}`);
+      const resp = await fetch(`/api/optimizarFrecuencia?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&dias=${diasVentana}&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadosOptimizacionFrecuencia(json);
@@ -248,26 +254,26 @@ export default function SeleccionValores() {
     setErrorCadena(null);
     setResultadoCadena(null);
     try {
-      const respOpt = await fetch(`/api/optimizar?dias=${diasVentana}`);
+      const respOpt = await fetch(`/api/optimizar?dias=${diasVentana}&indice=${indiceId}`);
       const jsonOpt = await respOpt.json();
       if (!respOpt.ok) throw new Error(jsonOpt.error || "Error al optimizar el factor");
 
-      const respOptN = await fetch(`/api/optimizarN?factor=${jsonOpt.mejorFactor}&dias=${diasVentana}`);
+      const respOptN = await fetch(`/api/optimizarN?factor=${jsonOpt.mejorFactor}&dias=${diasVentana}&indice=${indiceId}`);
       const jsonOptN = await respOptN.json();
       if (!respOptN.ok) throw new Error(jsonOptN.error || "Error al optimizar el número de componentes");
 
-      const respOptMax = await fetch(`/api/optimizarMax?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&dias=${diasVentana}`);
+      const respOptMax = await fetch(`/api/optimizarMax?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&dias=${diasVentana}&indice=${indiceId}`);
       const jsonOptMax = await respOptMax.json();
       if (!respOptMax.ok) throw new Error(jsonOptMax.error || "Error al optimizar el tope de diversificación");
 
       const respOptFrec = await fetch(
-        `/api/optimizarFrecuencia?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&max=${jsonOptMax.mejorPesoMaximo}&dias=${diasVentana}`
+        `/api/optimizarFrecuencia?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&max=${jsonOptMax.mejorPesoMaximo}&dias=${diasVentana}&indice=${indiceId}`
       );
       const jsonOptFrec = await respOptFrec.json();
       if (!respOptFrec.ok) throw new Error(jsonOptFrec.error || "Error al optimizar la frecuencia de rebalanceo");
 
       const respSel = await fetch(
-        `/api/seleccion?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&max=${jsonOptMax.mejorPesoMaximo}&frecuencia=${jsonOptFrec.mejorFrecuenciaRebalanceo}&dias=${diasVentana}`
+        `/api/seleccion?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&max=${jsonOptMax.mejorPesoMaximo}&frecuencia=${jsonOptFrec.mejorFrecuenciaRebalanceo}&dias=${diasVentana}&indice=${indiceId}`
       );
       const jsonSel = await respSel.json();
       if (!respSel.ok) throw new Error(jsonSel.error || "Error al realizar la selección");
@@ -318,7 +324,7 @@ export default function SeleccionValores() {
               <tbody>
                 {resultadoCadena.seleccion.historico[resultadoCadena.seleccion.historico.length - 1].cartera.map((c) => (
                   <tr key={c.ticker}>
-                    <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                    <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                     <td>{c.peso}%</td>
                     <td>{c.puntuacion}</td>
                     <td>{c.precio}</td>
@@ -338,7 +344,7 @@ export default function SeleccionValores() {
             {resultadoCadena.seleccion.rentabilidadIndice && (
               <>
                 <p style={{ fontSize: "1.2em" }}>
-                  {t.indiceDowJones}{" "}
+                  {t.indiceEtiqueta(nombreIndice)}{" "}
                   <b style={{ color: resultadoCadena.seleccion.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
                     {resultadoCadena.seleccion.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
                   </b>
@@ -586,7 +592,7 @@ export default function SeleccionValores() {
                     </b>
                     {dia.incrementoIndice !== null && dia.incrementoIndice !== undefined && (
                       <>
-                        {" — "}{t.djEtiqueta}{" "}
+                        {" — "}{t.indiceAbrevEtiqueta(indice.abreviatura)}{" "}
                         <b style={{ color: dia.incrementoIndice >= 0 ? "green" : "crimson" }}>
                           {dia.incrementoIndice.toFixed(3)}%
                         </b>
@@ -600,7 +606,7 @@ export default function SeleccionValores() {
                     <tbody>
                       {dia.cartera.map((c) => (
                         <tr key={c.ticker}>
-                          <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                          <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                           <td>{c.peso}%</td>
                           <td>{c.puntuacion}</td>
                           <td>{c.precio}</td>
@@ -635,7 +641,7 @@ export default function SeleccionValores() {
           {seleccion.rentabilidadIndice && (
             <>
               <p style={{ fontSize: "1.2em" }}>
-                {t.indiceDowJonesFechas(seleccion.rentabilidadIndice.fechaInicio, seleccion.rentabilidadIndice.fechaFin)}{" "}
+                {t.indiceFechas(nombreIndice, seleccion.rentabilidadIndice.fechaInicio, seleccion.rentabilidadIndice.fechaFin)}{" "}
                 <b style={{ color: seleccion.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
                   {seleccion.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
                 </b>
@@ -649,7 +655,7 @@ export default function SeleccionValores() {
           )}
           {seleccion.correlacionBeneficioIndice !== null && seleccion.correlacionBeneficioIndice !== undefined && (
             <p>
-              {t.coeficienteCorrelacion}{" "}
+              {t.coeficienteCorrelacion(nombreIndice)}{" "}
               <b>{seleccion.correlacionBeneficioIndice.toFixed(3)}</b>
             </p>
           )}
@@ -693,7 +699,7 @@ export default function SeleccionValores() {
             <tbody>
               {seleccionVeces.carteraHoy.map((c) => (
                 <tr key={c.ticker}>
-                  <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                  <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                   <td>{c.veces}</td>
                   <td>{c.peso}%</td>
                   <td>{c.precio}</td>
@@ -714,7 +720,7 @@ export default function SeleccionValores() {
             <tbody>
               {seleccionVeces.elegidosPorVeces.map((e) => (
                 <tr key={e.ticker}>
-                  <td>{e.ticker} — {NOMBRES[e.ticker]}</td>
+                  <td>{tickerVisible(e.ticker)} — {nombresEmpresas[e.ticker]}</td>
                   <td>{e.veces}</td>
                 </tr>
               ))}
@@ -731,7 +737,7 @@ export default function SeleccionValores() {
             <tbody>
               {seleccionVeces.historico[seleccionVeces.historico.length - 1].cartera.map((c) => (
                 <tr key={c.ticker}>
-                  <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                  <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                   <td>{c.peso}%</td>
                   <td>{c.puntuacion}</td>
                   <td>{c.precio}</td>
@@ -750,7 +756,7 @@ export default function SeleccionValores() {
           {seleccionVeces.rentabilidadIndice && (
             <>
               <p style={{ fontSize: "1.2em" }}>
-                {t.indiceDowJonesFechas(seleccionVeces.rentabilidadIndice.fechaInicio, seleccionVeces.rentabilidadIndice.fechaFin)}{" "}
+                {t.indiceFechas(nombreIndice, seleccionVeces.rentabilidadIndice.fechaInicio, seleccionVeces.rentabilidadIndice.fechaFin)}{" "}
                 <b style={{ color: seleccionVeces.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
                   {seleccionVeces.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
                 </b>
@@ -823,7 +829,7 @@ export default function SeleccionValores() {
                     </b>
                     {dia.incrementoIndice !== null && dia.incrementoIndice !== undefined && (
                       <>
-                        {" — "}{t.djEtiqueta}{" "}
+                        {" — "}{t.indiceAbrevEtiqueta(indice.abreviatura)}{" "}
                         <b style={{ color: dia.incrementoIndice >= 0 ? "green" : "crimson" }}>
                           {dia.incrementoIndice.toFixed(3)}%
                         </b>
@@ -837,7 +843,7 @@ export default function SeleccionValores() {
                     <tbody>
                       {dia.cartera.map((c) => (
                         <tr key={c.ticker}>
-                          <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                          <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                           <td>{c.peso}%</td>
                           <td>{c.puntuacion}</td>
                           <td>{c.precio}</td>
@@ -872,7 +878,7 @@ export default function SeleccionValores() {
           {seleccionVolumen.rentabilidadIndice && (
             <>
               <p style={{ fontSize: "1.2em" }}>
-                {t.indiceDowJonesFechas(seleccionVolumen.rentabilidadIndice.fechaInicio, seleccionVolumen.rentabilidadIndice.fechaFin)}{" "}
+                {t.indiceFechas(nombreIndice, seleccionVolumen.rentabilidadIndice.fechaInicio, seleccionVolumen.rentabilidadIndice.fechaFin)}{" "}
                 <b style={{ color: seleccionVolumen.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
                   {seleccionVolumen.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
                 </b>
@@ -886,7 +892,7 @@ export default function SeleccionValores() {
           )}
           {seleccionVolumen.correlacionBeneficioIndice !== null && seleccionVolumen.correlacionBeneficioIndice !== undefined && (
             <p>
-              {t.coeficienteCorrelacion}{" "}
+              {t.coeficienteCorrelacion(nombreIndice)}{" "}
               <b>{seleccionVolumen.correlacionBeneficioIndice.toFixed(3)}</b>
             </p>
           )}
@@ -951,7 +957,7 @@ export default function SeleccionValores() {
                     </b>
                     {dia.incrementoIndice !== null && dia.incrementoIndice !== undefined && (
                       <>
-                        {" — "}{t.djEtiqueta}{" "}
+                        {" — "}{t.indiceAbrevEtiqueta(indice.abreviatura)}{" "}
                         <b style={{ color: dia.incrementoIndice >= 0 ? "green" : "crimson" }}>
                           {dia.incrementoIndice.toFixed(3)}%
                         </b>
@@ -965,7 +971,7 @@ export default function SeleccionValores() {
                     <tbody>
                       {dia.cartera.map((c) => (
                         <tr key={c.ticker}>
-                          <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                          <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                           <td>{c.peso}%</td>
                           <td>{c.puntuacion}</td>
                           <td>{c.precio}</td>
@@ -1000,7 +1006,7 @@ export default function SeleccionValores() {
           {seleccionFlujo.rentabilidadIndice && (
             <>
               <p style={{ fontSize: "1.2em" }}>
-                {t.indiceDowJonesFechas(seleccionFlujo.rentabilidadIndice.fechaInicio, seleccionFlujo.rentabilidadIndice.fechaFin)}{" "}
+                {t.indiceFechas(nombreIndice, seleccionFlujo.rentabilidadIndice.fechaInicio, seleccionFlujo.rentabilidadIndice.fechaFin)}{" "}
                 <b style={{ color: seleccionFlujo.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
                   {seleccionFlujo.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
                 </b>
@@ -1014,7 +1020,7 @@ export default function SeleccionValores() {
           )}
           {seleccionFlujo.correlacionBeneficioIndice !== null && seleccionFlujo.correlacionBeneficioIndice !== undefined && (
             <p>
-              {t.coeficienteCorrelacion}{" "}
+              {t.coeficienteCorrelacion(nombreIndice)}{" "}
               <b>{seleccionFlujo.correlacionBeneficioIndice.toFixed(3)}</b>
             </p>
           )}
@@ -1058,7 +1064,7 @@ export default function SeleccionValores() {
             <tbody>
               {seleccionVecesVolumen.carteraHoy.map((c) => (
                 <tr key={c.ticker}>
-                  <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                  <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                   <td>{c.veces}</td>
                   <td>{c.peso}%</td>
                   <td>{c.precio}</td>
@@ -1079,7 +1085,7 @@ export default function SeleccionValores() {
             <tbody>
               {seleccionVecesVolumen.elegidosPorVeces.map((e) => (
                 <tr key={e.ticker}>
-                  <td>{e.ticker} — {NOMBRES[e.ticker]}</td>
+                  <td>{tickerVisible(e.ticker)} — {nombresEmpresas[e.ticker]}</td>
                   <td>{e.veces}</td>
                 </tr>
               ))}
@@ -1096,7 +1102,7 @@ export default function SeleccionValores() {
             <tbody>
               {seleccionVecesVolumen.historico[seleccionVecesVolumen.historico.length - 1].cartera.map((c) => (
                 <tr key={c.ticker}>
-                  <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                  <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                   <td>{c.peso}%</td>
                   <td>{c.puntuacion}</td>
                   <td>{c.precio}</td>
@@ -1115,7 +1121,7 @@ export default function SeleccionValores() {
           {seleccionVecesVolumen.rentabilidadIndice && (
             <>
               <p style={{ fontSize: "1.2em" }}>
-                {t.indiceDowJonesFechas(seleccionVecesVolumen.rentabilidadIndice.fechaInicio, seleccionVecesVolumen.rentabilidadIndice.fechaFin)}{" "}
+                {t.indiceFechas(nombreIndice, seleccionVecesVolumen.rentabilidadIndice.fechaInicio, seleccionVecesVolumen.rentabilidadIndice.fechaFin)}{" "}
                 <b style={{ color: seleccionVecesVolumen.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
                   {seleccionVecesVolumen.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
                 </b>
@@ -1188,7 +1194,7 @@ export default function SeleccionValores() {
                     </b>
                     {dia.incrementoIndice !== null && dia.incrementoIndice !== undefined && (
                       <>
-                        {" — "}{t.djEtiqueta}{" "}
+                        {" — "}{t.indiceAbrevEtiqueta(indice.abreviatura)}{" "}
                         <b style={{ color: dia.incrementoIndice >= 0 ? "green" : "crimson" }}>
                           {dia.incrementoIndice.toFixed(3)}%
                         </b>
@@ -1202,7 +1208,7 @@ export default function SeleccionValores() {
                     <tbody>
                       {dia.cartera.map((c) => (
                         <tr key={c.ticker}>
-                          <td>{c.ticker} — {NOMBRES[c.ticker]}</td>
+                          <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
                           <td>{c.peso}%</td>
                           <td>{c.puntuacion}</td>
                           <td>{c.precio}</td>
@@ -1237,7 +1243,7 @@ export default function SeleccionValores() {
           {seleccionAleatoria.rentabilidadIndice && (
             <>
               <p style={{ fontSize: "1.2em" }}>
-                {t.indiceDowJonesFechas(seleccionAleatoria.rentabilidadIndice.fechaInicio, seleccionAleatoria.rentabilidadIndice.fechaFin)}{" "}
+                {t.indiceFechas(nombreIndice, seleccionAleatoria.rentabilidadIndice.fechaInicio, seleccionAleatoria.rentabilidadIndice.fechaFin)}{" "}
                 <b style={{ color: seleccionAleatoria.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
                   {seleccionAleatoria.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
                 </b>
@@ -1251,7 +1257,7 @@ export default function SeleccionValores() {
           )}
           {seleccionAleatoria.correlacionBeneficioIndice !== null && seleccionAleatoria.correlacionBeneficioIndice !== undefined && (
             <p>
-              {t.coeficienteCorrelacion}{" "}
+              {t.coeficienteCorrelacion(nombreIndice)}{" "}
               <b>{seleccionAleatoria.correlacionBeneficioIndice.toFixed(3)}</b>
             </p>
           )}

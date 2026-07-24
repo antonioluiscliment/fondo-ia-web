@@ -1,13 +1,16 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
+import { obtenerIndice } from "../lib/indices";
 
 // Grupo 4: Análisis — de momento solo el análisis de correlación con
 // el índice, usando los parámetros ajustados en "Formas de
 // seleccionar los valores" (factor, número de componentes, tope y
-// frecuencia de rebalanceo).
+// frecuencia de rebalanceo) y el índice elegido en "Características
+// generales".
 export default function Analisis() {
-  const { t, factorPenalizacion, nComponentes, pesoMaximo, frecuenciaRebalanceo } = useAppConfig();
+  const { t, idioma, indiceId, factorPenalizacion, nComponentes, pesoMaximo, frecuenciaRebalanceo } = useAppConfig();
+  const nombreIndice = obtenerIndice(indiceId).nombre[idioma];
 
   const [analisisCorrelacion, setAnalisisCorrelacion] = useState(null);
   const [cargandoAnalisisCorrelacion, setCargandoAnalisisCorrelacion] = useState(false);
@@ -18,7 +21,7 @@ export default function Analisis() {
     setErrorAnalisisCorrelacion(null);
     setAnalisisCorrelacion(null);
     try {
-      const resp = await fetch(`/api/analisisCorrelacion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}`);
+      const resp = await fetch(`/api/analisisCorrelacion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setAnalisisCorrelacion(json);
@@ -32,7 +35,7 @@ export default function Analisis() {
   return (
     <MenuLayout>
       <h2>{t.analisisCorrelacionTitulo}</h2>
-      <p>{t.analisisCorrelacionDesc}</p>
+      <p>{t.analisisCorrelacionDesc(nombreIndice)}</p>
       <button onClick={realizarAnalisisCorrelacion} disabled={cargandoAnalisisCorrelacion}>
         {cargandoAnalisisCorrelacion ? t.analisisCorrelacionBotonCargando : t.analisisCorrelacionBoton}
       </button>

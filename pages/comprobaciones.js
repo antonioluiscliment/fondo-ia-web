@@ -1,17 +1,26 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
-import { TICKERS, NOMBRES } from "../lib/i18n";
+import { obtenerIndice, tickerVisible } from "../lib/indices";
 
 // Grupo 2: Comprobaciones — herramientas de consulta y auditoría.
 // Este grupo irá creciendo con el desarrollo de la aplicación.
 export default function Comprobaciones() {
-  const { t, diasVentana } = useAppConfig();
+  const { t, diasVentana, indiceId } = useAppConfig();
+  const indice = obtenerIndice(indiceId);
+  const { tickers, nombresEmpresas } = indice;
 
-  const [ticker, setTicker] = useState("MMM");
+  const [ticker, setTicker] = useState(tickers[0]);
   const [datos, setDatos] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
+
+  // Si se cambia de índice (en "Características generales") mientras
+  // se está en esta página, el ticker elegido puede dejar de existir
+  // en el nuevo índice: se reinicia al primero de la lista nueva.
+  useEffect(() => {
+    setTicker(tickers[0]);
+  }, [indiceId]);
 
   const [numeroSesionConsulta, setNumeroSesionConsulta] = useState(20);
   const [resultadoPuntuaciones, setResultadoPuntuaciones] = useState(null);
@@ -39,7 +48,7 @@ export default function Comprobaciones() {
     setErrorPuntuaciones(null);
     setResultadoPuntuaciones(null);
     try {
-      const resp = await fetch(`/api/puntuaciones?dias=${diasVentana}&sesion=${numeroSesionConsulta}`);
+      const resp = await fetch(`/api/puntuaciones?dias=${diasVentana}&sesion=${numeroSesionConsulta}&indice=${indiceId}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadoPuntuaciones(json);
@@ -57,8 +66,8 @@ export default function Comprobaciones() {
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "20px 0", flexWrap: "wrap" }}>
         <select value={ticker} onChange={(e) => setTicker(e.target.value)}>
-          {TICKERS.map((tk) => (
-            <option key={tk} value={tk}>{tk} — {NOMBRES[tk].slice(0, 25)}</option>
+          {tickers.map((tk) => (
+            <option key={tk} value={tk}>{tickerVisible(tk)} — {nombresEmpresas[tk].slice(0, 25)}</option>
           ))}
         </select>
         <button onClick={consultar} disabled={cargando}>
@@ -70,7 +79,7 @@ export default function Comprobaciones() {
 
       {datos && (
         <>
-          <h2>{t.ultimosCierres(datos.ticker, datos.cierres.length)}</h2>
+          <h2>{t.ultimosCierres(tickerVisible(datos.ticker), datos.cierres.length)}</h2>
           <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
             <thead>
               <tr>
@@ -140,7 +149,7 @@ export default function Comprobaciones() {
             <tbody>
               {resultadoPuntuaciones.puntuaciones.map((p) => (
                 <tr key={p.ticker}>
-                  <td>{p.ticker} — {NOMBRES[p.ticker]}</td>
+                  <td>{tickerVisible(p.ticker)} — {nombresEmpresas[p.ticker]}</td>
                   <td>{p.puntuacion}</td>
                   <td>{p.precio}</td>
                 </tr>

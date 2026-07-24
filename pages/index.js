@@ -1,12 +1,13 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
+import { INDICES } from "../lib/indices";
 
 // Grupo 1: Características generales — título (en MenuLayout), qué
 // hace la aplicación, especificaciones/historia/observaciones,
-// selección de índice (fijo, Dow Jones) e idioma (en MenuLayout).
+// selección de índice e idioma (en MenuLayout).
 export default function Home() {
-  const { t } = useAppConfig();
+  const { t, idioma, indiceId, setIndiceId } = useAppConfig();
 
   const [especificaciones, setEspecificaciones] = useState(null);
   const [cargandoEspecificaciones, setCargandoEspecificaciones] = useState(false);
@@ -85,6 +86,17 @@ export default function Home() {
 
   return (
     <MenuLayout>
+      <div style={{ marginBottom: 20 }}>
+        <label>
+          {t.indiceSeleccionadoEtiqueta}{" "}
+          <select value={indiceId} onChange={(e) => setIndiceId(e.target.value)}>
+            {INDICES.map((ind) => (
+              <option key={ind.id} value={ind.id}>{ind.nombre[idioma]}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       <div style={{ marginTop: 16 }}>
         <button onClick={verEspecificaciones} disabled={cargandoEspecificaciones}>
           {cargandoEspecificaciones
@@ -159,8 +171,6 @@ export default function Home() {
           dangerouslySetInnerHTML={{ __html: historia }}
         />
       )}
-
-      <p style={{ color: "#555" }}>{t.indiceFijoNota}</p>
 
       <hr style={{ margin: "24px 0" }} />
     </MenuLayout>
