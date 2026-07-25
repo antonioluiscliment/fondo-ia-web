@@ -91,6 +91,9 @@ export default async function handler(req, res) {
     if (errorInicializacion) throw errorInicializacion;
 
     const indice = obtenerIndice(req.query.indice);
+    if (!indice.etfReferencia) {
+      throw new Error("No encontré ETFs con los requisitos UCITS de distribución.");
+    }
     const resultado = await yahooFinance.quoteSummary(indice.etfReferencia, { modules: ["topHoldings"] });
     const holdingsBrutos = (resultado.topHoldings && resultado.topHoldings.holdings) || [];
 
