@@ -59,6 +59,7 @@ export default function Analisis() {
                 <th>{t.colCorrelacionMedia}</th>
                 <th>{t.colRentCarteraMedia}</th>
                 <th>{t.colRentIndiceMedia(indice.abreviatura)}</th>
+                <th>{t.colRentIndiceReciente(indice.abreviatura)}</th>
               </tr>
             </thead>
             <tbody>
@@ -82,6 +83,7 @@ export default function Analisis() {
                       )}
                     </td>
                     <td>{fila.rentabilidadIndiceMedia !== null ? `${fila.rentabilidadIndiceMedia.toFixed(3)}%` : "-"}</td>
+                    <td>{fila.rentabilidadIndiceReciente !== null ? `${fila.rentabilidadIndiceReciente.toFixed(3)}%` : "-"}</td>
                   </tr>
                 ))}
             </tbody>
