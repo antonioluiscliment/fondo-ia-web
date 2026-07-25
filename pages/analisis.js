@@ -17,6 +17,10 @@ export default function Analisis() {
   const [cargandoAnalisisCorrelacion, setCargandoAnalisisCorrelacion] = useState(false);
   const [errorAnalisisCorrelacion, setErrorAnalisisCorrelacion] = useState(null);
 
+  const [rentabilidadEtfs, setRentabilidadEtfs] = useState(null);
+  const [cargandoRentabilidadEtfs, setCargandoRentabilidadEtfs] = useState(false);
+  const [errorRentabilidadEtfs, setErrorRentabilidadEtfs] = useState(null);
+
   async function realizarAnalisisCorrelacion() {
     setCargandoAnalisisCorrelacion(true);
     setErrorAnalisisCorrelacion(null);
@@ -30,6 +34,22 @@ export default function Analisis() {
       setErrorAnalisisCorrelacion(e.message);
     } finally {
       setCargandoAnalisisCorrelacion(false);
+    }
+  }
+
+  async function consultarRentabilidadEtfs() {
+    setCargandoRentabilidadEtfs(true);
+    setErrorRentabilidadEtfs(null);
+    setRentabilidadEtfs(null);
+    try {
+      const resp = await fetch(`/api/rentabilidadETFs?indice=${indiceId}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setRentabilidadEtfs(json);
+    } catch (e) {
+      setErrorRentabilidadEtfs(e.message);
+    } finally {
+      setCargandoRentabilidadEtfs(false);
     }
   }
 
@@ -89,6 +109,57 @@ export default function Analisis() {
             </tbody>
           </table>
         </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.rentabilidadEtfsTitulo}</h2>
+      <p>{t.rentabilidadEtfsDesc}</p>
+      <button onClick={consultarRentabilidadEtfs} disabled={cargandoRentabilidadEtfs}>
+        {cargandoRentabilidadEtfs ? t.rentabilidadEtfsBotonCargando : t.rentabilidadEtfsBoton}
+      </button>
+
+      {errorRentabilidadEtfs && <p style={{ color: "crimson" }}>{t.error}: {errorRentabilidadEtfs}</p>}
+
+      {rentabilidadEtfs && (
+        <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+          <thead>
+            <tr>
+              <th>{t.colEtf}</th>
+              <th>{t.col60Sesiones}</th>
+              <th>{t.col120Sesiones}</th>
+              <th>{t.col1Anio}</th>
+              <th>{t.col2Anios}</th>
+              <th>{t.col3Anios}</th>
+              <th>{t.colVolumen(rentabilidadEtfs.anioVolumen, rentabilidadEtfs.esYTD)}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rentabilidadEtfs.filas.map((fila) => {
+              const filaIndice = rentabilidadEtfs.filas[0];
+              return (
+                <tr key={fila.ticker} style={{ fontWeight: fila.esIndice ? "bold" : "normal" }}>
+                  <td>{fila.nombre}</td>
+                  {["sesiones60", "sesiones120", "anio1", "anio2", "anio3"].map((campo) => {
+                    const valor = fila[campo];
+                    const valorIndice = filaIndice[campo];
+                    let color = "inherit";
+                    if (!fila.esIndice && valor !== null && valorIndice !== null) {
+                      if (valor > valorIndice) color = "green";
+                      else if (valor < valorIndice) color = "crimson";
+                    }
+                    return (
+                      <td key={campo} style={{ color }}>
+                        {valor !== null ? `${valor.toFixed(2)}%` : "-"}
+                      </td>
+                    );
+                  })}
+                  <td>{fila.volumen !== null ? fila.volumen.toLocaleString() : "-"}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
     </MenuLayout>
   );
