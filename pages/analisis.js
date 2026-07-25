@@ -114,52 +114,58 @@ export default function Analisis() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.rentabilidadEtfsTitulo}</h2>
-      <p>{t.rentabilidadEtfsDesc}</p>
-      <button onClick={consultarRentabilidadEtfs} disabled={cargandoRentabilidadEtfs}>
-        {cargandoRentabilidadEtfs ? t.rentabilidadEtfsBotonCargando : t.rentabilidadEtfsBoton}
-      </button>
+      {indice.etfsRentabilidad.length > 0 ? (
+        <>
+          <p>{t.rentabilidadEtfsDesc}</p>
+          <button onClick={consultarRentabilidadEtfs} disabled={cargandoRentabilidadEtfs}>
+            {cargandoRentabilidadEtfs ? t.rentabilidadEtfsBotonCargando : t.rentabilidadEtfsBoton}
+          </button>
 
-      {errorRentabilidadEtfs && <p style={{ color: "crimson" }}>{t.error}: {errorRentabilidadEtfs}</p>}
+          {errorRentabilidadEtfs && <p style={{ color: "crimson" }}>{t.error}: {errorRentabilidadEtfs}</p>}
 
-      {rentabilidadEtfs && (
-        <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
-          <thead>
-            <tr>
-              <th>{t.colEtf}</th>
-              <th>{t.col60Sesiones}</th>
-              <th>{t.col120Sesiones}</th>
-              <th>{t.col1Anio}</th>
-              <th>{t.col2Anios}</th>
-              <th>{t.col3Anios}</th>
-              <th>{t.colVolumen(rentabilidadEtfs.anioVolumen, rentabilidadEtfs.esYTD)}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rentabilidadEtfs.filas.map((fila) => {
-              const filaIndice = rentabilidadEtfs.filas[0];
-              return (
-                <tr key={fila.ticker} style={{ fontWeight: fila.esIndice ? "bold" : "normal" }}>
-                  <td>{fila.nombre}</td>
-                  {["sesiones60", "sesiones120", "anio1", "anio2", "anio3"].map((campo) => {
-                    const valor = fila[campo];
-                    const valorIndice = filaIndice[campo];
-                    let color = "inherit";
-                    if (!fila.esIndice && valor !== null && valorIndice !== null) {
-                      if (valor > valorIndice) color = "green";
-                      else if (valor < valorIndice) color = "crimson";
-                    }
-                    return (
-                      <td key={campo} style={{ color }}>
-                        {valor !== null ? `${valor.toFixed(2)}%` : "-"}
-                      </td>
-                    );
-                  })}
-                  <td>{fila.volumen !== null ? fila.volumen.toLocaleString() : "-"}</td>
+          {rentabilidadEtfs && (
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+              <thead>
+                <tr>
+                  <th>{t.colEtf}</th>
+                  <th>{t.col60Sesiones}</th>
+                  <th>{t.col120Sesiones}</th>
+                  <th>{t.col1Anio}</th>
+                  <th>{t.col2Anios}</th>
+                  <th>{t.col3Anios}</th>
+                  <th>{t.colVolumen(rentabilidadEtfs.anioVolumen, rentabilidadEtfs.esYTD)}</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {rentabilidadEtfs.filas.map((fila) => {
+                  const filaIndice = rentabilidadEtfs.filas[0];
+                  return (
+                    <tr key={fila.ticker} style={{ fontWeight: fila.esIndice ? "bold" : "normal" }}>
+                      <td>{fila.nombre}</td>
+                      {["sesiones60", "sesiones120", "anio1", "anio2", "anio3"].map((campo) => {
+                        const valor = fila[campo];
+                        const valorIndice = filaIndice[campo];
+                        let color = "inherit";
+                        if (!fila.esIndice && valor !== null && valorIndice !== null) {
+                          if (valor > valorIndice) color = "green";
+                          else if (valor < valorIndice) color = "crimson";
+                        }
+                        return (
+                          <td key={campo} style={{ color }}>
+                            {valor !== null ? `${valor.toFixed(2)}%` : "-"}
+                          </td>
+                        );
+                      })}
+                      <td>{fila.volumen !== null ? fila.volumen.toLocaleString() : "-"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </>
+      ) : (
+        <p style={{ color: "#555" }}>{t.sinEtfsDisponibles}</p>
       )}
     </MenuLayout>
   );

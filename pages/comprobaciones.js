@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
@@ -216,64 +216,88 @@ export default function Comprobaciones() {
       {errorVariacionIndices && <p style={{ color: "crimson" }}>{t.error}: {errorVariacionIndices}</p>}
 
       {variacionIndices && (
-        <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
-          <thead>
-            <tr>
-              <th>{t.colFecha}</th>
-              <th>Dow Jones</th>
-              <th>{t.colIncremento}</th>
-              <th>IBEX 35</th>
-              <th>{t.colIncremento}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {variacionIndices.filas.map((f) => (
-              <tr key={f.fecha}>
-                <td>{f.fecha.slice(0, 10)}</td>
-                <td>{f.dowJones.toLocaleString()}</td>
-                <td>{f.incrementoDowJones !== null ? `${f.incrementoDowJones.toFixed(3)}%` : "-"}</td>
-                <td>{f.ibex35.toLocaleString()}</td>
-                <td>{f.incrementoIbex35 !== null ? `${f.incrementoIbex35.toFixed(3)}%` : "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <>
+          <p style={{ color: "#555", fontStyle: "italic" }}>{t.avisoScrollHorizontal}</p>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+              <thead>
+                <tr>
+                  <th>{t.colFecha}</th>
+                  {variacionIndices.indices.map((ind) => (
+                    <th key={ind.id} colSpan={2}>{ind.abreviatura}</th>
+                  ))}
+                </tr>
+                <tr>
+                  <th></th>
+                  {variacionIndices.indices.map((ind) => (
+                    <Fragment key={ind.id}>
+                      <th>{t.colValor}</th>
+                      <th>{t.colIncremento}</th>
+                    </Fragment>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {variacionIndices.filas.map((f) => (
+                  <tr key={f.fecha}>
+                    <td>{f.fecha.slice(0, 10)}</td>
+                    {variacionIndices.indices.map((ind) => {
+                      const v = f.valores[ind.id];
+                      return (
+                        <Fragment key={ind.id}>
+                          <td>{v.cierre.toLocaleString()}</td>
+                          <td>{v.incremento !== null ? `${v.incremento.toFixed(3)}%` : "-"}</td>
+                        </Fragment>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.componentesEtfTitulo}</h2>
-      <p>{t.componentesEtfDesc(indice.etfReferencia, indice.nombre[idioma])}</p>
+      {indice.etfReferencia ? (
+        <>
+          <p>{t.componentesEtfDesc(indice.etfReferencia, indice.nombre[idioma])}</p>
 
-      <button onClick={consultarComponentesEtf} disabled={cargandoComponentesEtf}>
-        {cargandoComponentesEtf ? t.componentesEtfBotonCargando : t.componentesEtfBoton}
-      </button>
+          <button onClick={consultarComponentesEtf} disabled={cargandoComponentesEtf}>
+            {cargandoComponentesEtf ? t.componentesEtfBotonCargando : t.componentesEtfBoton}
+          </button>
 
-      {errorComponentesEtf && <p style={{ color: "crimson" }}>{t.error}: {errorComponentesEtf}</p>}
+          {errorComponentesEtf && <p style={{ color: "crimson" }}>{t.error}: {errorComponentesEtf}</p>}
 
-      {componentesEtf && (
-        <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
-          <thead>
-            <tr>
-              <th>{t.colTicker}</th>
-              <th>{t.colPeso}</th>
-              <th>{t.colEnNuestraLista}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {componentesEtf.holdings.map((h) => (
-              <tr key={h.ticker} style={{ background: h.enNuestraLista ? "transparent" : "#ffe0e0" }}>
-                <td>{tickerVisible(h.ticker)} — {h.nombre}</td>
-                <td>{h.porcentaje}%</td>
-                <td>
-                  {h.enNuestraLista
-                    ? h.notaBolsa ? `${t.enNuestraListaSi} (${h.notaBolsa})` : t.enNuestraListaSi
-                    : t.enNuestraListaNo}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          {componentesEtf && (
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+              <thead>
+                <tr>
+                  <th>{t.colTicker}</th>
+                  <th>{t.colPeso}</th>
+                  <th>{t.colEnNuestraLista}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {componentesEtf.holdings.map((h) => (
+                  <tr key={h.ticker} style={{ background: h.enNuestraLista ? "transparent" : "#ffe0e0" }}>
+                    <td>{tickerVisible(h.ticker)} — {h.nombre}</td>
+                    <td>{h.porcentaje}%</td>
+                    <td>
+                      {h.enNuestraLista
+                        ? h.notaBolsa ? `${t.enNuestraListaSi} (${h.notaBolsa})` : t.enNuestraListaSi
+                        : t.enNuestraListaNo}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
+      ) : (
+        <p style={{ color: "#555" }}>{t.sinEtfsDisponibles}</p>
       )}
     </MenuLayout>
   );
