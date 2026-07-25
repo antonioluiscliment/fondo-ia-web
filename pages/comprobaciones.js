@@ -265,7 +265,11 @@ export default function Comprobaciones() {
               <tr key={h.ticker} style={{ background: h.enNuestraLista ? "transparent" : "#ffe0e0" }}>
                 <td>{tickerVisible(h.ticker)} — {h.nombre}</td>
                 <td>{h.porcentaje}%</td>
-                <td>{h.enNuestraLista ? t.enNuestraListaSi : t.enNuestraListaNo}</td>
+                <td>
+                  {h.enNuestraLista
+                    ? h.notaBolsa ? `${t.enNuestraListaSi} (${h.notaBolsa})` : t.enNuestraListaSi
+                    : t.enNuestraListaNo}
+                </td>
               </tr>
             ))}
           </tbody>
