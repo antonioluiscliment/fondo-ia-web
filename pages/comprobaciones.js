@@ -6,7 +6,7 @@ import { obtenerIndice, tickerVisible } from "../lib/indices";
 // Grupo 2: Comprobaciones — herramientas de consulta y auditoría.
 // Este grupo irá creciendo con el desarrollo de la aplicación.
 export default function Comprobaciones() {
-  const { t, diasVentana, indiceId } = useAppConfig();
+  const { t, idioma, diasVentana, indiceId } = useAppConfig();
   const indice = obtenerIndice(indiceId);
   const { tickers, nombresEmpresas } = indice;
 
@@ -30,6 +30,15 @@ export default function Comprobaciones() {
   const [variacionIndices, setVariacionIndices] = useState(null);
   const [cargandoVariacionIndices, setCargandoVariacionIndices] = useState(false);
   const [errorVariacionIndices, setErrorVariacionIndices] = useState(null);
+
+  const [componentesEtf, setComponentesEtf] = useState(null);
+  const [cargandoComponentesEtf, setCargandoComponentesEtf] = useState(false);
+  const [errorComponentesEtf, setErrorComponentesEtf] = useState(null);
+
+  useEffect(() => {
+    setComponentesEtf(null);
+    setErrorComponentesEtf(null);
+  }, [indiceId]);
 
   async function consultar() {
     setCargando(true);
@@ -76,6 +85,22 @@ export default function Comprobaciones() {
       setErrorVariacionIndices(e.message);
     } finally {
       setCargandoVariacionIndices(false);
+    }
+  }
+
+  async function consultarComponentesEtf() {
+    setCargandoComponentesEtf(true);
+    setErrorComponentesEtf(null);
+    setComponentesEtf(null);
+    try {
+      const resp = await fetch(`/api/holdingsETF?indice=${indiceId}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setComponentesEtf(json);
+    } catch (e) {
+      setErrorComponentesEtf(e.message);
+    } finally {
+      setCargandoComponentesEtf(false);
     }
   }
 
@@ -209,6 +234,38 @@ export default function Comprobaciones() {
                 <td>{f.incrementoDowJones !== null ? `${f.incrementoDowJones.toFixed(3)}%` : "-"}</td>
                 <td>{f.ibex35.toLocaleString()}</td>
                 <td>{f.incrementoIbex35 !== null ? `${f.incrementoIbex35.toFixed(3)}%` : "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.componentesEtfTitulo}</h2>
+      <p>{t.componentesEtfDesc(indice.etfReferencia, indice.nombre[idioma])}</p>
+
+      <button onClick={consultarComponentesEtf} disabled={cargandoComponentesEtf}>
+        {cargandoComponentesEtf ? t.componentesEtfBotonCargando : t.componentesEtfBoton}
+      </button>
+
+      {errorComponentesEtf && <p style={{ color: "crimson" }}>{t.error}: {errorComponentesEtf}</p>}
+
+      {componentesEtf && (
+        <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+          <thead>
+            <tr>
+              <th>{t.colTicker}</th>
+              <th>{t.colPeso}</th>
+              <th>{t.colEnNuestraLista}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {componentesEtf.holdings.map((h) => (
+              <tr key={h.ticker} style={{ background: h.enNuestraLista ? "transparent" : "#ffe0e0" }}>
+                <td>{tickerVisible(h.ticker)} — {h.nombre}</td>
+                <td>{h.porcentaje}%</td>
+                <td>{h.enNuestraLista ? t.enNuestraListaSi : t.enNuestraListaNo}</td>
               </tr>
             ))}
           </tbody>
