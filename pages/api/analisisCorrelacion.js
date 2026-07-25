@@ -270,6 +270,7 @@ export default async function handler(req, res) {
           rentabilidadCarteraDesv: desviacion(rentabilidadesCartera, rentCarteraMedia),
           rentabilidadCarteraRango: rango(rentabilidadesCartera),
           rentabilidadIndiceMedia: media(rentabilidadesIndice),
+          rentabilidadIndiceReciente: rentabilidadesIndice[0] ?? null,
         });
       }
 
@@ -296,6 +297,7 @@ export default async function handler(req, res) {
         rentabilidadCarteraDesv: desviacion(rentabilidadesCarteraA, rentCarteraMediaA),
         rentabilidadCarteraRango: rango(rentabilidadesCarteraA),
         rentabilidadIndiceMedia: media(rentabilidadesIndiceA),
+        rentabilidadIndiceReciente: rentabilidadesIndiceA[0] ?? null,
       });
     }
 
