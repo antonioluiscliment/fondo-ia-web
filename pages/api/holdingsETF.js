@@ -12,6 +12,23 @@
 // comprobación parcial (los valores con más peso), no como sustituto
 // de revisar la composición oficial completa del índice.
 //
+// Algunos valores cotizan en varias bolsas a la vez (p.ej. Ferrovial
+// en Ámsterdam, España y Nasdaq), y el ETF puede reportar el holding
+// con el sufijo de una bolsa distinta a la "propia" del índice (nuestra
+// lista siempre usa la bolsa del índice: sin sufijo para el Dow Jones,
+// ".MC" para el IBEX 35). Sin este ajuste, esos casos saldrían siempre
+// como "falta", aunque el valor sí esté en la lista con el ticker de
+// la bolsa correcta. Antes de dar el mensaje de "falta", se comprueba:
+//   1. ¿El ticker que da el ETF tiene un sufijo de bolsa distinto al
+//      del índice?
+//   2. Si es así, ¿existe ese mismo valor en la bolsa del índice
+//      (comprobado con una consulta real a Yahoo Finance, no solo
+//      suponiéndolo)?
+//   3. Si existe, se busca ESE ticker (el de la bolsa del índice) en
+//      nuestro array, en vez del que dio el ETF.
+// Solo si tras estos 3 pasos sigue sin aparecer, se marca como falta
+// de verdad.
+//
 // Parámetros de la query:
 //   indice - id del índice a comprobar (dowjones, ibex35, ...).
 
@@ -26,6 +43,49 @@ try {
   errorInicializacion = e;
 }
 
+// Nombres legibles de los sufijos de bolsa más habituales en Yahoo
+// Finance, solo para el mensaje; si no está en esta lista se muestra
+// el sufijo tal cual.
+const NOMBRES_BOLSA = {
+  "": "EE. UU.",
+  MC: "Madrid",
+  AS: "Ámsterdam",
+  L: "Londres",
+  PA: "París",
+  DE: "Alemania",
+  MI: "Milán",
+  SW: "Suiza",
+  LS: "Lisboa",
+};
+
+function sufijoDe(ticker) {
+  const i = ticker.lastIndexOf(".");
+  return i > 0 ? ticker.slice(i + 1) : "";
+}
+
+function baseDe(ticker) {
+  const i = ticker.lastIndexOf(".");
+  return i > 0 ? ticker.slice(0, i) : ticker;
+}
+
+function nombreBolsa(sufijo) {
+  return NOMBRES_BOLSA[sufijo] || sufijo;
+}
+
+// Para un holding del ETF que cotiza en una bolsa distinta a la del
+// índice, comprueba si ese mismo valor existe también en la bolsa del
+// índice, y si es así, devuelve su ticker allí. Si no existe (o la
+// consulta falla), devuelve null.
+async function buscarEnBolsaDelIndice(tickerEtf, sufijoIndice) {
+  const candidato = baseDe(tickerEtf) + sufijoIndice;
+  try {
+    await yahooFinance.quote(candidato);
+    return candidato;
+  } catch {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   try {
     if (errorInicializacion) throw errorInicializacion;
@@ -34,12 +94,26 @@ export default async function handler(req, res) {
     const resultado = await yahooFinance.quoteSummary(indice.etfReferencia, { modules: ["topHoldings"] });
     const holdingsBrutos = (resultado.topHoldings && resultado.topHoldings.holdings) || [];
 
-    const holdings = holdingsBrutos.map((h) => ({
-      ticker: h.symbol,
-      nombre: h.holdingName,
-      porcentaje: Number((h.holdingPercent * 100).toFixed(2)),
-      enNuestraLista: indice.tickers.includes(h.symbol),
-    }));
+    const holdings = [];
+    for (const h of holdingsBrutos) {
+      const fila = {
+        ticker: h.symbol,
+        nombre: h.holdingName,
+        porcentaje: Number((h.holdingPercent * 100).toFixed(2)),
+        enNuestraLista: indice.tickers.includes(h.symbol),
+        notaBolsa: null,
+      };
+
+      if (!fila.enNuestraLista && sufijoDe(h.symbol) !== indice.sufijoMercado.replace(".", "")) {
+        const tickerEnBolsaIndice = await buscarEnBolsaDelIndice(h.symbol, indice.sufijoMercado);
+        if (tickerEnBolsaIndice) {
+          fila.enNuestraLista = indice.tickers.includes(tickerEnBolsaIndice);
+          fila.notaBolsa = `ETF incluye la de ${nombreBolsa(sufijoDe(h.symbol))}`;
+        }
+      }
+
+      holdings.push(fila);
+    }
 
     res.status(200).json({
       indice: indice.id,
