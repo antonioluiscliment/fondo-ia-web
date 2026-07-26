@@ -24,10 +24,22 @@ export default function Home() {
     setFrecuenciaRebalanceo,
     diasVentana,
     setDiasVentana,
+    sesionesPuntuacion,
   } = useAppConfig();
   const indice = obtenerIndice(indiceId);
   const { nombresEmpresas } = indice;
   const nombreIndice = indice.nombre[idioma];
+
+  // Días efectivos de selección real = ventana de backtest menos las
+  // sesiones que se consumen como "calentamiento" para poder calcular
+  // la primera puntuación (ver sesionesPuntuacion). Si son 0 o menos,
+  // no habría ningún día con cartera seleccionada: se bloquean los
+  // botones de cálculo hasta que se ajuste la ventana o las sesiones
+  // promediadas. Si son pocos pero válidos, solo se avisa.
+  const diasEfectivos = diasVentana - sesionesPuntuacion;
+  const UMBRAL_AVISO_DIAS_EFECTIVOS = 8;
+  const bloqueadoPorDiasEfectivos = diasEfectivos <= 0;
+  const avisoDiasEfectivos = !bloqueadoPorDiasEfectivos && diasEfectivos < UMBRAL_AVISO_DIAS_EFECTIVOS;
 
   const [seleccion, setSeleccion] = useState(null);
   const [cargandoSeleccion, setCargandoSeleccion] = useState(false);
@@ -74,6 +86,7 @@ export default function Home() {
   const [errorOptimizacionFrecuencia, setErrorOptimizacionFrecuencia] = useState(null);
 
   const [mostrarResumen, setMostrarResumen] = useState(false);
+  const [mostrarAvisoDias, setMostrarAvisoDias] = useState(false);
 
   const [cargandoCadena, setCargandoCadena] = useState(false);
   const [errorCadena, setErrorCadena] = useState(null);
@@ -85,7 +98,7 @@ export default function Home() {
     setSeleccion(null);
     setMostrarResumen(false);
     try {
-      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&indice=${indiceId}`);
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setSeleccion(json);
@@ -102,7 +115,7 @@ export default function Home() {
     setErrorSeleccionVeces(null);
     setSeleccionVeces(null);
     try {
-      const params = `factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&sesionesVeces=${sesionesVeces}&modo=${modoVeces}&indice=${indiceId}`;
+      const params = `factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&sesionesVeces=${sesionesVeces}&modo=${modoVeces}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`;
       const url = modoVeces === "real" ? `/api/seleccionVeces?${params}` : `/api/seleccionVeces?${params}&dias=${diasVentana}`;
       const resp = await fetch(url);
       const json = await resp.json();
@@ -120,7 +133,7 @@ export default function Home() {
     setErrorSeleccionVolumen(null);
     setSeleccionVolumen(null);
     try {
-      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=volumen&indice=${indiceId}`);
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=volumen&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setSeleccionVolumen(json);
@@ -136,7 +149,7 @@ export default function Home() {
     setErrorSeleccionFlujo(null);
     setSeleccionFlujo(null);
     try {
-      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=flujo&indice=${indiceId}`);
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=flujo&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setSeleccionFlujo(json);
@@ -152,7 +165,7 @@ export default function Home() {
     setErrorSeleccionVecesVolumen(null);
     setSeleccionVecesVolumen(null);
     try {
-      const params = `factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&sesionesVeces=${sesionesVecesVolumen}&modo=${modoVecesVolumen}&criterio=volumen&indice=${indiceId}`;
+      const params = `factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&sesionesVeces=${sesionesVecesVolumen}&modo=${modoVecesVolumen}&criterio=volumen&indice=${indiceId}&sesiones=${sesionesPuntuacion}`;
       const url = modoVecesVolumen === "real" ? `/api/seleccionVeces?${params}` : `/api/seleccionVeces?${params}&dias=${diasVentana}`;
       const resp = await fetch(url);
       const json = await resp.json();
@@ -170,7 +183,7 @@ export default function Home() {
     setErrorSeleccionAleatoria(null);
     setSeleccionAleatoria(null);
     try {
-      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=aleatorio&indice=${indiceId}`);
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=aleatorio&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setSeleccionAleatoria(json);
@@ -186,7 +199,7 @@ export default function Home() {
     setErrorOptimizacion(null);
     setResultadosOptimizacion(null);
     try {
-      const resp = await fetch(`/api/optimizar?dias=${diasVentana}&indice=${indiceId}`);
+      const resp = await fetch(`/api/optimizar?dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadosOptimizacion(json);
@@ -203,7 +216,7 @@ export default function Home() {
     setErrorOptimizacionN(null);
     setResultadosOptimizacionN(null);
     try {
-      const resp = await fetch(`/api/optimizarN?factor=${factorPenalizacion}&dias=${diasVentana}&indice=${indiceId}`);
+      const resp = await fetch(`/api/optimizarN?factor=${factorPenalizacion}&dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadosOptimizacionN(json);
@@ -220,7 +233,7 @@ export default function Home() {
     setErrorOptimizacionMax(null);
     setResultadosOptimizacionMax(null);
     try {
-      const resp = await fetch(`/api/optimizarMax?factor=${factorPenalizacion}&n=${nComponentes}&dias=${diasVentana}&indice=${indiceId}`);
+      const resp = await fetch(`/api/optimizarMax?factor=${factorPenalizacion}&n=${nComponentes}&dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadosOptimizacionMax(json);
@@ -237,7 +250,7 @@ export default function Home() {
     setErrorOptimizacionFrecuencia(null);
     setResultadosOptimizacionFrecuencia(null);
     try {
-      const resp = await fetch(`/api/optimizarFrecuencia?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&dias=${diasVentana}&indice=${indiceId}`);
+      const resp = await fetch(`/api/optimizarFrecuencia?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadosOptimizacionFrecuencia(json);
@@ -254,26 +267,26 @@ export default function Home() {
     setErrorCadena(null);
     setResultadoCadena(null);
     try {
-      const respOpt = await fetch(`/api/optimizar?dias=${diasVentana}&indice=${indiceId}`);
+      const respOpt = await fetch(`/api/optimizar?dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const jsonOpt = await respOpt.json();
       if (!respOpt.ok) throw new Error(jsonOpt.error || "Error al optimizar el factor");
 
-      const respOptN = await fetch(`/api/optimizarN?factor=${jsonOpt.mejorFactor}&dias=${diasVentana}&indice=${indiceId}`);
+      const respOptN = await fetch(`/api/optimizarN?factor=${jsonOpt.mejorFactor}&dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const jsonOptN = await respOptN.json();
       if (!respOptN.ok) throw new Error(jsonOptN.error || "Error al optimizar el número de componentes");
 
-      const respOptMax = await fetch(`/api/optimizarMax?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&dias=${diasVentana}&indice=${indiceId}`);
+      const respOptMax = await fetch(`/api/optimizarMax?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const jsonOptMax = await respOptMax.json();
       if (!respOptMax.ok) throw new Error(jsonOptMax.error || "Error al optimizar el tope de diversificación");
 
       const respOptFrec = await fetch(
-        `/api/optimizarFrecuencia?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&max=${jsonOptMax.mejorPesoMaximo}&dias=${diasVentana}&indice=${indiceId}`
+        `/api/optimizarFrecuencia?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&max=${jsonOptMax.mejorPesoMaximo}&dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`
       );
       const jsonOptFrec = await respOptFrec.json();
       if (!respOptFrec.ok) throw new Error(jsonOptFrec.error || "Error al optimizar la frecuencia de rebalanceo");
 
       const respSel = await fetch(
-        `/api/seleccion?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&max=${jsonOptMax.mejorPesoMaximo}&frecuencia=${jsonOptFrec.mejorFrecuenciaRebalanceo}&dias=${diasVentana}&indice=${indiceId}`
+        `/api/seleccion?factor=${jsonOpt.mejorFactor}&n=${jsonOptN.mejorNComponentes}&max=${jsonOptMax.mejorPesoMaximo}&frecuencia=${jsonOptFrec.mejorFrecuenciaRebalanceo}&dias=${diasVentana}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`
       );
       const jsonSel = await respSel.json();
       if (!respSel.ok) throw new Error(jsonSel.error || "Error al realizar la selección");
@@ -308,7 +321,7 @@ export default function Home() {
       <div style={{ border: "3px solid #2d6a2d", borderRadius: 8, padding: 16, background: "#f3fff3" }}>
         <h2 style={{ marginTop: 0 }}>{t.cadenaTitulo}</h2>
         <p>{t.cadenaDesc}</p>
-        <button onClick={ejecutarCadena} disabled={cargandoCadena}>
+        <button onClick={ejecutarCadena} disabled={bloqueadoPorDiasEfectivos || cargandoCadena}>
           {cargandoCadena ? t.cadenaBotonCargando : t.cadenaBoton}
         </button>
 
@@ -368,7 +381,7 @@ export default function Home() {
 
       <h2>{t.optFactorTitulo}</h2>
       <p>{t.optFactorDesc(FACTOR_PENALIZACION_DEFECTO_DISPLAY)}</p>
-      <button onClick={optimizarFactor} disabled={cargandoOptimizacion}>
+      <button onClick={optimizarFactor} disabled={bloqueadoPorDiasEfectivos || cargandoOptimizacion}>
         {cargandoOptimizacion ? t.optFactorBotonCargando : t.optFactorBoton}
       </button>
 
@@ -402,7 +415,7 @@ export default function Home() {
 
       <h2>{t.optNTitulo}</h2>
       <p>{t.optNDesc}</p>
-      <button onClick={optimizarNumeroComponentes} disabled={cargandoOptimizacionN}>
+      <button onClick={optimizarNumeroComponentes} disabled={bloqueadoPorDiasEfectivos || cargandoOptimizacionN}>
         {cargandoOptimizacionN ? t.optNBotonCargando : t.optNBoton}
       </button>
 
@@ -436,7 +449,7 @@ export default function Home() {
 
       <h2>{t.optMaxTitulo}</h2>
       <p>{t.optMaxDesc}</p>
-      <button onClick={optimizarTopeDiversificacion} disabled={cargandoOptimizacionMax}>
+      <button onClick={optimizarTopeDiversificacion} disabled={bloqueadoPorDiasEfectivos || cargandoOptimizacionMax}>
         {cargandoOptimizacionMax ? t.optMaxBotonCargando : t.optMaxBoton}
       </button>
 
@@ -470,7 +483,7 @@ export default function Home() {
 
       <h2>{t.optFrecuenciaTitulo}</h2>
       <p>{t.optFrecuenciaDesc}</p>
-      <button onClick={optimizarFrecuenciaRebalanceo} disabled={cargandoOptimizacionFrecuencia}>
+      <button onClick={optimizarFrecuenciaRebalanceo} disabled={bloqueadoPorDiasEfectivos || cargandoOptimizacionFrecuencia}>
         {cargandoOptimizacionFrecuencia ? t.optFrecuenciaBotonCargando : t.optFrecuenciaBoton}
       </button>
 
@@ -523,14 +536,49 @@ export default function Home() {
           {[20, 30, 50, 80, 120].map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
-        </select>
+        </select>{" "}
+        {avisoDiasEfectivos && (
+          <button
+            onClick={() => setMostrarAvisoDias((v) => !v)}
+            aria-label={t.diasEfectivosAviso(diasEfectivos)}
+            title={t.diasEfectivosAviso(diasEfectivos)}
+            style={{
+              background: "#fff3cd",
+              border: "1px solid #cc9a06",
+              borderRadius: "50%",
+              width: 22,
+              height: 22,
+              lineHeight: "20px",
+              padding: 0,
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontStyle: "italic",
+              fontFamily: "serif",
+              color: "#7a5c00",
+            }}
+          >
+            i
+          </button>
+        )}
       </p>
+
+      {avisoDiasEfectivos && mostrarAvisoDias && (
+        <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 12, color: "#7a5c00" }}>
+          {t.diasEfectivosAviso(diasEfectivos)}
+        </p>
+      )}
+
+      {bloqueadoPorDiasEfectivos && (
+        <p style={{ background: "#ffe0e0", border: "1px solid crimson", borderRadius: 6, padding: 12, color: "crimson" }}>
+          {t.diasEfectivosBloqueo(diasVentana, sesionesPuntuacion)}
+        </p>
+      )}
 
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.seleccionTitulo}</h2>
       <p>{t.seleccionDesc(nComponentes, pesoMaximo)}</p>
-      <button onClick={realizarSeleccion} disabled={cargandoSeleccion}>
+      <button onClick={realizarSeleccion} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccion}>
         {cargandoSeleccion ? t.seleccionBotonCargando : t.seleccionBoton}
       </button>
       <br />
@@ -683,7 +731,7 @@ export default function Home() {
         </select>
       </p>
 
-      <button onClick={realizarSeleccionVeces} disabled={cargandoSeleccionVeces}>
+      <button onClick={realizarSeleccionVeces} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionVeces}>
         {cargandoSeleccionVeces ? t.seleccionVecesBotonCargando : t.seleccionVecesBoton}
       </button>
 
@@ -775,7 +823,7 @@ export default function Home() {
 
       <h2>{t.seleccionVolumenTitulo}</h2>
       <p>{t.seleccionVolumenDesc(nComponentes, pesoMaximo)}</p>
-      <button onClick={realizarSeleccionVolumen} disabled={cargandoSeleccionVolumen}>
+      <button onClick={realizarSeleccionVolumen} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionVolumen}>
         {cargandoSeleccionVolumen ? t.seleccionBotonCargando : t.seleccionBoton}
       </button>
 
@@ -903,7 +951,7 @@ export default function Home() {
 
       <h2>{t.seleccionFlujoTitulo}</h2>
       <p>{t.seleccionFlujoDesc(nComponentes, pesoMaximo)}</p>
-      <button onClick={realizarSeleccionFlujo} disabled={cargandoSeleccionFlujo}>
+      <button onClick={realizarSeleccionFlujo} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionFlujo}>
         {cargandoSeleccionFlujo ? t.seleccionBotonCargando : t.seleccionBoton}
       </button>
 
@@ -1048,7 +1096,7 @@ export default function Home() {
         </select>
       </p>
 
-      <button onClick={realizarSeleccionVecesVolumen} disabled={cargandoSeleccionVecesVolumen}>
+      <button onClick={realizarSeleccionVecesVolumen} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionVecesVolumen}>
         {cargandoSeleccionVecesVolumen ? t.seleccionVecesBotonCargando : t.seleccionVecesBoton}
       </button>
 
@@ -1140,7 +1188,7 @@ export default function Home() {
 
       <h2>{t.seleccionAleatoriaTitulo}</h2>
       <p>{t.seleccionAleatoriaDesc(nComponentes, pesoMaximo)}</p>
-      <button onClick={realizarSeleccionAleatoria} disabled={cargandoSeleccionAleatoria}>
+      <button onClick={realizarSeleccionAleatoria} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionAleatoria}>
         {cargandoSeleccionAleatoria ? t.seleccionBotonCargando : t.seleccionBoton}
       </button>
 

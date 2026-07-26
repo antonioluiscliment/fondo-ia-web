@@ -6,7 +6,7 @@ import { obtenerIndice, tickerVisible } from "../lib/indices";
 // Grupo 2: Comprobaciones — herramientas de consulta y auditoría.
 // Este grupo irá creciendo con el desarrollo de la aplicación.
 export default function Comprobaciones() {
-  const { t, idioma, diasVentana, indiceId } = useAppConfig();
+  const { t, idioma, diasVentana, indiceId, sesionesPuntuacion } = useAppConfig();
   const indice = obtenerIndice(indiceId);
   const { tickers, nombresEmpresas } = indice;
 
@@ -15,7 +15,7 @@ export default function Comprobaciones() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
-  // Si se cambia de índice (en "Características generales") mientras
+  // Si se cambia de índice (en el marco exterior persistente) mientras
   // se está en esta página, el ticker elegido puede dejar de existir
   // en el nuevo índice: se reinicia al primero de la lista nueva.
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function Comprobaciones() {
     setErrorPuntuaciones(null);
     setResultadoPuntuaciones(null);
     try {
-      const resp = await fetch(`/api/puntuaciones?dias=${diasVentana}&sesion=${numeroSesionConsulta}&indice=${indiceId}`);
+      const resp = await fetch(`/api/puntuaciones?dias=${diasVentana}&sesion=${numeroSesionConsulta}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadoPuntuaciones(json);
@@ -163,14 +163,14 @@ export default function Comprobaciones() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.puntuacionesTitulo}</h2>
-      <p>{t.puntuacionesDesc}</p>
+      <p>{t.puntuacionesDesc(sesionesPuntuacion, tickers.length)}</p>
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "12px 0", flexWrap: "wrap" }}>
         <label>
-          {t.puntuacionesEtiquetaSesion(4, diasVentana)}{" "}
+          {t.puntuacionesEtiquetaSesion(sesionesPuntuacion + 1, diasVentana, sesionesPuntuacion)}{" "}
           <input
             type="number"
-            min={4}
+            min={sesionesPuntuacion + 1}
             max={diasVentana}
             value={numeroSesionConsulta}
             onChange={(e) => setNumeroSesionConsulta(Number(e.target.value))}

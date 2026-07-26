@@ -9,7 +9,7 @@ import { obtenerIndice } from "../lib/indices";
 // frecuencia de rebalanceo) y el índice elegido en "Características
 // generales".
 export default function Analisis() {
-  const { t, idioma, indiceId, factorPenalizacion, nComponentes, pesoMaximo, frecuenciaRebalanceo } = useAppConfig();
+  const { t, idioma, indiceId, factorPenalizacion, nComponentes, pesoMaximo, frecuenciaRebalanceo, sesionesPuntuacion } = useAppConfig();
   const indice = obtenerIndice(indiceId);
   const nombreIndice = indice.nombre[idioma];
 
@@ -26,7 +26,7 @@ export default function Analisis() {
     setErrorAnalisisCorrelacion(null);
     setAnalisisCorrelacion(null);
     try {
-      const resp = await fetch(`/api/analisisCorrelacion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&indice=${indiceId}`);
+      const resp = await fetch(`/api/analisisCorrelacion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setAnalisisCorrelacion(json);
