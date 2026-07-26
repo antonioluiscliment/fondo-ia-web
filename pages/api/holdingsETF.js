@@ -21,13 +21,19 @@
 // la bolsa correcta. Antes de dar el mensaje de "falta", se comprueba:
 //   1. ¿El ticker que da el ETF tiene un sufijo de bolsa distinto al
 //      del índice?
-//   2. Si es así, ¿existe ese mismo valor en la bolsa del índice
-//      (comprobado con una consulta real a Yahoo Finance, no solo
-//      suponiéndolo)?
-//   3. Si existe, se busca ESE ticker (el de la bolsa del índice) en
-//      nuestro array, en vez del que dio el ETF.
-// Solo si tras estos 3 pasos sigue sin aparecer, se marca como falta
-// de verdad.
+//   2. ¿El propio índice tiene un alias manual para ese mnemónico
+//      concreto (indice.aliasesTicker)? Hace falta para casos como
+//      Unilever (Londres: "ULVR", Ámsterdam: "UNA") o STMicroelectronics
+//      (París: "STMPA", Milán: "STMMI"), donde no solo cambia el
+//      sufijo de bolsa sino el propio mnemónico — la regla genérica
+//      de "mismo ticker, sufijo distinto" no puede resolverlos sola.
+//   3. Si no hay alias, se prueba con la regla genérica: mismo
+//      mnemónico, sufijo de la bolsa del índice.
+//   4. El candidato que salga de 2 o 3 se comprueba con una consulta
+//      real a Yahoo Finance (no solo se supone), y si existe, se
+//      busca ESE ticker en nuestro array, en vez del que dio el ETF.
+// Solo si tras estos pasos sigue sin aparecer, se marca como falta de
+// verdad.
 //
 // Parámetros de la query:
 //   indice - id del índice a comprobar (dowjones, ibex35, ...).
@@ -74,10 +80,14 @@ function nombreBolsa(sufijo) {
 
 // Para un holding del ETF que cotiza en una bolsa distinta a la del
 // índice, comprueba si ese mismo valor existe también en la bolsa del
-// índice, y si es así, devuelve su ticker allí. Si no existe (o la
-// consulta falla), devuelve null.
-async function buscarEnBolsaDelIndice(tickerEtf, sufijoIndice) {
-  const candidato = baseDe(tickerEtf) + sufijoIndice;
+// índice, y si es así, devuelve su ticker allí. Usa primero el alias
+// manual del índice (si lo tiene para ese mnemónico); si no, prueba
+// con la regla genérica de mismo mnemónico y sufijo de la bolsa del
+// índice. Si ninguno existe (o la consulta falla), devuelve null.
+async function buscarEnBolsaDelIndice(tickerEtf, indice) {
+  const base = baseDe(tickerEtf);
+  const baseCandidata = (indice.aliasesTicker && indice.aliasesTicker[base]) || base;
+  const candidato = baseCandidata + indice.sufijoMercado;
   try {
     await yahooFinance.quote(candidato);
     return candidato;
@@ -108,7 +118,7 @@ export default async function handler(req, res) {
       };
 
       if (!fila.enNuestraLista && sufijoDe(h.symbol) !== indice.sufijoMercado.replace(".", "")) {
-        const tickerEnBolsaIndice = await buscarEnBolsaDelIndice(h.symbol, indice.sufijoMercado);
+        const tickerEnBolsaIndice = await buscarEnBolsaDelIndice(h.symbol, indice);
         if (tickerEnBolsaIndice) {
           fila.enNuestraLista = indice.tickers.includes(tickerEnBolsaIndice);
           fila.notaBolsa = `ETF incluye la de ${nombreBolsa(sufijoDe(h.symbol))}`;
