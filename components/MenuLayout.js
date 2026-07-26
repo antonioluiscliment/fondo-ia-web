@@ -47,7 +47,7 @@ const estiloPanelDocx = {
 };
 
 export default function MenuLayout({ children }) {
-  const { idioma, setIdioma, t, indiceId, setIndiceId } = useAppConfig();
+  const { idioma, setIdioma, t, indiceId, setIndiceId, sesionesPuntuacion, setSesionesPuntuacion } = useAppConfig();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [infoAbierto, setInfoAbierto] = useState(false);
   const router = useRouter();
@@ -154,14 +154,23 @@ export default function MenuLayout({ children }) {
         </button>
       </div>
 
-      {/* Marco exterior persistente: índice e idioma, visibles siempre,
-          en cualquier pantalla, independientemente del menú hamburguesa. */}
+      {/* Marco exterior persistente: índice, sesiones promediadas e
+          idioma, visibles siempre, en cualquier pantalla,
+          independientemente del menú hamburguesa. */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", marginTop: 12 }}>
         <label>
           {t.indiceSeleccionadoEtiqueta}{" "}
           <select value={indiceId} onChange={(e) => setIndiceId(e.target.value)}>
             {INDICES.map((ind) => (
               <option key={ind.id} value={ind.id}>{ind.nombre[idioma]}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {t.sesionesPuntuacionEtiqueta}{" "}
+          <select value={sesionesPuntuacion} onChange={(e) => setSesionesPuntuacion(Number(e.target.value))}>
+            {[3, 5, 8, 13].map((s) => (
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </label>
