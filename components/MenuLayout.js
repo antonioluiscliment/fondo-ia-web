@@ -2,12 +2,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAppConfig } from "../lib/appConfig";
-import { obtenerIndice } from "../lib/indices";
+import { INDICES, obtenerIndice } from "../lib/indices";
 
+// "General" ya no es una opción del menú hamburguesa: el selector de
+// índice e idioma viven siempre visibles en el marco exterior (más
+// abajo en este mismo componente), y las especificaciones/historia/
+// observaciones se han movido al panel del icono de info (ⓘ).
 const ENLACES = [
-  { href: "/", labelKey: "menuGeneral" },
   { href: "/comprobaciones", labelKey: "menuComprobaciones" },
-  { href: "/seleccionValores", labelKey: "menuFormasSeleccion" },
+  { href: "/", labelKey: "menuFormasSeleccion" },
   { href: "/analisis", labelKey: "menuAnalisis" },
 ];
 
@@ -24,11 +27,109 @@ function IconoMenu() {
   );
 }
 
+const estiloBotonIcono = {
+  background: "none",
+  border: "1px solid #999",
+  borderRadius: 6,
+  padding: "6px 8px",
+  cursor: "pointer",
+  lineHeight: 0,
+};
+
+const estiloPanelDocx = {
+  border: "1px solid #ccc",
+  borderRadius: 6,
+  padding: 16,
+  margin: "16px 0",
+  maxHeight: 480,
+  overflowY: "auto",
+  background: "#fafafa",
+};
+
 export default function MenuLayout({ children }) {
-  const { idioma, setIdioma, t, indiceId } = useAppConfig();
-  const nombreIndice = obtenerIndice(indiceId).nombre[idioma];
+  const { idioma, setIdioma, t, indiceId, setIndiceId } = useAppConfig();
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [infoAbierto, setInfoAbierto] = useState(false);
   const router = useRouter();
+
+  // Especificaciones / historia / observaciones: antes vivían en la
+  // página "Características generales"; ahora, al ser contenido que
+  // queremos accesible desde cualquier pantalla, viven aquí, en el
+  // marco exterior persistente, detrás del icono de info.
+  const [especificaciones, setEspecificaciones] = useState(null);
+  const [cargandoEspecificaciones, setCargandoEspecificaciones] = useState(false);
+  const [errorEspecificaciones, setErrorEspecificaciones] = useState(null);
+  const [mostrarEspecificaciones, setMostrarEspecificaciones] = useState(false);
+
+  const [observaciones, setObservaciones] = useState(null);
+  const [cargandoObservaciones, setCargandoObservaciones] = useState(false);
+  const [errorObservaciones, setErrorObservaciones] = useState(null);
+  const [mostrarObservaciones, setMostrarObservaciones] = useState(false);
+
+  const [historia, setHistoria] = useState(null);
+  const [cargandoHistoria, setCargandoHistoria] = useState(false);
+  const [errorHistoria, setErrorHistoria] = useState(null);
+  const [mostrarHistoria, setMostrarHistoria] = useState(false);
+
+  async function verEspecificaciones() {
+    if (especificaciones) {
+      setMostrarEspecificaciones((v) => !v);
+      return;
+    }
+    setCargandoEspecificaciones(true);
+    setErrorEspecificaciones(null);
+    try {
+      const resp = await fetch(`/api/especificaciones`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setEspecificaciones(json.html);
+      setMostrarEspecificaciones(true);
+    } catch (e) {
+      setErrorEspecificaciones(e.message);
+    } finally {
+      setCargandoEspecificaciones(false);
+    }
+  }
+
+  async function verObservaciones() {
+    if (observaciones) {
+      setMostrarObservaciones((v) => !v);
+      return;
+    }
+    setCargandoObservaciones(true);
+    setErrorObservaciones(null);
+    try {
+      const resp = await fetch(`/api/observaciones`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setObservaciones(json.html);
+      setMostrarObservaciones(true);
+    } catch (e) {
+      setErrorObservaciones(e.message);
+    } finally {
+      setCargandoObservaciones(false);
+    }
+  }
+
+  async function verHistoria() {
+    if (historia) {
+      setMostrarHistoria((v) => !v);
+      return;
+    }
+    setCargandoHistoria(true);
+    setErrorHistoria(null);
+    try {
+      const resp = await fetch(`/api/historia`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setHistoria(json.html);
+      setMostrarHistoria(true);
+    } catch (e) {
+      setErrorHistoria(e.message);
+    } finally {
+      setCargandoHistoria(false);
+    }
+  }
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", fontFamily: "sans-serif", padding: "16px", background: "#ffe4d6", minHeight: "100vh" }}>
@@ -37,29 +138,41 @@ export default function MenuLayout({ children }) {
           <button
             onClick={() => setMenuAbierto((v) => !v)}
             aria-label={menuAbierto ? t.menuCerrar : t.menuAbrir}
-            style={{
-              background: "none",
-              border: "1px solid #999",
-              borderRadius: 6,
-              padding: "6px 8px",
-              cursor: "pointer",
-              lineHeight: 0,
-            }}
+            style={estiloBotonIcono}
           >
             <IconoMenu />
           </button>
           <h1 style={{ margin: 0 }}>{t.titulo}</h1>
         </div>
-        <div>
+        <button
+          onClick={() => setInfoAbierto((v) => !v)}
+          aria-label={t.infoEtiqueta}
+          title={t.infoEtiqueta}
+          style={{ ...estiloBotonIcono, fontWeight: "bold", fontStyle: "italic", fontFamily: "serif" }}
+        >
+          i
+        </button>
+      </div>
+
+      {/* Marco exterior persistente: índice e idioma, visibles siempre,
+          en cualquier pantalla, independientemente del menú hamburguesa. */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", marginTop: 12 }}>
+        <label>
+          {t.indiceSeleccionadoEtiqueta}{" "}
+          <select value={indiceId} onChange={(e) => setIndiceId(e.target.value)}>
+            {INDICES.map((ind) => (
+              <option key={ind.id} value={ind.id}>{ind.nombre[idioma]}</option>
+            ))}
+          </select>
+        </label>
+        <label>
           {t.idiomaEtiqueta}{" "}
           <select value={idioma} onChange={(e) => setIdioma(e.target.value)}>
             <option value="es">Español</option>
             <option value="en">English</option>
           </select>
-        </div>
+        </label>
       </div>
-
-      <p style={{ margin: "4px 0 0 46px", color: "#555", fontSize: "0.9em" }}>{nombreIndice}</p>
 
       {menuAbierto && (
         <nav
@@ -93,6 +206,57 @@ export default function MenuLayout({ children }) {
             );
           })}
         </nav>
+      )}
+
+      {infoAbierto && (
+        <div
+          style={{
+            marginTop: 12,
+            border: "1px solid #999",
+            borderRadius: 8,
+            background: "#fff8f3",
+            padding: 16,
+          }}
+        >
+          <div>
+            <button onClick={verEspecificaciones} disabled={cargandoEspecificaciones}>
+              {cargandoEspecificaciones
+                ? t.especificacionesCargando
+                : mostrarEspecificaciones
+                ? t.especificacionesOcultar
+                : t.especificacionesMostrar}
+            </button>{" "}
+            <button onClick={verObservaciones} disabled={cargandoObservaciones}>
+              {cargandoObservaciones
+                ? t.especificacionesCargando
+                : mostrarObservaciones
+                ? t.observacionesOcultar
+                : t.observacionesMostrar}
+            </button>{" "}
+            <button onClick={verHistoria} disabled={cargandoHistoria}>
+              {cargandoHistoria
+                ? t.especificacionesCargando
+                : mostrarHistoria
+                ? t.historiaOcultar
+                : t.historiaMostrar}
+            </button>
+          </div>
+
+          {errorEspecificaciones && <p style={{ color: "crimson" }}>{t.error}: {errorEspecificaciones}</p>}
+          {mostrarEspecificaciones && especificaciones && (
+            <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: especificaciones }} />
+          )}
+
+          {errorObservaciones && <p style={{ color: "crimson" }}>{t.error}: {errorObservaciones}</p>}
+          {mostrarObservaciones && observaciones && (
+            <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: observaciones }} />
+          )}
+
+          {errorHistoria && <p style={{ color: "crimson" }}>{t.error}: {errorHistoria}</p>}
+          {mostrarHistoria && historia && (
+            <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: historia }} />
+          )}
+        </div>
       )}
 
       <div style={{ marginTop: 16 }}>{children}</div>
