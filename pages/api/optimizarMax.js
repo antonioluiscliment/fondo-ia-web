@@ -19,6 +19,7 @@ import {
   N_COMPONENTES,
   PESO_MAXIMO_TOPE_BUSQUEDA,
   FRECUENCIA_REBALANCEO_DEFECTO,
+  SESIONES_PUNTUACION_DEFECTO,
   DIAS,
 } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
@@ -70,6 +71,12 @@ export default async function handler(req, res) {
     const indice = obtenerIndice(req.query.indice);
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
 
+    const sesionesParam = req.query.sesiones;
+    const sesionesPuntuacion = sesionesParam !== undefined ? Number(sesionesParam) : SESIONES_PUNTUACION_DEFECTO;
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      throw new Error("El parámetro 'sesiones' debe ser 3, 5, 8 o 13.");
+    }
+
     const candidatos = [];
     for (let m = Math.ceil(pesoMinimo); m < PESO_MAXIMO_TOPE_BUSQUEDA; m += PASO) {
       candidatos.push(m);
@@ -90,7 +97,11 @@ export default async function handler(req, res) {
         factorPenalizacion,
         nComponentes,
         pesoMaximo,
-        frecuenciaRebalanceo
+        frecuenciaRebalanceo,
+        undefined,
+        undefined,
+        undefined,
+        sesionesPuntuacion
       );
       resultados.push({ pesoMaximo, sumaBeneficioSinCambio: Number(sumaBeneficioSinCambio.toFixed(6)) });
       if (!mejor || sumaBeneficioSinCambio > mejor.sumaBeneficioSinCambio) {

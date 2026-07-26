@@ -32,7 +32,7 @@
 // backtest que cuenta las "veces" (el que decide quién entra y quién
 // sale cada día) rankea los 30 componentes por la puntuación de
 // precio de siempre, o por la puntuación de volumen (suma de los
-// incrementos de volumen de las últimas SESIONES_PUNTUACION
+// incrementos de volumen de las últimas "sesionesPuntuacion"
 // sesiones). El peso y el beneficio de la cartera resultante siguen
 // siendo siempre en función del precio.
 
@@ -47,7 +47,7 @@ import {
   N_COMPONENTES,
   PESO_MAXIMO,
   FRECUENCIA_REBALANCEO_DEFECTO,
-  SESIONES_PUNTUACION,
+  SESIONES_PUNTUACION_DEFECTO,
   SESIONES_VECES_DEFECTO,
   DIAS,
 } from "../../lib/motor";
@@ -112,11 +112,22 @@ export default async function handler(req, res) {
     const criterioParam = req.query.criterio;
     const criterioPuntuacion = criterioParam === "volumen" ? "volumen" : "precio";
 
+    const sesionesParam = req.query.sesiones;
+    const sesionesPuntuacion = sesionesParam !== undefined ? Number(sesionesParam) : SESIONES_PUNTUACION_DEFECTO;
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      throw new Error("El parámetro 'sesiones' debe ser 3, 5, 8 o 13.");
+    }
+    if (sesionesPuntuacion > sesionesVeces) {
+      throw new Error(
+        `'sesionesVeces' (${sesionesVeces}) no puede ser menor que 'sesiones' (${sesionesPuntuacion}): no quedarían suficientes sesiones para el segundo backtest.`
+      );
+    }
+
     if (modo === "real") {
       // Un único backtest, sobre las sesionesVeces sesiones MÁS
       // RECIENTES (terminando hoy): sirve para elegir la cartera a
       // invertir, no para medir una estrategia.
-      const diasTotal = sesionesVeces + SESIONES_PUNTUACION;
+      const diasTotal = sesionesVeces + sesionesPuntuacion;
       const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal, indice.tickers);
 
       const { contadorApariciones } = calcularSeleccionCompleta(
@@ -127,7 +138,9 @@ export default async function handler(req, res) {
         pesoMaximo,
         frecuenciaRebalanceo,
         null,
-        criterioPuntuacion
+        criterioPuntuacion,
+        undefined,
+        sesionesPuntuacion
       );
 
       const elegidos = elegirTopPorVeces(contadorApariciones, nComponentes, indice.tickers);
@@ -144,6 +157,7 @@ export default async function handler(req, res) {
         modo,
         criterioPuntuacion,
         sesionesVeces,
+        sesionesPuntuacion,
         fechaReferencia,
         carteraHoy,
         factorPenalizacion,
@@ -165,8 +179,8 @@ export default async function handler(req, res) {
     const diasTotal = diasVentana + sesionesVeces;
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal, indice.tickers);
 
-    // Backtest 1: primeras (sesionesVeces + SESIONES_PUNTUACION) sesiones.
-    const finBacktest1 = sesionesVeces + SESIONES_PUNTUACION;
+    // Backtest 1: primeras (sesionesVeces + sesionesPuntuacion) sesiones.
+    const finBacktest1 = sesionesVeces + sesionesPuntuacion;
     const fechasVeces = fechas.slice(0, finBacktest1);
     const datosVeces = cortarDatos(datos, 0, finBacktest1);
     const { contadorApariciones, historico: historicoVeces } = calcularSeleccionCompleta(
@@ -177,19 +191,21 @@ export default async function handler(req, res) {
       pesoMaximo,
       frecuenciaRebalanceo,
       null,
-      criterioPuntuacion
+      criterioPuntuacion,
+      undefined,
+      sesionesPuntuacion
     );
 
     const elegidos = elegirTopPorVeces(contadorApariciones, nComponentes, indice.tickers);
     const carteraInicial = elegidos.map(({ ticker }) => ({ ticker, peso: 100 / nComponentes }));
 
-    // Backtest 2: desde SESIONES_PUNTUACION sesiones antes del final
+    // Backtest 2: desde "sesionesPuntuacion" sesiones antes del final
     // del backtest 1 (para que su primer día tenga puntuación que
     // mostrar) hasta el final — exactamente la ventana principal
     // solicitada, sin solape en los días de decisión con el backtest
     // 1. Se rebalancea "nunca": la cartera elegida arriba se mantiene
     // fija, los pesos solo derivan con el precio.
-    const inicioBacktest2 = sesionesVeces - SESIONES_PUNTUACION;
+    const inicioBacktest2 = sesionesVeces - sesionesPuntuacion;
     const fechasPrincipal = fechas.slice(inicioBacktest2);
     const datosPrincipal = cortarDatos(datos, inicioBacktest2, undefined);
     const { historico } = calcularSeleccionCompleta(
@@ -199,7 +215,10 @@ export default async function handler(req, res) {
       nComponentes,
       pesoMaximo,
       "nunca",
-      carteraInicial
+      carteraInicial,
+      undefined,
+      undefined,
+      sesionesPuntuacion
     );
 
     const rentabilidadCarteraAnterior = calcularRentabilidadTotalCarteraAnterior(historico);
@@ -225,6 +244,7 @@ export default async function handler(req, res) {
       pesoMaximo,
       frecuenciaRebalanceo,
       diasVentana,
+      sesionesPuntuacion,
       rentabilidadCarteraAnterior,
       rentabilidadIndice,
     });

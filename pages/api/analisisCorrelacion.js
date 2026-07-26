@@ -26,7 +26,7 @@ import {
   N_COMPONENTES,
   PESO_MAXIMO,
   FRECUENCIA_REBALANCEO_DEFECTO,
-  SESIONES_PUNTUACION,
+  SESIONES_PUNTUACION_DEFECTO,
 } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
 
@@ -47,10 +47,10 @@ function cortarDatos(datos, desde, hasta) {
 }
 
 // Devuelve las ventanas [inicio, fin) no solapadas de tamaño
-// (duracion + SESIONES_PUNTUACION), tantas como quepan hacia atrás
+// (duracion + sesionesPuntuacion), tantas como quepan hacia atrás
 // desde el final del histórico descargado, hasta MAX_REPETICIONES.
-function calcularVentanas(totalDias, duracion) {
-  const tamano = duracion + SESIONES_PUNTUACION;
+function calcularVentanas(totalDias, duracion, sesionesPuntuacion) {
+  const tamano = duracion + sesionesPuntuacion;
   const ventanas = [];
   let fin = totalDias;
   while (ventanas.length < MAX_REPETICIONES && fin - tamano >= 0) {
@@ -87,7 +87,8 @@ function ejecutarVentana(fechas, datos, ventana, criterioPuntuacion, semillaAlea
     params.frecuencia,
     null,
     criterioPuntuacion,
-    semillaAleatoria
+    semillaAleatoria,
+    params.sesionesPuntuacion
   );
 
   const historicoConIndice = historico.map((dia) => ({
@@ -238,7 +239,14 @@ export default async function handler(req, res) {
     const params = { factor, n, max, frecuencia };
     const indice = obtenerIndice(req.query.indice);
 
-    const diasTotal = Math.max(...DURACIONES) * MAX_REPETICIONES + SESIONES_PUNTUACION + 20;
+    const sesionesParam = req.query.sesiones;
+    const sesionesPuntuacion = sesionesParam !== undefined ? Number(sesionesParam) : SESIONES_PUNTUACION_DEFECTO;
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      throw new Error("El parámetro 'sesiones' debe ser 3, 5, 8 o 13.");
+    }
+    params.sesionesPuntuacion = sesionesPuntuacion;
+
+    const diasTotal = Math.max(...DURACIONES) * MAX_REPETICIONES + sesionesPuntuacion + 20;
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal, indice.tickers);
     const { incrementos: incrementosIndice, cierres: cierresIndice } = await obtenerIncrementosIndice(
       yahooFinance,
@@ -249,7 +257,7 @@ export default async function handler(req, res) {
     const filas = [];
 
     for (const duracion of DURACIONES) {
-      const ventanas = calcularVentanas(fechas.length, duracion);
+      const ventanas = calcularVentanas(fechas.length, duracion, sesionesPuntuacion);
       if (ventanas.length === 0) continue;
 
       for (const metodo of ["precio", "volumen", "flujo"]) {
@@ -308,6 +316,7 @@ export default async function handler(req, res) {
       duraciones: DURACIONES,
       maxRepeticiones: MAX_REPETICIONES,
       numSemillas: SEMILLAS_ALEATORIO.length,
+      sesionesPuntuacion,
       filas,
       conclusion,
     });

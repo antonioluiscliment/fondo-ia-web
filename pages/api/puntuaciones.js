@@ -17,6 +17,7 @@ import {
   mensajeErrorAmigable,
   obtenerDatosAlineados,
   calcularPuntuacionesSesion,
+  SESIONES_PUNTUACION_DEFECTO,
   DIAS,
 } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
@@ -25,9 +26,14 @@ export default async function handler(req, res) {
   try {
     const diasVentana = req.query.dias ? Number(req.query.dias) : DIAS;
     const numeroSesion = req.query.sesion !== undefined ? Number(req.query.sesion) : NaN;
+    const sesionesPuntuacion = req.query.sesiones !== undefined ? Number(req.query.sesiones) : SESIONES_PUNTUACION_DEFECTO;
 
     if (!Number.isInteger(numeroSesion)) {
       res.status(400).json({ error: "Falta el parámetro 'sesion' (número de sesión dentro de la ventana)." });
+      return;
+    }
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      res.status(400).json({ error: "El parámetro 'sesiones' debe ser 3, 5, 8 o 13." });
       return;
     }
 
@@ -35,7 +41,7 @@ export default async function handler(req, res) {
     const indice = obtenerIndice(req.query.indice);
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
 
-    const resultado = calcularPuntuacionesSesion(fechas, datos, numeroSesion);
+    const resultado = calcularPuntuacionesSesion(fechas, datos, numeroSesion, sesionesPuntuacion);
     res.status(200).json(resultado);
   } catch (error) {
     res.status(400).json({ error: mensajeErrorAmigable(error) });

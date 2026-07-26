@@ -15,6 +15,7 @@ import {
   obtenerDatosAlineados,
   calcularSeleccionCompleta,
   FACTOR_PENALIZACION_DEFECTO,
+  SESIONES_PUNTUACION_DEFECTO,
   DIAS,
 } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
@@ -49,11 +50,19 @@ export default async function handler(req, res) {
     const indice = obtenerIndice(req.query.indice);
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
 
+    const sesionesParam = req.query.sesiones;
+    const sesionesPuntuacion = sesionesParam !== undefined ? Number(sesionesParam) : SESIONES_PUNTUACION_DEFECTO;
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      throw new Error("El parámetro 'sesiones' debe ser 3, 5, 8 o 13.");
+    }
+
     const resultados = [];
     let mejor = null;
 
     for (let n = N_MIN; n <= N_MAX; n++) {
-      const { sumaBeneficioSinCambio } = calcularSeleccionCompleta(fechas, datos, factorPenalizacion, n);
+      const { sumaBeneficioSinCambio } = calcularSeleccionCompleta(
+        fechas, datos, factorPenalizacion, n, undefined, undefined, undefined, undefined, undefined, sesionesPuntuacion
+      );
       resultados.push({ nComponentes: n, sumaBeneficioSinCambio: Number(sumaBeneficioSinCambio.toFixed(6)) });
       if (!mejor || sumaBeneficioSinCambio > mejor.sumaBeneficioSinCambio) {
         mejor = { nComponentes: n, sumaBeneficioSinCambio };

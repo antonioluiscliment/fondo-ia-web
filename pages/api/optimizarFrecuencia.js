@@ -14,6 +14,7 @@ import {
   FACTOR_PENALIZACION_DEFECTO,
   N_COMPONENTES,
   PESO_MAXIMO,
+  SESIONES_PUNTUACION_DEFECTO,
   DIAS,
 } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
@@ -43,11 +44,19 @@ export default async function handler(req, res) {
     const indice = obtenerIndice(req.query.indice);
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
 
-    const mejorFrecuenciaRebalanceo = buscarMejorFrecuencia(fechas, datos, { factor, n, max });
+    const sesionesParam = req.query.sesiones;
+    const sesionesPuntuacion = sesionesParam !== undefined ? Number(sesionesParam) : SESIONES_PUNTUACION_DEFECTO;
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      throw new Error("El parámetro 'sesiones' debe ser 3, 5, 8 o 13.");
+    }
+
+    const mejorFrecuenciaRebalanceo = buscarMejorFrecuencia(fechas, datos, { factor, n, max, sesionesPuntuacion });
 
     const candidatos = ["diario", ...Array.from({ length: n }, (_, i) => n - 1 - i)];
     const resultados = candidatos.map((frecuencia) => {
-      const { sumaBeneficioSinCambio } = calcularSeleccionCompleta(fechas, datos, factor, n, max, frecuencia);
+      const { sumaBeneficioSinCambio } = calcularSeleccionCompleta(
+        fechas, datos, factor, n, max, frecuencia, undefined, undefined, undefined, sesionesPuntuacion
+      );
       return { frecuencia, sumaBeneficioSinCambio: Number(sumaBeneficioSinCambio.toFixed(6)) };
     });
 

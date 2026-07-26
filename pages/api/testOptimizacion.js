@@ -21,6 +21,7 @@ import {
   N_COMPONENTES,
   PESO_MAXIMO,
   FRECUENCIA_REBALANCEO_DEFECTO,
+  SESIONES_PUNTUACION_DEFECTO,
   DIAS,
 } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
@@ -59,17 +60,17 @@ const COMBINACIONES = [
   { num: 15, variables: ["factor", "n", "max", "frecuencia"], descripcion: "Óptimos factor, número de componentes, tope y frecuencia" },
 ];
 
-function resolverCombinacion(fechas, datos, variables) {
+function resolverCombinacion(fechas, datos, variables, sesionesPuntuacion) {
   const valores = { ...DEF };
   for (const variable of variables) {
     if (variable === "factor") {
-      valores.factor = buscarMejorFactor(fechas, datos, { n: valores.n, max: valores.max, frecuencia: valores.frecuencia });
+      valores.factor = buscarMejorFactor(fechas, datos, { n: valores.n, max: valores.max, frecuencia: valores.frecuencia, sesionesPuntuacion });
     } else if (variable === "n") {
-      valores.n = buscarMejorN(fechas, datos, { factor: valores.factor, max: valores.max, frecuencia: valores.frecuencia });
+      valores.n = buscarMejorN(fechas, datos, { factor: valores.factor, max: valores.max, frecuencia: valores.frecuencia, sesionesPuntuacion });
     } else if (variable === "max") {
-      valores.max = buscarMejorMax(fechas, datos, { factor: valores.factor, n: valores.n, frecuencia: valores.frecuencia });
+      valores.max = buscarMejorMax(fechas, datos, { factor: valores.factor, n: valores.n, frecuencia: valores.frecuencia, sesionesPuntuacion });
     } else if (variable === "frecuencia") {
-      valores.frecuencia = buscarMejorFrecuencia(fechas, datos, { factor: valores.factor, n: valores.n, max: valores.max });
+      valores.frecuencia = buscarMejorFrecuencia(fechas, datos, { factor: valores.factor, n: valores.n, max: valores.max, sesionesPuntuacion });
     }
   }
   return valores;
@@ -88,9 +89,15 @@ export default async function handler(req, res) {
     const indice = obtenerIndice(req.query.indice);
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
 
+    const sesionesParam = req.query.sesiones;
+    const sesionesPuntuacion = sesionesParam !== undefined ? Number(sesionesParam) : SESIONES_PUNTUACION_DEFECTO;
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      throw new Error("El parámetro 'sesiones' debe ser 3, 5, 8 o 13.");
+    }
+
     const resultados = COMBINACIONES.map(({ num, variables, descripcion }) => {
-      const valores = resolverCombinacion(fechas, datos, variables);
-      const beneficioPct = calcularBeneficioAcumulado(fechas, datos, valores.factor, valores.n, valores.max, valores.frecuencia);
+      const valores = resolverCombinacion(fechas, datos, variables, sesionesPuntuacion);
+      const beneficioPct = calcularBeneficioAcumulado(fechas, datos, valores.factor, valores.n, valores.max, valores.frecuencia, sesionesPuntuacion);
       return {
         num,
         descripcion,

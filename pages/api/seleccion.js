@@ -35,6 +35,7 @@ import {
   N_COMPONENTES,
   PESO_MAXIMO,
   FRECUENCIA_REBALANCEO_DEFECTO,
+  SESIONES_PUNTUACION_DEFECTO,
   DIAS,
 } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
@@ -92,6 +93,12 @@ export default async function handler(req, res) {
       throw new Error("El parámetro 'dias' debe ser un número entero entre 5 y 90.");
     }
 
+    const sesionesParam = req.query.sesiones;
+    const sesionesPuntuacion = sesionesParam !== undefined ? Number(sesionesParam) : SESIONES_PUNTUACION_DEFECTO;
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      throw new Error("El parámetro 'sesiones' debe ser 3, 5, 8 o 13.");
+    }
+
     const indice = obtenerIndice(req.query.indice);
 
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
@@ -103,7 +110,9 @@ export default async function handler(req, res) {
       pesoMaximo,
       frecuenciaRebalanceo,
       null,
-      criterioPuntuacion
+      criterioPuntuacion,
+      undefined,
+      sesionesPuntuacion
     );
 
     const rentabilidadCarteraAnterior = calcularRentabilidadTotalCarteraAnterior(historico);
@@ -156,6 +165,7 @@ export default async function handler(req, res) {
       frecuenciaRebalanceo,
       criterioPuntuacion,
       diasVentana,
+      sesionesPuntuacion,
       rentabilidadCarteraAnterior,
       rentabilidadIndice,
       correlacionBeneficioIndice,

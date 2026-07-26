@@ -13,7 +13,7 @@
 // ANTERIOR, que es la única decisión realmente alcanzable (se toma
 // con el cierre de ayer, no con el de hoy).
 
-import { getYahooFinanceInstance, obtenerDatosAlineados, calcularSeleccionCompleta, DIAS } from "../../lib/motor";
+import { getYahooFinanceInstance, obtenerDatosAlineados, calcularSeleccionCompleta, SESIONES_PUNTUACION_DEFECTO, DIAS } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
 
 let yahooFinance;
@@ -41,6 +41,12 @@ export default async function handler(req, res) {
     const indice = obtenerIndice(req.query.indice);
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, indice.tickers);
 
+    const sesionesParam = req.query.sesiones;
+    const sesionesPuntuacion = sesionesParam !== undefined ? Number(sesionesParam) : SESIONES_PUNTUACION_DEFECTO;
+    if (![3, 5, 8, 13].includes(sesionesPuntuacion)) {
+      throw new Error("El parámetro 'sesiones' debe ser 3, 5, 8 o 13.");
+    }
+
     const resultados = [];
     let mejor = null;
 
@@ -49,7 +55,9 @@ export default async function handler(req, res) {
     const nPasos = Math.round((FACTOR_MAX - FACTOR_MIN) / PASO);
     for (let i = 0; i <= nPasos; i++) {
       const factor = Number((FACTOR_MIN + i * PASO).toFixed(2));
-      const { sumaBeneficioSinCambio } = calcularSeleccionCompleta(fechas, datos, factor);
+      const { sumaBeneficioSinCambio } = calcularSeleccionCompleta(
+        fechas, datos, factor, undefined, undefined, undefined, undefined, undefined, undefined, sesionesPuntuacion
+      );
       resultados.push({ factor, sumaBeneficioSinCambio: Number(sumaBeneficioSinCambio.toFixed(6)) });
       if (!mejor || sumaBeneficioSinCambio > mejor.sumaBeneficioSinCambio) {
         mejor = { factor, sumaBeneficioSinCambio };
