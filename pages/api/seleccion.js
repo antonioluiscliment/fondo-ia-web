@@ -2,19 +2,22 @@
 //
 // Recorre la ventana de sesiones (20 por defecto, configurable con
 // ?dias=X) y, para cada día a partir del tercero, calcula el ranking
-// de los 30 componentes, selecciona los mejores (5 por defecto, o el
-// número indicado en ?n=X, entre 3 y 6) y actualiza composición y
-// pesos. Acepta también ?factor=X (el multiplicador de la penalización
-// de protección), ?max=X (el tope de diversificación por componente,
-// 40% por defecto), ?frecuencia=diario o ?frecuencia=K (K entero
-// 0..n-1: el umbral de supervivientes que dispara el rebalanceo —
-// "diario" por defecto) y ?criterio=precio (por defecto), ?criterio=
-// volumen, ?criterio=flujo o ?criterio=aleatorio (con qué se ordenan
-// los 30 componentes cada día: suma de incrementos de precio, de
-// volumen, de flujo de dinero —precio × volumen—, o una puntuación
-// pseudoaleatoria determinista con semilla fija — ver
-// SEMILLA_ALEATORIA_DEFECTO en motor.js). Si no se indican, se usan
-// los valores por defecto.
+// de los componentes del índice elegido, selecciona los mejores (5
+// por defecto, o el número indicado en ?n=X, entre 3 y 6) y actualiza
+// composición y pesos. Acepta también ?factor=X (el multiplicador de
+// la penalización de protección), ?max=X (el tope de diversificación
+// por componente, 40% por defecto), ?frecuencia=diario o ?frecuencia=K
+// (K entero 0..n-1: el umbral de supervivientes que dispara el
+// rebalanceo — "diario" por defecto) y ?criterio=precio (por
+// defecto), ?criterio=volumen, ?criterio=flujo o ?criterio=aleatorio
+// (con qué se ordenan los componentes cada día: suma de incrementos
+// de precio, de volumen, de flujo de dinero —precio × volumen—, o una
+// puntuación pseudoaleatoria determinista con semilla fija — ver
+// SEMILLA_ALEATORIA_DEFECTO en motor.js). También ?criterio=precioBajo,
+// volumenBajo o flujoBajo: las "antítesis" de los tres primeros — usan
+// el mismo cálculo de puntuación, pero seleccionan los ÚLTIMOS de la
+// clasificación en vez de los primeros. Si no se indican, se usan los
+// valores por defecto.
 //
 // Además, calcula la rentabilidad total compuesta de las carteras
 // "anteriores" (la parte del modelo realmente alcanzable) y la
@@ -84,8 +87,10 @@ export default async function handler(req, res) {
     }
 
     const criterioParam = req.query.criterio;
-    const criteriosValidos = ["precio", "volumen", "flujo", "aleatorio"];
-    const criterioPuntuacion = criteriosValidos.includes(criterioParam) ? criterioParam : "precio";
+    const criteriosValidos = ["precio", "volumen", "flujo", "aleatorio", "precioBajo", "volumenBajo", "flujoBajo"];
+    const criterioSeleccionado = criteriosValidos.includes(criterioParam) ? criterioParam : "precio";
+    const invertido = criterioSeleccionado.endsWith("Bajo");
+    const criterioPuntuacion = invertido ? criterioSeleccionado.slice(0, -"Bajo".length) : criterioSeleccionado;
 
     const diasParam = req.query.dias;
     const diasVentana = diasParam !== undefined ? Number(diasParam) : DIAS;
@@ -112,7 +117,8 @@ export default async function handler(req, res) {
       null,
       criterioPuntuacion,
       undefined,
-      sesionesPuntuacion
+      sesionesPuntuacion,
+      invertido
     );
 
     const rentabilidadCarteraAnterior = calcularRentabilidadTotalCarteraAnterior(historico);
@@ -164,6 +170,8 @@ export default async function handler(req, res) {
       pesoMaximo,
       frecuenciaRebalanceo,
       criterioPuntuacion,
+      criterioSeleccionado,
+      invertido,
       diasVentana,
       sesionesPuntuacion,
       rentabilidadCarteraAnterior,

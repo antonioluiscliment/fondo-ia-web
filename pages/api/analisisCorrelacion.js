@@ -74,7 +74,16 @@ function rentabilidadIndiceEnPeriodo(cierresIndice, fechaInicioObjetivo, fechaFi
 // Ejecuta un backtest sobre una ventana concreta y devuelve su
 // correlación con el índice y su rentabilidad (de la cartera y del
 // propio índice en ese mismo periodo).
-function ejecutarVentana(fechas, datos, ventana, criterioPuntuacion, semillaAleatoria, incrementosIndice, cierresIndice, params) {
+// Los métodos "Bajo" (precioBajo, volumenBajo, flujoBajo) son la
+// antítesis de precio/volumen/flujo: mismo cálculo de puntuación,
+// pero seleccionando los últimos de la clasificación en vez de los
+// primeros.
+function descomponerMetodo(metodo) {
+  const invertido = metodo.endsWith("Bajo");
+  return { criterioPuntuacion: invertido ? metodo.slice(0, -"Bajo".length) : metodo, invertido };
+}
+
+function ejecutarVentana(fechas, datos, ventana, criterioPuntuacion, semillaAleatoria, incrementosIndice, cierresIndice, params, invertido = false) {
   const fechasV = fechas.slice(ventana.inicio, ventana.fin);
   const datosV = cortarDatos(datos, ventana.inicio, ventana.fin);
 
@@ -88,7 +97,8 @@ function ejecutarVentana(fechas, datos, ventana, criterioPuntuacion, semillaAlea
     null,
     criterioPuntuacion,
     semillaAleatoria,
-    params.sesionesPuntuacion
+    params.sesionesPuntuacion,
+    invertido
   );
 
   const historicoConIndice = historico.map((dia) => ({
@@ -154,8 +164,15 @@ function generarConclusion(filas, nombreIndice, numComponentes) {
     porDuracion[fila.duracion][fila.metodo] = fila;
   }
 
-  const METODOS_COMPARABLES = ["precio", "volumen", "flujo"];
-  const NOMBRE_METODO = { precio: "por precio", volumen: "por volumen", flujo: "por flujo de dinero" };
+  const METODOS_COMPARABLES = ["precio", "volumen", "flujo", "precioBajo", "volumenBajo", "flujoBajo"];
+  const NOMBRE_METODO = {
+    precio: "por precio",
+    volumen: "por volumen",
+    flujo: "por flujo de dinero",
+    precioBajo: "por precio bajo (antítesis)",
+    volumenBajo: "por volumen bajo (antítesis)",
+    flujoBajo: "por flujo de dinero bajo (antítesis)",
+  };
 
   const resumenMetodo = Object.fromEntries(
     METODOS_COMPARABLES.map((m) => [m, { supera: 0, similar: 0, peor: 0, total: 0 }])
@@ -212,7 +229,7 @@ function generarConclusion(filas, nombreIndice, numComponentes) {
   if (diferenciaMediaCorrelacion !== null) {
     if (diferenciaMediaCorrelacion < 0.1) {
       partes.push(
-        `La correlación con el índice es, además, muy parecida entre los tres métodos (diferencia media de solo ${diferenciaMediaCorrelacion.toFixed(3)} frente al azar) — un indicio de que ese comovimiento es sobre todo un efecto de pertenecer al mismo universo de ${numComponentes} valores del ${nombreIndice}, no del criterio de selección en sí.`
+        `La correlación con el índice es, además, muy parecida entre los métodos (diferencia media de solo ${diferenciaMediaCorrelacion.toFixed(3)} frente al azar) — un indicio de que ese comovimiento es sobre todo un efecto de pertenecer al mismo universo de ${numComponentes} valores del ${nombreIndice}, no del criterio de selección en sí.`
       );
     } else {
       partes.push(
@@ -260,9 +277,10 @@ export default async function handler(req, res) {
       const ventanas = calcularVentanas(fechas.length, duracion, sesionesPuntuacion);
       if (ventanas.length === 0) continue;
 
-      for (const metodo of ["precio", "volumen", "flujo"]) {
+      for (const metodo of ["precio", "volumen", "flujo", "precioBajo", "volumenBajo", "flujoBajo"]) {
+        const { criterioPuntuacion, invertido } = descomponerMetodo(metodo);
         const resultados = ventanas.map((v) =>
-          ejecutarVentana(fechas, datos, v, metodo, undefined, incrementosIndice, cierresIndice, params)
+          ejecutarVentana(fechas, datos, v, criterioPuntuacion, undefined, incrementosIndice, cierresIndice, params, invertido)
         );
         const correlaciones = resultados.map((r) => r.correlacion);
         const rentabilidadesCartera = resultados.map((r) => r.rentabilidadCartera);
