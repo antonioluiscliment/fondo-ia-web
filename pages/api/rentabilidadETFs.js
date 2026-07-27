@@ -2,16 +2,29 @@
 //
 // Grupo "Análisis" > "Rentabilidad de los ETFs": compara la
 // rentabilidad del propio índice con la de sus ETFs UCITS de
-// distribución de referencia (ver lib/indices.js, campo
-// etfsRentabilidad), en 60 y 120 sesiones y en 1, 2 y 3 años.
+// referencia (ver lib/indices.js), en 60 y 120 sesiones y en 1, 2 y 3
+// años.
 //
-// Se usan ETFs de DISTRIBUCIÓN, no de acumulación: el índice se
-// calcula con las cotizaciones ex-dividendo de sus componentes, y un
-// ETF de distribución también cae en la fecha ex-dividendo (el
-// dividendo sale del fondo hacia el inversor), así que su cotización
-// es comparable a la del índice. Un ETF de acumulación reinvierte el
+// Dos grupos de ETFs:
+//   - etfsRentabilidad: los COMPARABLES con el índice — de
+//     distribución para todos los índices salvo el DAX (donde son de
+//     acumulación, por ser el DAX un índice de rentabilidad total; ver
+//     el comentario junto a DAX.etfsRentabilidad en lib/indices.js).
+//   - etfsOpuestos: el resto de ETFs UCITS del mismo índice, del tipo
+//     contrario (acumulación donde los comparables son de
+//     distribución, o al revés para el DAX) — no son directamente
+//     comparables con el índice por el mismo motivo, pero se
+//     muestran igualmente para que se puedan consultar, marcados como
+//     tales (frontend: "esComparable: false").
+//
+// Por qué importa la distinción: el índice se calcula con las
+// cotizaciones ex-dividendo de sus componentes. Un ETF de
+// distribución también cae en la fecha ex-dividendo (el dividendo
+// sale del fondo hacia el inversor), así que su cotización es
+// comparable a la del índice. Un ETF de acumulación reinvierte el
 // dividendo dentro del fondo, lo que infla su cotización frente al
-// índice y haría la comparación injusta.
+// índice y haría la comparación injusta — de ahí que los "opuestos"
+// no se traten como comparables.
 //
 // Parámetros de la query:
 //   indice - id del índice a comprobar (dowjones, ibex35, ...).
@@ -103,16 +116,20 @@ export default async function handler(req, res) {
     const indice = obtenerIndice(req.query.indice);
     const { anio: anioVolumen, esYTD } = calcularAnioVolumen();
 
-    const [cierresIndice, ...cierresEtfs] = await Promise.all([
+    const [cierresIndice, ...cierresTodos] = await Promise.all([
       obtenerCierresConActual(yahooFinance, indice.simboloIndice, SESIONES_DESCARGA),
       ...indice.etfsRentabilidad.map((etf) => obtenerCierresConActual(yahooFinance, etf.ticker, SESIONES_DESCARGA)),
+      ...indice.etfsOpuestos.map((etf) => obtenerCierresConActual(yahooFinance, etf.ticker, SESIONES_DESCARGA)),
     ]);
+    const cierresEtfs = cierresTodos.slice(0, indice.etfsRentabilidad.length);
+    const cierresOpuestos = cierresTodos.slice(indice.etfsRentabilidad.length);
 
     const filas = [
       {
         ticker: indice.simboloIndice,
         nombre: indice.nombre.es,
         esIndice: true,
+        esComparable: true,
         volumen: null,
         ...calcularRentabilidades(cierresIndice),
       },
@@ -120,8 +137,17 @@ export default async function handler(req, res) {
         ticker: etf.ticker,
         nombre: etf.nombre,
         esIndice: false,
+        esComparable: true,
         volumen: sumaVolumenAnio(cierresEtfs[i], anioVolumen),
         ...calcularRentabilidades(cierresEtfs[i]),
+      })),
+      ...indice.etfsOpuestos.map((etf, i) => ({
+        ticker: etf.ticker,
+        nombre: etf.nombre,
+        esIndice: false,
+        esComparable: false,
+        volumen: sumaVolumenAnio(cierresOpuestos[i], anioVolumen),
+        ...calcularRentabilidades(cierresOpuestos[i]),
       })),
     ];
 
