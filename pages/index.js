@@ -58,6 +58,15 @@ export default function Home() {
   const [seleccionFlujo, setSeleccionFlujo] = useState(null);
   const [cargandoSeleccionFlujo, setCargandoSeleccionFlujo] = useState(false);
   const [errorSeleccionFlujo, setErrorSeleccionFlujo] = useState(null);
+  const [seleccionPrecioBajo, setSeleccionPrecioBajo] = useState(null);
+  const [cargandoSeleccionPrecioBajo, setCargandoSeleccionPrecioBajo] = useState(false);
+  const [errorSeleccionPrecioBajo, setErrorSeleccionPrecioBajo] = useState(null);
+  const [seleccionVolumenBajo, setSeleccionVolumenBajo] = useState(null);
+  const [cargandoSeleccionVolumenBajo, setCargandoSeleccionVolumenBajo] = useState(false);
+  const [errorSeleccionVolumenBajo, setErrorSeleccionVolumenBajo] = useState(null);
+  const [seleccionFlujoBajo, setSeleccionFlujoBajo] = useState(null);
+  const [cargandoSeleccionFlujoBajo, setCargandoSeleccionFlujoBajo] = useState(false);
+  const [errorSeleccionFlujoBajo, setErrorSeleccionFlujoBajo] = useState(null);
 
   const [seleccionVecesVolumen, setSeleccionVecesVolumen] = useState(null);
   const [cargandoSeleccionVecesVolumen, setCargandoSeleccionVecesVolumen] = useState(false);
@@ -162,6 +171,54 @@ export default function Home() {
       setErrorSeleccionFlujo(e.message);
     } finally {
       setCargandoSeleccionFlujo(false);
+    }
+  }
+
+  async function realizarSeleccionPrecioBajo() {
+    setCargandoSeleccionPrecioBajo(true);
+    setErrorSeleccionPrecioBajo(null);
+    setSeleccionPrecioBajo(null);
+    try {
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=precioBajo&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setSeleccionPrecioBajo(json);
+    } catch (e) {
+      setErrorSeleccionPrecioBajo(e.message);
+    } finally {
+      setCargandoSeleccionPrecioBajo(false);
+    }
+  }
+
+  async function realizarSeleccionVolumenBajo() {
+    setCargandoSeleccionVolumenBajo(true);
+    setErrorSeleccionVolumenBajo(null);
+    setSeleccionVolumenBajo(null);
+    try {
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=volumenBajo&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setSeleccionVolumenBajo(json);
+    } catch (e) {
+      setErrorSeleccionVolumenBajo(e.message);
+    } finally {
+      setCargandoSeleccionVolumenBajo(false);
+    }
+  }
+
+  async function realizarSeleccionFlujoBajo() {
+    setCargandoSeleccionFlujoBajo(true);
+    setErrorSeleccionFlujoBajo(null);
+    setSeleccionFlujoBajo(null);
+    try {
+      const resp = await fetch(`/api/seleccion?factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}&dias=${diasVentana}&criterio=flujoBajo&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setSeleccionFlujoBajo(json);
+    } catch (e) {
+      setErrorSeleccionFlujoBajo(e.message);
+    } finally {
+      setCargandoSeleccionFlujoBajo(false);
     }
   }
 
@@ -1097,6 +1154,386 @@ export default function Home() {
       )}
 
       <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.seleccionPrecioBajoTitulo}</h2>
+      <p>{t.seleccionPrecioBajoDesc(nComponentes, pesoMaximo)}</p>
+      <button onClick={realizarSeleccionPrecioBajo} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionPrecioBajo}>
+        {cargandoSeleccionPrecioBajo ? t.seleccionBotonCargando : t.seleccionBoton}
+      </button>
+
+      {errorSeleccionPrecioBajo && <p style={{ color: "crimson" }}>{t.error}: {errorSeleccionPrecioBajo}</p>}
+
+      {seleccionPrecioBajo && (
+        <div style={{ marginTop: 20 }}>
+          {seleccionPrecioBajo.historico.map((dia, i) => (
+            <div key={i} style={{ marginBottom: 28, borderBottom: "1px solid #ddd", paddingBottom: 16 }}>
+              <strong>{dia.fecha}</strong>
+
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8 }}>
+                <div style={{ flex: "1 1 220px" }}>
+                  <em>{t.carteraAnterior}</em>
+                  {dia.carteraAntes ? (
+                    <>
+                      <p style={{ margin: "4px 0" }}>
+                        {t.beneficioSinCambio}{" "}
+                        <b style={{ color: dia.beneficioSinCambio >= 1 ? "green" : "crimson" }}>
+                          {((dia.beneficioSinCambio - 1) * 100).toFixed(3)}%
+                        </b>
+                      </p>
+                      <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>
+                        <thead>
+                          <tr><th>{t.colTicker}</th><th>{t.colPeso}</th><th>{t.colPuntuacion}</th><th>{t.colPrecio}</th><th>{t.colVeces}</th></tr>
+                        </thead>
+                        <tbody>
+                          {dia.carteraAntes.map((c) => (
+                            <tr key={c.ticker}>
+                              <td>{c.ticker}</td>
+                              <td>{c.peso}%</td>
+                              <td>{c.puntuacion}</td>
+                              <td>{c.precio}</td>
+                              <td>{c.vecesSeleccionado}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>
+                  ) : (
+                    <p>{t.primeraSeleccion}</p>
+                  )}
+                </div>
+
+                <div style={{ flex: "1 1 220px" }}>
+                  <em>{t.carteraSeleccionada}{dia.rebalanceado === false ? t.sinCambiosEtiqueta : ""}</em>
+                  <p style={{ margin: "4px 0" }}>
+                    {t.beneficio}{" "}
+                    <b style={{ color: dia.beneficio >= 1 ? "green" : "crimson" }}>
+                      {((dia.beneficio - 1) * 100).toFixed(3)}%
+                    </b>
+                    {dia.incrementoIndice !== null && dia.incrementoIndice !== undefined && (
+                      <>
+                        {" — "}{t.indiceAbrevEtiqueta(indice.abreviatura)}{" "}
+                        <b style={{ color: dia.incrementoIndice >= 0 ? "green" : "crimson" }}>
+                          {dia.incrementoIndice.toFixed(3)}%
+                        </b>
+                      </>
+                    )}
+                  </p>
+                  <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>
+                    <thead>
+                      <tr><th>{t.colTicker}</th><th>{t.colPeso}</th><th>{t.colPuntuacion}</th><th>{t.colPrecio}</th><th>{t.colVeces}</th></tr>
+                    </thead>
+                    <tbody>
+                      {dia.cartera.map((c) => (
+                        <tr key={c.ticker}>
+                          <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
+                          <td>{c.peso}%</td>
+                          <td>{c.puntuacion}</td>
+                          <td>{c.precio}</td>
+                          <td>{c.vecesSeleccionado}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {dia.beneficioSinCambio !== null && (
+                <p style={{ color: "#666", marginTop: 4 }}>
+                  {dia.beneficio >= dia.beneficioSinCambio ? t.mejoraResultado : t.empeoraResultado}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {seleccionPrecioBajo && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{t.resumenTitulo}</h3>
+          <p>{t.resumenDesc(seleccionPrecioBajo.rentabilidadCarteraAnterior.nDias)}</p>
+          <p style={{ fontSize: "1.2em" }}>
+            {t.carteraDelModelo}{" "}
+            <b style={{ color: seleccionPrecioBajo.rentabilidadCarteraAnterior.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+              {seleccionPrecioBajo.rentabilidadCarteraAnterior.rentabilidadPct.toFixed(3)}%
+            </b>
+          </p>
+          {seleccionPrecioBajo.rentabilidadIndice && (
+            <>
+              <p style={{ fontSize: "1.2em" }}>
+                {t.indiceFechas(nombreIndice, seleccionPrecioBajo.rentabilidadIndice.fechaInicio, seleccionPrecioBajo.rentabilidadIndice.fechaFin)}{" "}
+                <b style={{ color: seleccionPrecioBajo.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                  {seleccionPrecioBajo.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
+                </b>
+              </p>
+              <p style={{ fontWeight: "bold" }}>
+                {seleccionPrecioBajo.rentabilidadCarteraAnterior.rentabilidadPct >= seleccionPrecioBajo.rentabilidadIndice.rentabilidadPct
+                  ? t.superaIndice((seleccionPrecioBajo.rentabilidadCarteraAnterior.rentabilidadPct - seleccionPrecioBajo.rentabilidadIndice.rentabilidadPct).toFixed(3))
+                  : t.quedaPorDebajo((seleccionPrecioBajo.rentabilidadIndice.rentabilidadPct - seleccionPrecioBajo.rentabilidadCarteraAnterior.rentabilidadPct).toFixed(3))}
+              </p>
+            </>
+          )}
+          {seleccionPrecioBajo.correlacionBeneficioIndice !== null && seleccionPrecioBajo.correlacionBeneficioIndice !== undefined && (
+            <p>
+              {t.coeficienteCorrelacion(nombreIndice)}{" "}
+              <b>{seleccionPrecioBajo.correlacionBeneficioIndice.toFixed(3)}</b>
+            </p>
+          )}
+        </div>
+      )}
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.seleccionVolumenBajoTitulo}</h2>
+      <p>{t.seleccionVolumenBajoDesc(nComponentes, pesoMaximo)}</p>
+      <button onClick={realizarSeleccionVolumenBajo} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionVolumenBajo}>
+        {cargandoSeleccionVolumenBajo ? t.seleccionBotonCargando : t.seleccionBoton}
+      </button>
+
+      {errorSeleccionVolumenBajo && <p style={{ color: "crimson" }}>{t.error}: {errorSeleccionVolumenBajo}</p>}
+
+      {seleccionVolumenBajo && (
+        <div style={{ marginTop: 20 }}>
+          {seleccionVolumenBajo.historico.map((dia, i) => (
+            <div key={i} style={{ marginBottom: 28, borderBottom: "1px solid #ddd", paddingBottom: 16 }}>
+              <strong>{dia.fecha}</strong>
+
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8 }}>
+                <div style={{ flex: "1 1 220px" }}>
+                  <em>{t.carteraAnterior}</em>
+                  {dia.carteraAntes ? (
+                    <>
+                      <p style={{ margin: "4px 0" }}>
+                        {t.beneficioSinCambio}{" "}
+                        <b style={{ color: dia.beneficioSinCambio >= 1 ? "green" : "crimson" }}>
+                          {((dia.beneficioSinCambio - 1) * 100).toFixed(3)}%
+                        </b>
+                      </p>
+                      <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>
+                        <thead>
+                          <tr><th>{t.colTicker}</th><th>{t.colPeso}</th><th>{t.colPuntuacion}</th><th>{t.colPrecio}</th><th>{t.colVeces}</th></tr>
+                        </thead>
+                        <tbody>
+                          {dia.carteraAntes.map((c) => (
+                            <tr key={c.ticker}>
+                              <td>{c.ticker}</td>
+                              <td>{c.peso}%</td>
+                              <td>{c.puntuacion}</td>
+                              <td>{c.precio}</td>
+                              <td>{c.vecesSeleccionado}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>
+                  ) : (
+                    <p>{t.primeraSeleccion}</p>
+                  )}
+                </div>
+
+                <div style={{ flex: "1 1 220px" }}>
+                  <em>{t.carteraSeleccionada}{dia.rebalanceado === false ? t.sinCambiosEtiqueta : ""}</em>
+                  <p style={{ margin: "4px 0" }}>
+                    {t.beneficio}{" "}
+                    <b style={{ color: dia.beneficio >= 1 ? "green" : "crimson" }}>
+                      {((dia.beneficio - 1) * 100).toFixed(3)}%
+                    </b>
+                    {dia.incrementoIndice !== null && dia.incrementoIndice !== undefined && (
+                      <>
+                        {" — "}{t.indiceAbrevEtiqueta(indice.abreviatura)}{" "}
+                        <b style={{ color: dia.incrementoIndice >= 0 ? "green" : "crimson" }}>
+                          {dia.incrementoIndice.toFixed(3)}%
+                        </b>
+                      </>
+                    )}
+                  </p>
+                  <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>
+                    <thead>
+                      <tr><th>{t.colTicker}</th><th>{t.colPeso}</th><th>{t.colPuntuacion}</th><th>{t.colPrecio}</th><th>{t.colVeces}</th></tr>
+                    </thead>
+                    <tbody>
+                      {dia.cartera.map((c) => (
+                        <tr key={c.ticker}>
+                          <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
+                          <td>{c.peso}%</td>
+                          <td>{c.puntuacion}</td>
+                          <td>{c.precio}</td>
+                          <td>{c.vecesSeleccionado}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {dia.beneficioSinCambio !== null && (
+                <p style={{ color: "#666", marginTop: 4 }}>
+                  {dia.beneficio >= dia.beneficioSinCambio ? t.mejoraResultado : t.empeoraResultado}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {seleccionVolumenBajo && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{t.resumenTitulo}</h3>
+          <p>{t.resumenDesc(seleccionVolumenBajo.rentabilidadCarteraAnterior.nDias)}</p>
+          <p style={{ fontSize: "1.2em" }}>
+            {t.carteraDelModelo}{" "}
+            <b style={{ color: seleccionVolumenBajo.rentabilidadCarteraAnterior.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+              {seleccionVolumenBajo.rentabilidadCarteraAnterior.rentabilidadPct.toFixed(3)}%
+            </b>
+          </p>
+          {seleccionVolumenBajo.rentabilidadIndice && (
+            <>
+              <p style={{ fontSize: "1.2em" }}>
+                {t.indiceFechas(nombreIndice, seleccionVolumenBajo.rentabilidadIndice.fechaInicio, seleccionVolumenBajo.rentabilidadIndice.fechaFin)}{" "}
+                <b style={{ color: seleccionVolumenBajo.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                  {seleccionVolumenBajo.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
+                </b>
+              </p>
+              <p style={{ fontWeight: "bold" }}>
+                {seleccionVolumenBajo.rentabilidadCarteraAnterior.rentabilidadPct >= seleccionVolumenBajo.rentabilidadIndice.rentabilidadPct
+                  ? t.superaIndice((seleccionVolumenBajo.rentabilidadCarteraAnterior.rentabilidadPct - seleccionVolumenBajo.rentabilidadIndice.rentabilidadPct).toFixed(3))
+                  : t.quedaPorDebajo((seleccionVolumenBajo.rentabilidadIndice.rentabilidadPct - seleccionVolumenBajo.rentabilidadCarteraAnterior.rentabilidadPct).toFixed(3))}
+              </p>
+            </>
+          )}
+          {seleccionVolumenBajo.correlacionBeneficioIndice !== null && seleccionVolumenBajo.correlacionBeneficioIndice !== undefined && (
+            <p>
+              {t.coeficienteCorrelacion(nombreIndice)}{" "}
+              <b>{seleccionVolumenBajo.correlacionBeneficioIndice.toFixed(3)}</b>
+            </p>
+          )}
+        </div>
+      )}
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.seleccionFlujoBajoTitulo}</h2>
+      <p>{t.seleccionFlujoBajoDesc(nComponentes, pesoMaximo)}</p>
+      <button onClick={realizarSeleccionFlujoBajo} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionFlujoBajo}>
+        {cargandoSeleccionFlujoBajo ? t.seleccionBotonCargando : t.seleccionBoton}
+      </button>
+
+      {errorSeleccionFlujoBajo && <p style={{ color: "crimson" }}>{t.error}: {errorSeleccionFlujoBajo}</p>}
+
+      {seleccionFlujoBajo && (
+        <div style={{ marginTop: 20 }}>
+          {seleccionFlujoBajo.historico.map((dia, i) => (
+            <div key={i} style={{ marginBottom: 28, borderBottom: "1px solid #ddd", paddingBottom: 16 }}>
+              <strong>{dia.fecha}</strong>
+
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginTop: 8 }}>
+                <div style={{ flex: "1 1 220px" }}>
+                  <em>{t.carteraAnterior}</em>
+                  {dia.carteraAntes ? (
+                    <>
+                      <p style={{ margin: "4px 0" }}>
+                        {t.beneficioSinCambio}{" "}
+                        <b style={{ color: dia.beneficioSinCambio >= 1 ? "green" : "crimson" }}>
+                          {((dia.beneficioSinCambio - 1) * 100).toFixed(3)}%
+                        </b>
+                      </p>
+                      <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>
+                        <thead>
+                          <tr><th>{t.colTicker}</th><th>{t.colPeso}</th><th>{t.colPuntuacion}</th><th>{t.colPrecio}</th><th>{t.colVeces}</th></tr>
+                        </thead>
+                        <tbody>
+                          {dia.carteraAntes.map((c) => (
+                            <tr key={c.ticker}>
+                              <td>{c.ticker}</td>
+                              <td>{c.peso}%</td>
+                              <td>{c.puntuacion}</td>
+                              <td>{c.precio}</td>
+                              <td>{c.vecesSeleccionado}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>
+                  ) : (
+                    <p>{t.primeraSeleccion}</p>
+                  )}
+                </div>
+
+                <div style={{ flex: "1 1 220px" }}>
+                  <em>{t.carteraSeleccionada}{dia.rebalanceado === false ? t.sinCambiosEtiqueta : ""}</em>
+                  <p style={{ margin: "4px 0" }}>
+                    {t.beneficio}{" "}
+                    <b style={{ color: dia.beneficio >= 1 ? "green" : "crimson" }}>
+                      {((dia.beneficio - 1) * 100).toFixed(3)}%
+                    </b>
+                    {dia.incrementoIndice !== null && dia.incrementoIndice !== undefined && (
+                      <>
+                        {" — "}{t.indiceAbrevEtiqueta(indice.abreviatura)}{" "}
+                        <b style={{ color: dia.incrementoIndice >= 0 ? "green" : "crimson" }}>
+                          {dia.incrementoIndice.toFixed(3)}%
+                        </b>
+                      </>
+                    )}
+                  </p>
+                  <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>
+                    <thead>
+                      <tr><th>{t.colTicker}</th><th>{t.colPeso}</th><th>{t.colPuntuacion}</th><th>{t.colPrecio}</th><th>{t.colVeces}</th></tr>
+                    </thead>
+                    <tbody>
+                      {dia.cartera.map((c) => (
+                        <tr key={c.ticker}>
+                          <td>{tickerVisible(c.ticker)} — {nombresEmpresas[c.ticker]}</td>
+                          <td>{c.peso}%</td>
+                          <td>{c.puntuacion}</td>
+                          <td>{c.precio}</td>
+                          <td>{c.vecesSeleccionado}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {dia.beneficioSinCambio !== null && (
+                <p style={{ color: "#666", marginTop: 4 }}>
+                  {dia.beneficio >= dia.beneficioSinCambio ? t.mejoraResultado : t.empeoraResultado}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {seleccionFlujoBajo && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{t.resumenTitulo}</h3>
+          <p>{t.resumenDesc(seleccionFlujoBajo.rentabilidadCarteraAnterior.nDias)}</p>
+          <p style={{ fontSize: "1.2em" }}>
+            {t.carteraDelModelo}{" "}
+            <b style={{ color: seleccionFlujoBajo.rentabilidadCarteraAnterior.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+              {seleccionFlujoBajo.rentabilidadCarteraAnterior.rentabilidadPct.toFixed(3)}%
+            </b>
+          </p>
+          {seleccionFlujoBajo.rentabilidadIndice && (
+            <>
+              <p style={{ fontSize: "1.2em" }}>
+                {t.indiceFechas(nombreIndice, seleccionFlujoBajo.rentabilidadIndice.fechaInicio, seleccionFlujoBajo.rentabilidadIndice.fechaFin)}{" "}
+                <b style={{ color: seleccionFlujoBajo.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                  {seleccionFlujoBajo.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
+                </b>
+              </p>
+              <p style={{ fontWeight: "bold" }}>
+                {seleccionFlujoBajo.rentabilidadCarteraAnterior.rentabilidadPct >= seleccionFlujoBajo.rentabilidadIndice.rentabilidadPct
+                  ? t.superaIndice((seleccionFlujoBajo.rentabilidadCarteraAnterior.rentabilidadPct - seleccionFlujoBajo.rentabilidadIndice.rentabilidadPct).toFixed(3))
+                  : t.quedaPorDebajo((seleccionFlujoBajo.rentabilidadIndice.rentabilidadPct - seleccionFlujoBajo.rentabilidadCarteraAnterior.rentabilidadPct).toFixed(3))}
+              </p>
+            </>
+          )}
+          {seleccionFlujoBajo.correlacionBeneficioIndice !== null && seleccionFlujoBajo.correlacionBeneficioIndice !== undefined && (
+            <p>
+              {t.coeficienteCorrelacion(nombreIndice)}{" "}
+              <b>{seleccionFlujoBajo.correlacionBeneficioIndice.toFixed(3)}</b>
+            </p>
+          )}
+        </div>
+      )}
 
       <h2>{t.seleccionVecesVolumenTitulo}</h2>
       <p>{modoVecesVolumen === "real" ? t.seleccionVecesVolumenDescReal(sesionesVecesVolumen) : t.seleccionVecesVolumenDescAnalisis(sesionesVecesVolumen)}</p>
