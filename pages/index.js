@@ -204,7 +204,7 @@ export default function Home() {
     setErrorMejorFundamental(null);
     setMejorFundamental(null);
     try {
-      const resp = await fetch(`/api/mejorFundamentalActual?indice=${indiceId}&criterio=${criterioFundamental}&max=${pesoMaximo}&dias=${diasVentana}`);
+      const resp = await fetch(`/api/mejorFundamentalActual?criterio=${criterioFundamental}&max=${pesoMaximo}&dias=${diasVentana}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setMejorFundamental(json);
@@ -1348,64 +1348,72 @@ export default function Home() {
           <option value="dividendo">{t.colDividendo}</option>
         </select>
       </p>
-      <button onClick={realizarMejorFundamental} disabled={bloqueadoPorDiasEfectivos || cargandoMejorFundamental}>
+      <button onClick={realizarMejorFundamental} disabled={cargandoMejorFundamental}>
         {cargandoMejorFundamental ? t.mejorFundamentalBotonCargando : t.mejorFundamentalBoton}
       </button>
 
       {errorMejorFundamental && <p style={{ color: "crimson" }}>{t.error}: {errorMejorFundamental}</p>}
 
-      {mejorFundamental && (
-        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
-          <p>{t.mejorFundamentalNComponentes(mejorFundamental.nComponentes)}</p>
-          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
-            <thead>
-              <tr>
-                <th>{t.colTicker}</th>
-                <th>{t.colValorCriterio}</th>
-                <th>{t.colRentabilidadPeriodo}</th>
-                <th>{t.colPeso}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mejorFundamental.cartera.map((c) => (
-                <tr key={c.ticker}>
-                  <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
-                  <td>{c.valor.toFixed(2)}</td>
-                  <td style={{ color: c.retornoPeriodoPct >= 0 ? "green" : "crimson" }}>{c.retornoPeriodoPct.toFixed(2)}%</td>
-                  <td>{c.peso}%</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {mejorFundamental && mejorFundamental.resultados.map((r) => (
+        <div key={r.indice} style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{r.nombreIndice}</h3>
 
-          {mejorFundamental.excluidos.length > 0 && (
-            <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorFundamentalExcluidos(mejorFundamental.excluidos.length)}</p>
-          )}
-
-          <h3 style={{ marginTop: 16 }}>{t.expectativaRentabilidad}</h3>
-          <p style={{ fontSize: "1.2em" }}>
-            {t.modelo}{" "}
-            <b style={{ color: mejorFundamental.rentabilidadCartera.rentabilidadPct >= 0 ? "green" : "crimson" }}>
-              {mejorFundamental.rentabilidadCartera.rentabilidadPct.toFixed(3)}%
-            </b>
-          </p>
-          {mejorFundamental.rentabilidadIndice && (
+          {r.error ? (
+            <p style={{ color: "crimson" }}>{t.error}: {r.error}</p>
+          ) : (
             <>
+              <p>{t.mejorFundamentalNComponentes(r.nComponentes)}</p>
+              <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+                <thead>
+                  <tr>
+                    <th>{t.colTicker}</th>
+                    <th>{t.colValorCriterio}</th>
+                    <th>{t.colRentabilidadPeriodo}</th>
+                    <th>{t.colPeso}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.cartera.map((c) => (
+                    <tr key={c.ticker}>
+                      <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
+                      <td>{c.valor.toFixed(2)}</td>
+                      <td style={{ color: c.retornoPeriodoPct >= 0 ? "green" : "crimson" }}>{c.retornoPeriodoPct.toFixed(2)}%</td>
+                      <td>{c.peso}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {r.excluidos.length > 0 && (
+                <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorFundamentalExcluidos(r.excluidos.length)}</p>
+              )}
+
+              <h4 style={{ marginTop: 16 }}>{t.expectativaRentabilidad}</h4>
               <p style={{ fontSize: "1.2em" }}>
-                {t.indiceFechas(nombreIndice, mejorFundamental.rentabilidadIndice.fechaInicio, mejorFundamental.rentabilidadIndice.fechaFin)}{" "}
-                <b style={{ color: mejorFundamental.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
-                  {mejorFundamental.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
+                {t.modelo}{" "}
+                <b style={{ color: r.rentabilidadCartera.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                  {r.rentabilidadCartera.rentabilidadPct.toFixed(3)}%
                 </b>
               </p>
-              <p style={{ fontWeight: "bold" }}>
-                {mejorFundamental.rentabilidadCartera.rentabilidadPct >= mejorFundamental.rentabilidadIndice.rentabilidadPct
-                  ? t.superaIndice((mejorFundamental.rentabilidadCartera.rentabilidadPct - mejorFundamental.rentabilidadIndice.rentabilidadPct).toFixed(3))
-                  : t.quedaPorDebajo((mejorFundamental.rentabilidadIndice.rentabilidadPct - mejorFundamental.rentabilidadCartera.rentabilidadPct).toFixed(3))}
-              </p>
+              {r.rentabilidadIndice && (
+                <>
+                  <p style={{ fontSize: "1.2em" }}>
+                    {t.indiceFechas(r.nombreIndice, r.rentabilidadIndice.fechaInicio, r.rentabilidadIndice.fechaFin)}{" "}
+                    <b style={{ color: r.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                      {r.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
+                    </b>
+                  </p>
+                  <p style={{ fontWeight: "bold" }}>
+                    {r.rentabilidadCartera.rentabilidadPct >= r.rentabilidadIndice.rentabilidadPct
+                      ? t.superaIndice((r.rentabilidadCartera.rentabilidadPct - r.rentabilidadIndice.rentabilidadPct).toFixed(3))
+                      : t.quedaPorDebajo((r.rentabilidadIndice.rentabilidadPct - r.rentabilidadCartera.rentabilidadPct).toFixed(3))}
+                  </p>
+                </>
+              )}
             </>
           )}
         </div>
-      )}
+      ))}
     </MenuLayout>
   );
 }
