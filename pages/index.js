@@ -69,6 +69,11 @@ export default function Home() {
   const [cargandoSeleccionAleatoria, setCargandoSeleccionAleatoria] = useState(false);
   const [errorSeleccionAleatoria, setErrorSeleccionAleatoria] = useState(null);
 
+  const [criterioFundamental, setCriterioFundamental] = useState("per");
+  const [mejorFundamental, setMejorFundamental] = useState(null);
+  const [cargandoMejorFundamental, setCargandoMejorFundamental] = useState(false);
+  const [errorMejorFundamental, setErrorMejorFundamental] = useState(null);
+
   const [resultadosOptimizacion, setResultadosOptimizacion] = useState(null);
   const [cargandoOptimizacion, setCargandoOptimizacion] = useState(false);
   const [errorOptimizacion, setErrorOptimizacion] = useState(null);
@@ -191,6 +196,22 @@ export default function Home() {
       setErrorSeleccionAleatoria(e.message);
     } finally {
       setCargandoSeleccionAleatoria(false);
+    }
+  }
+
+  async function realizarMejorFundamental() {
+    setCargandoMejorFundamental(true);
+    setErrorMejorFundamental(null);
+    setMejorFundamental(null);
+    try {
+      const resp = await fetch(`/api/mejorFundamentalActual?indice=${indiceId}&criterio=${criterioFundamental}&max=${pesoMaximo}&dias=${diasVentana}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setMejorFundamental(json);
+    } catch (e) {
+      setErrorMejorFundamental(e.message);
+    } finally {
+      setCargandoMejorFundamental(false);
     }
   }
 
@@ -1308,6 +1329,80 @@ export default function Home() {
               {t.coeficienteCorrelacion(nombreIndice)}{" "}
               <b>{seleccionAleatoria.correlacionBeneficioIndice.toFixed(3)}</b>
             </p>
+          )}
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.mejorFundamentalTitulo}</h2>
+      <p>{t.mejorFundamentalDesc}</p>
+      <p>
+        {t.mejorFundamentalCriterioEtiqueta}{" "}
+        <select value={criterioFundamental} onChange={(e) => setCriterioFundamental(e.target.value)}>
+          <option value="per">{t.colPER}</option>
+          <option value="perFuturo">{t.colPERFuturo}</option>
+          <option value="eps">{t.colEPS}</option>
+          <option value="epsFuturo">{t.colEPSFuturo}</option>
+          <option value="pvc">{t.colPVC}</option>
+          <option value="dividendo">{t.colDividendo}</option>
+        </select>
+      </p>
+      <button onClick={realizarMejorFundamental} disabled={bloqueadoPorDiasEfectivos || cargandoMejorFundamental}>
+        {cargandoMejorFundamental ? t.mejorFundamentalBotonCargando : t.mejorFundamentalBoton}
+      </button>
+
+      {errorMejorFundamental && <p style={{ color: "crimson" }}>{t.error}: {errorMejorFundamental}</p>}
+
+      {mejorFundamental && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <p>{t.mejorFundamentalNComponentes(mejorFundamental.nComponentes)}</p>
+          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+            <thead>
+              <tr>
+                <th>{t.colTicker}</th>
+                <th>{t.colValorCriterio}</th>
+                <th>{t.colRentabilidadPeriodo}</th>
+                <th>{t.colPeso}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mejorFundamental.cartera.map((c) => (
+                <tr key={c.ticker}>
+                  <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
+                  <td>{c.valor.toFixed(2)}</td>
+                  <td style={{ color: c.retornoPeriodoPct >= 0 ? "green" : "crimson" }}>{c.retornoPeriodoPct.toFixed(2)}%</td>
+                  <td>{c.peso}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {mejorFundamental.excluidos.length > 0 && (
+            <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorFundamentalExcluidos(mejorFundamental.excluidos.length)}</p>
+          )}
+
+          <h3 style={{ marginTop: 16 }}>{t.expectativaRentabilidad}</h3>
+          <p style={{ fontSize: "1.2em" }}>
+            {t.modelo}{" "}
+            <b style={{ color: mejorFundamental.rentabilidadCartera.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+              {mejorFundamental.rentabilidadCartera.rentabilidadPct.toFixed(3)}%
+            </b>
+          </p>
+          {mejorFundamental.rentabilidadIndice && (
+            <>
+              <p style={{ fontSize: "1.2em" }}>
+                {t.indiceFechas(nombreIndice, mejorFundamental.rentabilidadIndice.fechaInicio, mejorFundamental.rentabilidadIndice.fechaFin)}{" "}
+                <b style={{ color: mejorFundamental.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                  {mejorFundamental.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
+                </b>
+              </p>
+              <p style={{ fontWeight: "bold" }}>
+                {mejorFundamental.rentabilidadCartera.rentabilidadPct >= mejorFundamental.rentabilidadIndice.rentabilidadPct
+                  ? t.superaIndice((mejorFundamental.rentabilidadCartera.rentabilidadPct - mejorFundamental.rentabilidadIndice.rentabilidadPct).toFixed(3))
+                  : t.quedaPorDebajo((mejorFundamental.rentabilidadIndice.rentabilidadPct - mejorFundamental.rentabilidadCartera.rentabilidadPct).toFixed(3))}
+              </p>
+            </>
           )}
         </div>
       )}
