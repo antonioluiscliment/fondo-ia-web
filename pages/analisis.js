@@ -159,7 +159,9 @@ export default function Analisis() {
                     const filaIndice = rentabilidadEtfs.filas[0];
                     return (
                       <tr key={fila.ticker} style={{ fontWeight: fila.esIndice ? "bold" : "normal" }}>
-                        <td>{fila.nombre}</td>
+                        <td style={fila.esComparable === false ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
+                          {fila.nombre}
+                        </td>
                         {["sesiones60", "sesiones120", "anio1", "anio2", "anio3"].map((campo) => {
                           const valor = fila[campo];
                           const valorIndice = filaIndice[campo];
