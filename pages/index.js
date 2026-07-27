@@ -1363,26 +1363,28 @@ export default function Home() {
           ) : (
             <>
               <p>{t.mejorFundamentalNComponentes(r.nComponentes)}</p>
-              <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
-                <thead>
-                  <tr>
-                    <th>{t.colTicker}</th>
-                    <th>{t.colValorCriterio}</th>
-                    <th>{t.colRentabilidadPeriodo}</th>
-                    <th>{t.colPeso}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {r.cartera.map((c) => (
-                    <tr key={c.ticker}>
-                      <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
-                      <td>{c.valor.toFixed(2)}</td>
-                      <td style={{ color: c.retornoPeriodoPct >= 0 ? "green" : "crimson" }}>{c.retornoPeriodoPct.toFixed(2)}%</td>
-                      <td>{c.peso}%</td>
+              <div style={{ overflowX: "auto" }}>
+                <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+                  <thead>
+                    <tr>
+                      <th>{t.colTicker}</th>
+                      <th>{t.colValorCriterio}</th>
+                      <th>{t.colRentabilidadPeriodo}</th>
+                      <th>{t.colPeso}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {r.cartera.map((c) => (
+                      <tr key={c.ticker}>
+                        <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
+                        <td>{c.valor.toFixed(2)}</td>
+                        <td style={{ color: c.retornoPeriodoPct >= 0 ? "green" : "crimson" }}>{c.retornoPeriodoPct.toFixed(2)}%</td>
+                        <td>{c.peso}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               {r.excluidos.length > 0 && (
                 <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorFundamentalExcluidos(r.excluidos.length)}</p>
