@@ -6,8 +6,23 @@ import { obtenerIndice } from "../lib/indices";
 // Grupo 4: Análisis — de momento solo el análisis de correlación con
 // el índice, usando los parámetros ajustados en "Formas de
 // seleccionar los valores" (factor, número de componentes, tope y
-// frecuencia de rebalanceo) y el índice elegido en "Características
-// generales".
+// frecuencia de rebalanceo) y el índice elegido en el marco exterior
+// persistente.
+
+// Orden en el que se muestran los métodos en la tabla (agrupando cada
+// criterio con su antítesis), y su nombre traducido.
+const ORDEN_METODOS = ["precio", "precioBajo", "volumen", "volumenBajo", "flujo", "flujoBajo", "aleatorio"];
+function NOMBRE_METODO(t) {
+  return {
+    precio: t.metodoPrecio,
+    precioBajo: t.metodoPrecioBajo,
+    volumen: t.metodoVolumen,
+    volumenBajo: t.metodoVolumenBajo,
+    flujo: t.metodoFlujo,
+    flujoBajo: t.metodoFlujoBajo,
+    aleatorio: t.metodoAleatorio,
+  };
+}
 export default function Analisis() {
   const { t, idioma, indiceId, factorPenalizacion, nComponentes, pesoMaximo, frecuenciaRebalanceo, sesionesPuntuacion } = useAppConfig();
   const indice = obtenerIndice(indiceId);
@@ -85,10 +100,10 @@ export default function Analisis() {
               </thead>
               <tbody>
                 {[...analisisCorrelacion.filas]
-                  .sort((a, b) => a.duracion - b.duracion || ["precio", "volumen", "flujo", "aleatorio"].indexOf(a.metodo) - ["precio", "volumen", "flujo", "aleatorio"].indexOf(b.metodo))
+                  .sort((a, b) => a.duracion - b.duracion || ORDEN_METODOS.indexOf(a.metodo) - ORDEN_METODOS.indexOf(b.metodo))
                   .map((fila, i) => (
                     <tr key={i}>
-                      <td>{fila.metodo === "precio" ? t.metodoPrecio : fila.metodo === "volumen" ? t.metodoVolumen : fila.metodo === "flujo" ? t.metodoFlujo : t.metodoAleatorio}</td>
+                      <td>{NOMBRE_METODO(t)[fila.metodo]}</td>
                       <td>{fila.duracion}</td>
                       <td>{fila.repeticiones}</td>
                       <td>
