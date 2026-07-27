@@ -40,6 +40,15 @@ export default function Comprobaciones() {
     setErrorComponentesEtf(null);
   }, [indiceId]);
 
+  const [fundamentales, setFundamentales] = useState(null);
+  const [cargandoFundamentales, setCargandoFundamentales] = useState(false);
+  const [errorFundamentales, setErrorFundamentales] = useState(null);
+
+  useEffect(() => {
+    setFundamentales(null);
+    setErrorFundamentales(null);
+  }, [indiceId]);
+
   async function consultar() {
     setCargando(true);
     setError(null);
@@ -101,6 +110,22 @@ export default function Comprobaciones() {
       setErrorComponentesEtf(e.message);
     } finally {
       setCargandoComponentesEtf(false);
+    }
+  }
+
+  async function consultarFundamentales() {
+    setCargandoFundamentales(true);
+    setErrorFundamentales(null);
+    setFundamentales(null);
+    try {
+      const resp = await fetch(`/api/fundamentales?indice=${indiceId}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setFundamentales(json);
+    } catch (e) {
+      setErrorFundamentales(e.message);
+    } finally {
+      setCargandoFundamentales(false);
     }
   }
 
@@ -298,6 +323,58 @@ export default function Comprobaciones() {
         </>
       ) : (
         <p style={{ color: "#555" }}>{t.sinEtfsDisponibles}</p>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.fundamentalesTitulo}</h2>
+      <p>{t.fundamentalesDesc}</p>
+
+      <button onClick={consultarFundamentales} disabled={cargandoFundamentales}>
+        {cargandoFundamentales ? t.fundamentalesBotonCargando : t.fundamentalesBoton}
+      </button>
+
+      {errorFundamentales && <p style={{ color: "crimson" }}>{t.error}: {errorFundamentales}</p>}
+
+      {fundamentales && (
+        <div style={{ overflowX: "auto" }}>
+          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+            <thead>
+              <tr>
+                <th>{t.colTicker}</th>
+                <th>{t.colPER}</th>
+                <th>{t.colPERFuturo}</th>
+                <th>{t.colEPS}</th>
+                <th>{t.colEPSFuturo}</th>
+                <th>{t.colPVC}</th>
+                <th>{t.colDividendo}</th>
+                <th>{t.colPrecioActual}</th>
+                <th>{t.colVariacionDia}</th>
+                <th>{t.colMax52}</th>
+                <th>{t.colMin52}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fundamentales.filas.map((f) => (
+                <tr key={f.ticker}>
+                  <td>{tickerVisible(f.ticker)} — {f.nombre}</td>
+                  <td>{f.trailingPE !== null ? f.trailingPE.toFixed(2) : t.nd}</td>
+                  <td>{f.forwardPE !== null ? f.forwardPE.toFixed(2) : t.nd}</td>
+                  <td>{f.epsTrailingTwelveMonths !== null ? f.epsTrailingTwelveMonths.toFixed(2) : t.nd}</td>
+                  <td>{f.epsForward !== null ? f.epsForward.toFixed(2) : t.nd}</td>
+                  <td>{f.priceToBook !== null ? f.priceToBook.toFixed(2) : t.nd}</td>
+                  <td>{f.dividendYield !== null ? `${f.dividendYield.toFixed(2)}%` : t.nd}</td>
+                  <td>{f.regularMarketPrice !== null ? f.regularMarketPrice.toFixed(2) : t.nd}</td>
+                  <td style={{ color: f.regularMarketChangePercent === null ? "inherit" : f.regularMarketChangePercent >= 0 ? "green" : "crimson" }}>
+                    {f.regularMarketChangePercent !== null ? `${f.regularMarketChangePercent.toFixed(2)}%` : t.nd}
+                  </td>
+                  <td>{f.fiftyTwoWeekHigh !== null ? f.fiftyTwoWeekHigh.toFixed(2) : t.nd}</td>
+                  <td>{f.fiftyTwoWeekLow !== null ? f.fiftyTwoWeekLow.toFixed(2) : t.nd}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </MenuLayout>
   );
