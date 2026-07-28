@@ -23,6 +23,7 @@ export default function Comprobaciones() {
   }, [indiceId]);
 
   const [numeroSesionConsulta, setNumeroSesionConsulta] = useState(20);
+  const [criterioPuntuacionConsulta, setCriterioPuntuacionConsulta] = useState("precio");
   const [resultadoPuntuaciones, setResultadoPuntuaciones] = useState(null);
   const [cargandoPuntuaciones, setCargandoPuntuaciones] = useState(false);
   const [errorPuntuaciones, setErrorPuntuaciones] = useState(null);
@@ -79,7 +80,7 @@ export default function Comprobaciones() {
     setErrorPuntuaciones(null);
     setResultadoPuntuaciones(null);
     try {
-      const resp = await fetch(`/api/puntuaciones?dias=${diasVentana}&sesion=${numeroSesionConsulta}&indice=${indiceId}&sesiones=${sesionesPuntuacion}`);
+      const resp = await fetch(`/api/puntuaciones?dias=${diasVentana}&sesion=${numeroSesionConsulta}&indice=${indiceId}&sesiones=${sesionesPuntuacion}&criterio=${criterioPuntuacionConsulta}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultadoPuntuaciones(json);
@@ -214,8 +215,17 @@ export default function Comprobaciones() {
 
       <h2>{t.puntuacionesTitulo}</h2>
       <p>{t.puntuacionesDesc(sesionesPuntuacion, tickers.length)}</p>
+      <p style={{ color: "#555", fontStyle: "italic" }}>{t.puntuacionesAplicabilidad}</p>
 
       <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "12px 0", flexWrap: "wrap" }}>
+        <label>
+          {t.puntuacionesEtiquetaCriterio}{" "}
+          <select value={criterioPuntuacionConsulta} onChange={(e) => setCriterioPuntuacionConsulta(e.target.value)}>
+            <option value="precio">{t.metodoPrecio}</option>
+            <option value="volumen">{t.metodoVolumen}</option>
+            <option value="flujo">{t.metodoFlujo}</option>
+          </select>
+        </label>
         <label>
           {t.puntuacionesEtiquetaSesion(sesionesPuntuacion + 1, diasVentana, sesionesPuntuacion)}{" "}
           <input
@@ -237,6 +247,14 @@ export default function Comprobaciones() {
       {resultadoPuntuaciones && (
         <>
           <h3>{t.puntuacionesResultadoTitulo(resultadoPuntuaciones.fecha, resultadoPuntuaciones.numeroSesion)}</h3>
+          <p style={{ color: "#555" }}>
+            {t.puntuacionesEtiquetaCriterio}{" "}
+            {resultadoPuntuaciones.criterioPuntuacion === "volumen"
+              ? t.metodoVolumen
+              : resultadoPuntuaciones.criterioPuntuacion === "flujo"
+              ? t.metodoFlujo
+              : t.metodoPrecio}
+          </p>
           <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%" }}>
             <thead>
               <tr><th>{t.colTicker}</th><th>{t.colPuntuacion}</th><th>{t.colPrecio}</th></tr>
