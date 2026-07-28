@@ -49,6 +49,15 @@ export default function Comprobaciones() {
     setErrorFundamentales(null);
   }, [indiceId]);
 
+  const [recomendacionesAnalistas, setRecomendacionesAnalistas] = useState(null);
+  const [cargandoRecomendacionesAnalistas, setCargandoRecomendacionesAnalistas] = useState(false);
+  const [errorRecomendacionesAnalistas, setErrorRecomendacionesAnalistas] = useState(null);
+
+  useEffect(() => {
+    setRecomendacionesAnalistas(null);
+    setErrorRecomendacionesAnalistas(null);
+  }, [indiceId]);
+
   async function consultar() {
     setCargando(true);
     setError(null);
@@ -126,6 +135,22 @@ export default function Comprobaciones() {
       setErrorFundamentales(e.message);
     } finally {
       setCargandoFundamentales(false);
+    }
+  }
+
+  async function consultarRecomendacionesAnalistas() {
+    setCargandoRecomendacionesAnalistas(true);
+    setErrorRecomendacionesAnalistas(null);
+    setRecomendacionesAnalistas(null);
+    try {
+      const resp = await fetch(`/api/recomendacionesAnalistas?indice=${indiceId}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setRecomendacionesAnalistas(json);
+    } catch (e) {
+      setErrorRecomendacionesAnalistas(e.message);
+    } finally {
+      setCargandoRecomendacionesAnalistas(false);
     }
   }
 
@@ -370,6 +395,49 @@ export default function Comprobaciones() {
                   </td>
                   <td>{f.fiftyTwoWeekHigh !== null ? f.fiftyTwoWeekHigh.toFixed(2) : t.nd}</td>
                   <td>{f.fiftyTwoWeekLow !== null ? f.fiftyTwoWeekLow.toFixed(2) : t.nd}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.recomendacionesAnalistasTitulo}</h2>
+      <p>{t.recomendacionesAnalistasDesc}</p>
+      {indice.tickers.length > 60 && (
+        <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 12, color: "#7a5c00" }}>
+          {t.recomendacionesAnalistasAvisoIndiceGrande(indice.tickers.length)}
+        </p>
+      )}
+
+      <button onClick={consultarRecomendacionesAnalistas} disabled={cargandoRecomendacionesAnalistas}>
+        {cargandoRecomendacionesAnalistas ? t.recomendacionesAnalistasBotonCargando : t.recomendacionesAnalistasBoton}
+      </button>
+
+      {errorRecomendacionesAnalistas && <p style={{ color: "crimson" }}>{t.error}: {errorRecomendacionesAnalistas}</p>}
+
+      {recomendacionesAnalistas && (
+        <div style={{ overflowX: "auto" }}>
+          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+            <thead>
+              <tr>
+                <th>{t.colTicker}</th>
+                <th>{t.colConsenso}</th>
+                <th>{t.colNumAnalistas}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recomendacionesAnalistas.filas.map((f) => (
+                <tr key={f.ticker}>
+                  <td>{tickerVisible(f.ticker)} — {f.nombre}</td>
+                  <td>
+                    {f.recommendationMean !== null
+                      ? `${f.recommendationMean.toFixed(2)}${f.recommendationKey ? ` (${f.recommendationKey})` : ""}`
+                      : t.nd}
+                  </td>
+                  <td>{f.numeroAnalistas !== null ? f.numeroAnalistas : t.nd}</td>
                 </tr>
               ))}
             </tbody>
