@@ -83,6 +83,10 @@ export default function Home() {
   const [cargandoMejorFundamental, setCargandoMejorFundamental] = useState(false);
   const [errorMejorFundamental, setErrorMejorFundamental] = useState(null);
 
+  const [mejorAnalistas, setMejorAnalistas] = useState(null);
+  const [cargandoMejorAnalistas, setCargandoMejorAnalistas] = useState(false);
+  const [errorMejorAnalistas, setErrorMejorAnalistas] = useState(null);
+
   const [resultadosOptimizacion, setResultadosOptimizacion] = useState(null);
   const [cargandoOptimizacion, setCargandoOptimizacion] = useState(false);
   const [errorOptimizacion, setErrorOptimizacion] = useState(null);
@@ -269,6 +273,22 @@ export default function Home() {
       setErrorMejorFundamental(e.message);
     } finally {
       setCargandoMejorFundamental(false);
+    }
+  }
+
+  async function realizarMejorAnalistas() {
+    setCargandoMejorAnalistas(true);
+    setErrorMejorAnalistas(null);
+    setMejorAnalistas(null);
+    try {
+      const resp = await fetch(`/api/mejorAnalistas?indice=${indiceId}&max=${pesoMaximo}&dias=${diasVentana}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setMejorAnalistas(json);
+    } catch (e) {
+      setErrorMejorAnalistas(e.message);
+    } finally {
+      setCargandoMejorAnalistas(false);
     }
   }
 
@@ -560,7 +580,7 @@ export default function Home() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.optFrecuenciaTitulo}</h2>
-      <p>{t.optFrecuenciaDesc}</p>
+      <p>{t.optFrecuenciaDesc(indice.tickers.length)}</p>
       <button onClick={optimizarFrecuenciaRebalanceo} disabled={bloqueadoPorDiasEfectivos || cargandoOptimizacionFrecuencia}>
         {cargandoOptimizacionFrecuencia ? t.optFrecuenciaBotonCargando : t.optFrecuenciaBoton}
       </button>
@@ -655,7 +675,7 @@ export default function Home() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.seleccionTitulo}</h2>
-      <p>{t.seleccionDesc(nComponentes, pesoMaximo)}</p>
+      <p>{t.seleccionDesc(nComponentes, pesoMaximo, diasVentana, indice.tickers.length)}</p>
       <button onClick={realizarSeleccion} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccion}>
         {cargandoSeleccion ? t.seleccionBotonCargando : t.seleccionBoton}
       </button>
@@ -791,7 +811,7 @@ export default function Home() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.seleccionVecesTitulo}</h2>
-      <p>{modoVeces === "real" ? t.seleccionVecesDescReal(sesionesVeces) : t.seleccionVecesDescAnalisis(sesionesVeces)}</p>
+      <p>{modoVeces === "real" ? t.seleccionVecesDescReal(sesionesVeces) : t.seleccionVecesDescAnalisis(sesionesVeces, indice.tickers.length)}</p>
 
       <p>
         {t.modoVecesEtiqueta}{" "}
@@ -900,7 +920,7 @@ export default function Home() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.seleccionVolumenTitulo}</h2>
-      <p>{t.seleccionVolumenDesc(nComponentes, pesoMaximo)}</p>
+      <p>{t.seleccionVolumenDesc(nComponentes, pesoMaximo, indice.tickers.length, sesionesPuntuacion)}</p>
       <button onClick={realizarSeleccionVolumen} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionVolumen}>
         {cargandoSeleccionVolumen ? t.seleccionBotonCargando : t.seleccionBoton}
       </button>
@@ -1028,7 +1048,7 @@ export default function Home() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.seleccionFlujoTitulo}</h2>
-      <p>{t.seleccionFlujoDesc(nComponentes, pesoMaximo)}</p>
+      <p>{t.seleccionFlujoDesc(nComponentes, pesoMaximo, indice.tickers.length, sesionesPuntuacion)}</p>
       <button onClick={realizarSeleccionFlujo} disabled={bloqueadoPorDiasEfectivos || cargandoSeleccionFlujo}>
         {cargandoSeleccionFlujo ? t.seleccionBotonCargando : t.seleccionBoton}
       </button>
@@ -1536,7 +1556,7 @@ export default function Home() {
       )}
 
       <h2>{t.seleccionVecesVolumenTitulo}</h2>
-      <p>{modoVecesVolumen === "real" ? t.seleccionVecesVolumenDescReal(sesionesVecesVolumen) : t.seleccionVecesVolumenDescAnalisis(sesionesVecesVolumen)}</p>
+      <p>{modoVecesVolumen === "real" ? t.seleccionVecesVolumenDescReal(sesionesVecesVolumen) : t.seleccionVecesVolumenDescAnalisis(sesionesVecesVolumen, indice.tickers.length)}</p>
 
       <p>
         {t.modoVecesEtiqueta}{" "}
@@ -1853,6 +1873,78 @@ export default function Home() {
           )}
         </div>
       ))}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.mejorAnalistasTitulo}</h2>
+      <p>{t.mejorAnalistasDesc}</p>
+      {indice.tickers.length > 60 && (
+        <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 12, color: "#7a5c00" }}>
+          {t.mejorAnalistasAvisoIndiceGrande(indice.tickers.length)}
+        </p>
+      )}
+      <button onClick={realizarMejorAnalistas} disabled={cargandoMejorAnalistas}>
+        {cargandoMejorAnalistas ? t.mejorAnalistasBotonCargando : t.mejorAnalistasBoton}
+      </button>
+
+      {errorMejorAnalistas && <p style={{ color: "crimson" }}>{t.error}: {errorMejorAnalistas}</p>}
+
+      {mejorAnalistas && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <p>{t.mejorFundamentalNComponentes(mejorAnalistas.nComponentes)}</p>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.colTicker}</th>
+                  <th>{t.colConsenso}</th>
+                  <th>{t.colNumAnalistas}</th>
+                  <th>{t.colRentabilidadPeriodo}</th>
+                  <th>{t.colPeso}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mejorAnalistas.cartera.map((c) => (
+                  <tr key={c.ticker}>
+                    <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
+                    <td>{c.recommendationMean.toFixed(2)}{c.recommendationKey ? ` (${c.recommendationKey})` : ""}</td>
+                    <td>{c.numeroAnalistas}</td>
+                    <td style={{ color: c.retornoPeriodoPct >= 0 ? "green" : "crimson" }}>{c.retornoPeriodoPct.toFixed(2)}%</td>
+                    <td>{c.peso}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {mejorAnalistas.excluidos.length > 0 && (
+            <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorAnalistasExcluidos(mejorAnalistas.excluidos.length)}</p>
+          )}
+
+          <h3 style={{ marginTop: 16 }}>{t.expectativaRentabilidad}</h3>
+          <p style={{ fontSize: "1.2em" }}>
+            {t.modelo}{" "}
+            <b style={{ color: mejorAnalistas.rentabilidadCartera.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+              {mejorAnalistas.rentabilidadCartera.rentabilidadPct.toFixed(3)}%
+            </b>
+          </p>
+          {mejorAnalistas.rentabilidadIndice && (
+            <>
+              <p style={{ fontSize: "1.2em" }}>
+                {t.indiceFechas(nombreIndice, mejorAnalistas.rentabilidadIndice.fechaInicio, mejorAnalistas.rentabilidadIndice.fechaFin)}{" "}
+                <b style={{ color: mejorAnalistas.rentabilidadIndice.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                  {mejorAnalistas.rentabilidadIndice.rentabilidadPct.toFixed(3)}%
+                </b>
+              </p>
+              <p style={{ fontWeight: "bold" }}>
+                {mejorAnalistas.rentabilidadCartera.rentabilidadPct >= mejorAnalistas.rentabilidadIndice.rentabilidadPct
+                  ? t.superaIndice((mejorAnalistas.rentabilidadCartera.rentabilidadPct - mejorAnalistas.rentabilidadIndice.rentabilidadPct).toFixed(3))
+                  : t.quedaPorDebajo((mejorAnalistas.rentabilidadIndice.rentabilidadPct - mejorAnalistas.rentabilidadCartera.rentabilidadPct).toFixed(3))}
+              </p>
+            </>
+          )}
+        </div>
+      )}
     </MenuLayout>
   );
 }
