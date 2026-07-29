@@ -1,7 +1,7 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
-import { obtenerIndice, tickerVisible } from "../lib/indices";
+import { obtenerIndice, tickerVisible, INDICES } from "../lib/indices";
 
 // Grupo 4: Análisis — de momento solo el análisis de correlación con
 // el índice, usando los parámetros ajustados en "Formas de
@@ -36,6 +36,18 @@ export default function Analisis() {
   const [cargandoCorrelacionAnalistas, setCargandoCorrelacionAnalistas] = useState(false);
   const [errorCorrelacionAnalistas, setErrorCorrelacionAnalistas] = useState(null);
 
+  // Por defecto, todos los índices marcados salvo el que más
+  // componentes tenga (hoy, el Nasdaq 100): consultar el consenso de
+  // analistas de un índice tan grande, sumado a los demás, puede
+  // tardar bastante — se deja marcar aparte si se quiere incluir.
+  const indiceMasGrande = INDICES.reduce((a, b) => (b.tickers.length > a.tickers.length ? b : a));
+  const [indicesSeleccionados, setIndicesSeleccionados] = useState(() =>
+    Object.fromEntries(INDICES.map((ind) => [ind.id, ind.id !== indiceMasGrande.id]))
+  );
+  const [correlacionAnalistasIndices, setCorrelacionAnalistasIndices] = useState(null);
+  const [cargandoCorrelacionAnalistasIndices, setCargandoCorrelacionAnalistasIndices] = useState(false);
+  const [errorCorrelacionAnalistasIndices, setErrorCorrelacionAnalistasIndices] = useState(null);
+
   const [rentabilidadEtfs, setRentabilidadEtfs] = useState(null);
   const [cargandoRentabilidadEtfs, setCargandoRentabilidadEtfs] = useState(false);
   const [errorRentabilidadEtfs, setErrorRentabilidadEtfs] = useState(null);
@@ -69,6 +81,28 @@ export default function Analisis() {
       setErrorCorrelacionAnalistas(e.message);
     } finally {
       setCargandoCorrelacionAnalistas(false);
+    }
+  }
+
+  async function realizarCorrelacionAnalistasIndices() {
+    setCargandoCorrelacionAnalistasIndices(true);
+    setErrorCorrelacionAnalistasIndices(null);
+    setCorrelacionAnalistasIndices(null);
+    try {
+      const idsElegidos = Object.entries(indicesSeleccionados)
+        .filter(([, marcado]) => marcado)
+        .map(([id]) => id);
+      if (idsElegidos.length === 0) {
+        throw new Error("Marca al menos un índice.");
+      }
+      const resp = await fetch(`/api/correlacionAnalistasIndices?indices=${idsElegidos.join(",")}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setCorrelacionAnalistasIndices(json);
+    } catch (e) {
+      setErrorCorrelacionAnalistasIndices(e.message);
+    } finally {
+      setCargandoCorrelacionAnalistasIndices(false);
     }
   }
 
@@ -195,6 +229,13 @@ export default function Analisis() {
             <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorAnalistasExcluidos(correlacionAnalistas.excluidos.length)}</p>
           )}
 
+          {correlacionAnalistas.conclusion && (
+            <>
+              <h3>{t.correlacionAnalistasConclusionTitulo}</h3>
+              <p>{correlacionAnalistas.conclusion}</p>
+            </>
+          )}
+
           <h3>{t.correlacionAnalistasDetalleTitulo}</h3>
           <div style={{ overflowX: "auto" }}>
             <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
@@ -225,6 +266,72 @@ export default function Analisis() {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.correlacionAnalistasIndicesTitulo}</h2>
+      <p>{t.correlacionAnalistasIndicesDesc}</p>
+
+      <p style={{ fontWeight: "bold", marginBottom: 4 }}>{t.correlacionAnalistasIndicesEtiquetaSeleccion}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 12 }}>
+        {INDICES.map((ind) => (
+          <label key={ind.id} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={!!indicesSeleccionados[ind.id]}
+              onChange={(e) => setIndicesSeleccionados((prev) => ({ ...prev, [ind.id]: e.target.checked }))}
+            />
+            {ind.nombre[idioma]}
+          </label>
+        ))}
+      </div>
+
+      <button onClick={realizarCorrelacionAnalistasIndices} disabled={cargandoCorrelacionAnalistasIndices}>
+        {cargandoCorrelacionAnalistasIndices ? t.correlacionAnalistasIndicesBotonCargando : t.correlacionAnalistasIndicesBoton}
+      </button>
+
+      {errorCorrelacionAnalistasIndices && <p style={{ color: "crimson" }}>{t.error}: {errorCorrelacionAnalistasIndices}</p>}
+
+      {correlacionAnalistasIndices && (
+        <div style={{ overflowX: "auto" }}>
+          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
+            <thead>
+              <tr>
+                <th>{t.colIndice}</th>
+                <th>{t.col1Mes}</th>
+                <th>{t.col2Meses}</th>
+                <th>{t.col3Meses}</th>
+                <th>{t.col6Meses}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {correlacionAnalistasIndices.resultados.map((r) => (
+                <tr key={r.indice}>
+                  <td>{r.nombreIndice}</td>
+                  {r.error ? (
+                    <td colSpan={4} style={{ color: "crimson" }}>{t.error}: {r.error}</td>
+                  ) : (
+                    ["meses1", "meses2", "meses3", "meses6"].map((clave) => (
+                      <td key={clave}>
+                        {r.correlaciones[clave].valor !== null ? r.correlaciones[clave].valor.toFixed(3) : "-"}
+                        <span style={{ color: "#666" }}> (n={r.correlaciones[clave].n})</span>
+                      </td>
+                    ))
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {correlacionAnalistasIndices.resultados
+            .filter((r) => !r.error)
+            .map((r) => (
+              <p key={r.indice} style={{ marginTop: 12 }}>
+                <b>{r.nombreIndice}:</b> {r.conclusion}
+              </p>
+            ))}
         </div>
       )}
 
