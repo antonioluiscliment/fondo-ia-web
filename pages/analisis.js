@@ -1,7 +1,7 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
-import { obtenerIndice } from "../lib/indices";
+import { obtenerIndice, tickerVisible } from "../lib/indices";
 
 // Grupo 4: Análisis — de momento solo el análisis de correlación con
 // el índice, usando los parámetros ajustados en "Formas de
@@ -32,6 +32,10 @@ export default function Analisis() {
   const [cargandoAnalisisCorrelacion, setCargandoAnalisisCorrelacion] = useState(false);
   const [errorAnalisisCorrelacion, setErrorAnalisisCorrelacion] = useState(null);
 
+  const [correlacionAnalistas, setCorrelacionAnalistas] = useState(null);
+  const [cargandoCorrelacionAnalistas, setCargandoCorrelacionAnalistas] = useState(false);
+  const [errorCorrelacionAnalistas, setErrorCorrelacionAnalistas] = useState(null);
+
   const [rentabilidadEtfs, setRentabilidadEtfs] = useState(null);
   const [cargandoRentabilidadEtfs, setCargandoRentabilidadEtfs] = useState(false);
   const [errorRentabilidadEtfs, setErrorRentabilidadEtfs] = useState(null);
@@ -49,6 +53,22 @@ export default function Analisis() {
       setErrorAnalisisCorrelacion(e.message);
     } finally {
       setCargandoAnalisisCorrelacion(false);
+    }
+  }
+
+  async function realizarCorrelacionAnalistas() {
+    setCargandoCorrelacionAnalistas(true);
+    setErrorCorrelacionAnalistas(null);
+    setCorrelacionAnalistas(null);
+    try {
+      const resp = await fetch(`/api/correlacionAnalistas?indice=${indiceId}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setCorrelacionAnalistas(json);
+    } catch (e) {
+      setErrorCorrelacionAnalistas(e.message);
+    } finally {
+      setCargandoCorrelacionAnalistas(false);
     }
   }
 
@@ -122,6 +142,86 @@ export default function Analisis() {
                       <td>{fila.rentabilidadIndiceReciente !== null ? `${fila.rentabilidadIndiceReciente.toFixed(3)}%` : "-"}</td>
                     </tr>
                   ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.correlacionAnalistasTitulo}</h2>
+      <p>{t.correlacionAnalistasDesc}</p>
+      {indice.tickers.length > 60 && (
+        <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 12, color: "#7a5c00" }}>
+          {t.recomendacionesAnalistasAvisoIndiceGrande(indice.tickers.length)}
+        </p>
+      )}
+      <button onClick={realizarCorrelacionAnalistas} disabled={cargandoCorrelacionAnalistas}>
+        {cargandoCorrelacionAnalistas ? t.correlacionAnalistasBotonCargando : t.correlacionAnalistasBoton}
+      </button>
+
+      {errorCorrelacionAnalistas && <p style={{ color: "crimson" }}>{t.error}: {errorCorrelacionAnalistas}</p>}
+
+      {correlacionAnalistas && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{t.correlacionAnalistasResumenTitulo}</h3>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.col1Mes}</th>
+                  <th>{t.col2Meses}</th>
+                  <th>{t.col3Meses}</th>
+                  <th>{t.col6Meses}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {["meses1", "meses2", "meses3", "meses6"].map((clave) => (
+                    <td key={clave}>
+                      {correlacionAnalistas.correlaciones[clave].valor !== null
+                        ? correlacionAnalistas.correlaciones[clave].valor.toFixed(3)
+                        : "-"}
+                      <span style={{ color: "#666" }}> (n={correlacionAnalistas.correlaciones[clave].n})</span>
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {correlacionAnalistas.excluidos.length > 0 && (
+            <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorAnalistasExcluidos(correlacionAnalistas.excluidos.length)}</p>
+          )}
+
+          <h3>{t.correlacionAnalistasDetalleTitulo}</h3>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.colTicker}</th>
+                  <th>{t.colConsenso}</th>
+                  <th>{t.colNumAnalistas}</th>
+                  <th>{t.col1Mes}</th>
+                  <th>{t.col2Meses}</th>
+                  <th>{t.col3Meses}</th>
+                  <th>{t.col6Meses}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {correlacionAnalistas.filas.map((f) => (
+                  <tr key={f.ticker}>
+                    <td>{tickerVisible(f.ticker)} — {f.nombre}</td>
+                    <td>{f.recommendationMean.toFixed(2)}</td>
+                    <td>{f.numeroAnalistas}</td>
+                    {["incremento1m", "incremento2m", "incremento3m", "incremento6m"].map((campo) => (
+                      <td key={campo} style={{ color: f[campo] === null ? "inherit" : f[campo] >= 0 ? "green" : "crimson" }}>
+                        {f[campo] !== null ? `${f[campo].toFixed(2)}%` : t.nd}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
