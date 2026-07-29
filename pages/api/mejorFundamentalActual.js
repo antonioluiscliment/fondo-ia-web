@@ -29,6 +29,15 @@
 //     pérdidas, no es "mejor" que uno positivo bajo — se descarta).
 //   - EPS, EPS futuro, rentabilidad por dividendo: de MAYOR a MENOR.
 //
+// EPS y EPS futuro se normalizan dividiendo por el precio actual
+// (EPS/Precio × 100, en porcentaje — el inverso del PER, también
+// llamado "rentabilidad por beneficio" o "earnings yield"): comparar
+// el EPS en bruto entre valores no tiene sentido, porque una acción
+// con una cotización alta tiende a tener un EPS más alto solo por
+// eso, sin que la empresa sea mejor — dos empresas solo son
+// comparables por esta vía atendiendo al cociente con el precio, no
+// al importe absoluto del beneficio por acción.
+//
 // Los índices se procesan uno detrás de otro (no en paralelo): con 8
 // índices, cada uno necesitando una consulta por lotes más la
 // descarga de precios de hasta 6 valores, hacerlo todo a la vez
@@ -67,8 +76,8 @@ const CRITERIOS = {
   per: { campo: "trailingPE", orden: "asc", soloPositivos: true },
   perFuturo: { campo: "forwardPE", orden: "asc", soloPositivos: true },
   pvc: { campo: "priceToBook", orden: "asc", soloPositivos: true },
-  eps: { campo: "epsTrailingTwelveMonths", orden: "desc", soloPositivos: false },
-  epsFuturo: { campo: "epsForward", orden: "desc", soloPositivos: false },
+  eps: { campo: "epsTrailingTwelveMonths", orden: "desc", soloPositivos: false, normalizarPorPrecio: true },
+  epsFuturo: { campo: "epsForward", orden: "desc", soloPositivos: false, normalizarPorPrecio: true },
   dividendo: { campo: "dividendYield", orden: "desc", soloPositivos: false },
 };
 
@@ -102,7 +111,7 @@ function asignarPesosOptimos(candidatosConRetorno, pesoMaximo) {
 // lanzar (el llamante decide cómo tratarlo por índice).
 async function calcularParaIndice(indice, criterio, pesoMaximo, diasVentana) {
   const cotizaciones = await yahooFinance.quote(indice.tickers, {
-    fields: ["symbol", criterio.campo],
+    fields: ["symbol", criterio.campo, "regularMarketPrice"],
   });
   const porTicker = Object.fromEntries(cotizaciones.map((c) => [c.symbol, c]));
 
@@ -110,9 +119,28 @@ async function calcularParaIndice(indice, criterio, pesoMaximo, diasVentana) {
   const excluidos = [];
   for (const ticker of indice.tickers) {
     const c = porTicker[ticker];
-    const valor = c ? c[criterio.campo] : undefined;
-    if (!numeroValido(valor) || (criterio.soloPositivos && valor <= 0)) {
-      excluidos.push({ ticker, nombre: indice.nombresEmpresas[ticker], valor: numeroValido(valor) ? valor : null });
+    const bruto = c ? c[criterio.campo] : undefined;
+
+    if (!numeroValido(bruto)) {
+      excluidos.push({ ticker, nombre: indice.nombresEmpresas[ticker], valor: null });
+      continue;
+    }
+
+    let valor = bruto;
+    if (criterio.normalizarPorPrecio) {
+      const precio = c ? c.regularMarketPrice : undefined;
+      if (!numeroValido(precio) || precio <= 0) {
+        excluidos.push({ ticker, nombre: indice.nombresEmpresas[ticker], valor: null });
+        continue;
+      }
+      // EPS/Precio × 100: rentabilidad por beneficio (earnings yield),
+      // el inverso del PER — así sí es comparable entre valores con
+      // cotizaciones muy distintas.
+      valor = Number(((bruto / precio) * 100).toFixed(3));
+    }
+
+    if (criterio.soloPositivos && valor <= 0) {
+      excluidos.push({ ticker, nombre: indice.nombresEmpresas[ticker], valor });
       continue;
     }
     candidatos.push({ ticker, nombre: indice.nombresEmpresas[ticker], valor });
