@@ -10,7 +10,9 @@ import { INDICES, obtenerIndice } from "../lib/indices";
 // observaciones se han movido al panel del icono de info (ⓘ).
 const ENLACES = [
   { href: "/comprobaciones", labelKey: "menuComprobaciones" },
-  { href: "/", labelKey: "menuFormasSeleccion" },
+  { href: "/parametrosTecnicos", labelKey: "menuParametrosTecnicos" },
+  { href: "/", labelKey: "menuSeleccionTecnica" },
+  { href: "/seleccionAlternativa", labelKey: "menuSeleccionAlternativa" },
   { href: "/analisis", labelKey: "menuAnalisis" },
 ];
 
