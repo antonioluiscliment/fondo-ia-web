@@ -223,8 +223,8 @@ export default function SeleccionAlternativa() {
         <select value={criterioFundamental} onChange={(e) => setCriterioFundamental(e.target.value)}>
           <option value="per">{t.colPER}</option>
           <option value="perFuturo">{t.colPERFuturo}</option>
-          <option value="eps">{t.colEPS}</option>
-          <option value="epsFuturo">{t.colEPSFuturo}</option>
+          <option value="eps">{t.mejorFundamentalOpcionEps}</option>
+          <option value="epsFuturo">{t.mejorFundamentalOpcionEpsFuturo}</option>
           <option value="pvc">{t.colPVC}</option>
           <option value="dividendo">{t.colDividendo}</option>
         </select>
@@ -258,7 +258,7 @@ export default function SeleccionAlternativa() {
                     {r.cartera.map((c) => (
                       <tr key={c.ticker}>
                         <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
-                        <td>{c.valor.toFixed(2)}</td>
+                        <td>{c.valor.toFixed(2)}{(criterioFundamental === "eps" || criterioFundamental === "epsFuturo") ? "%" : ""}</td>
                         <td style={{ color: c.retornoPeriodoPct >= 0 ? "green" : "crimson" }}>{c.retornoPeriodoPct.toFixed(2)}%</td>
                         <td>{c.peso}%</td>
                       </tr>
