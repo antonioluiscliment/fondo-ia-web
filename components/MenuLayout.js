@@ -50,6 +50,7 @@ const estiloPanelDocx = {
 
 export default function MenuLayout({ children }) {
   const { idioma, setIdioma, t, indiceId, setIndiceId, sesionesPuntuacion, setSesionesPuntuacion } = useAppConfig();
+  const indiceActual = obtenerIndice(indiceId);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [infoAbierto, setInfoAbierto] = useState(false);
   const router = useRouter();
@@ -184,6 +185,12 @@ export default function MenuLayout({ children }) {
           </select>
         </label>
       </div>
+
+      {indiceActual.advertencia && (
+        <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 12, color: "#7a5c00", marginTop: 8 }}>
+          {indiceActual.advertencia[idioma]}
+        </p>
+      )}
 
       {menuAbierto && (
         <nav
