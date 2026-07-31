@@ -36,13 +36,18 @@ export default function Analisis() {
   const [cargandoCorrelacionAnalistas, setCargandoCorrelacionAnalistas] = useState(false);
   const [errorCorrelacionAnalistas, setErrorCorrelacionAnalistas] = useState(null);
 
-  // Por defecto, todos los índices marcados salvo el que más
-  // componentes tenga (hoy, el Nasdaq 100): consultar el consenso de
-  // analistas de un índice tan grande, sumado a los demás, puede
-  // tardar bastante — se deja marcar aparte si se quiere incluir.
+  // Por defecto, marcados solo los índices "normales" (los que ya
+  // existían antes de la serie de ADR: Dow Jones, IBEX 35, CAC 40,
+  // PSI 20, DAX, AEX, FTSE MIB) — salvo el que más componentes tenga
+  // (hoy, el Nasdaq 100). Todos los índices ADR (Argentina, Australia,
+  // India, Asia, China, Brasil, Corea, Latinoamérica, Grecia, México)
+  // quedan desmarcados por defecto: aunque cada uno por separado sea
+  // pequeño, el consenso de analistas solo se puede consultar valor
+  // por valor, y sumados entre todos representan bastante carga
+  // adicional — se dejan marcar aparte si se quieren incluir.
   const indiceMasGrande = INDICES.reduce((a, b) => (b.tickers.length > a.tickers.length ? b : a));
   const [indicesSeleccionados, setIndicesSeleccionados] = useState(() =>
-    Object.fromEntries(INDICES.map((ind) => [ind.id, ind.id !== indiceMasGrande.id]))
+    Object.fromEntries(INDICES.map((ind) => [ind.id, !ind.id.endsWith("adr") && ind.id !== indiceMasGrande.id]))
   );
   const [correlacionAnalistasIndices, setCorrelacionAnalistasIndices] = useState(null);
   const [cargandoCorrelacionAnalistasIndices, setCargandoCorrelacionAnalistasIndices] = useState(false);

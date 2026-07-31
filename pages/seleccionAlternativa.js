@@ -2,6 +2,7 @@ import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
+import { descargarTablaPdf } from "../lib/pdfComun";
 
 // "Selección de cartera por criterios alternativos": selección
 // aleatoria (referencia estadística), por mejor fundamental (para
@@ -213,6 +214,24 @@ export default function SeleccionAlternativa() {
         </div>
       )}
 
+      {seleccionAleatoria && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.seleccionAleatoriaTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colFecha, t.colTicker, t.colPeso, t.colAleatorio, t.colPrecio, t.colVeces],
+              filas: seleccionAleatoria.historico.flatMap((dia) =>
+                dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
+              ),
+              nombreArchivo: `seleccion-aleatoria-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
+      )}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -297,6 +316,25 @@ export default function SeleccionAlternativa() {
                   </p>
                 </>
               )}
+              <button
+                onClick={() =>
+                  descargarTablaPdf({
+                    titulo: t.mejorFundamentalTitulo,
+                    subtitulo: r.nombreIndice,
+                    columnas: [t.colTicker, t.colValorCriterio, t.colRentabilidadPeriodo, t.colPeso],
+                    filas: r.cartera.map((c) => [
+                      `${tickerVisible(c.ticker)} — ${c.nombre}`,
+                      `${c.valor.toFixed(2)}${(criterioFundamental === "eps" || criterioFundamental === "epsFuturo") ? "%" : ""}`,
+                      `${c.retornoPeriodoPct.toFixed(2)}%`,
+                      `${c.peso}%`,
+                    ]),
+                    nombreArchivo: `mejor-fundamental-${r.indice}.pdf`,
+                  })
+                }
+                style={{ marginTop: 12 }}
+              >
+                {t.descargarPdfBoton}
+              </button>
             </>
           )}
         </div>
@@ -378,6 +416,26 @@ export default function SeleccionAlternativa() {
               </p>
             </>
           )}
+          <button
+            onClick={() =>
+              descargarTablaPdf({
+                titulo: t.mejorAnalistasTitulo,
+                subtitulo: nombreIndice,
+                columnas: [t.colTicker, t.colConsenso, t.colNumAnalistas, t.colRentabilidadPeriodo, t.colPeso],
+                filas: mejorAnalistas.cartera.map((c) => [
+                  `${tickerVisible(c.ticker)} — ${c.nombre}`,
+                  `${c.recommendationMean.toFixed(2)}${c.recommendationKey ? ` (${c.recommendationKey})` : ""}`,
+                  c.numeroAnalistas,
+                  `${c.retornoPeriodoPct.toFixed(2)}%`,
+                  `${c.peso}%`,
+                ]),
+                nombreArchivo: `mejor-analistas-${indice.id}.pdf`,
+              })
+            }
+            style={{ marginTop: 12 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </div>
       )}
     </MenuLayout>
