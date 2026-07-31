@@ -148,9 +148,11 @@ async function calcularParaIndice(indice, criterio, pesoMaximo, diasVentana) {
   candidatos.sort((a, b) => (criterio.orden === "asc" ? a.valor - b.valor : b.valor - a.valor));
 
   if (candidatos.length < N_MIN) {
-    throw new Error(
+    const e = new Error(
       `Hacen falta al menos ${N_MIN} componentes con valor válido para este criterio, y solo hay ${candidatos.length}.`
     );
+    e.insuficiente = true;
+    throw e;
   }
 
   const nMaxReal = Math.min(N_MAX, candidatos.length);
@@ -220,6 +222,15 @@ export default async function handler(req, res) {
         const resultado = await calcularParaIndice(indice, criterio, pesoMaximo, diasVentana);
         resultados.push(resultado);
       } catch (errorIndice) {
+        if (errorIndice.insuficiente) {
+          resultados.push({
+            indice: indice.id,
+            nombreIndice: indice.nombre.es,
+            insuficiente: true,
+            mensaje: errorIndice.message,
+          });
+          continue;
+        }
         resultados.push({
           indice: indice.id,
           nombreIndice: indice.nombre.es,

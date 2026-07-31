@@ -61,6 +61,15 @@ export default async function handler(req, res) {
           conclusion: generarConclusionAnalistas(correlaciones),
         });
       } catch (errorIndice) {
+        if (errorIndice.insuficiente) {
+          resultados.push({
+            indice: indice.id,
+            nombreIndice: indice.nombre.es,
+            insuficiente: true,
+            mensaje: errorIndice.message,
+          });
+          continue;
+        }
         resultados.push({
           indice: indice.id,
           nombreIndice: indice.nombre.es,

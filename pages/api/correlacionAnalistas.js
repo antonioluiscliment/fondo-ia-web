@@ -38,6 +38,10 @@ export default async function handler(req, res) {
 
     res.status(200).json({ indice: indice.id, filas, correlaciones, excluidos, conclusion });
   } catch (error) {
+    if (error.insuficiente) {
+      res.status(200).json({ insuficiente: true, mensaje: error.message });
+      return;
+    }
     res.status(500).json({ error: mensajeErrorAmigable(error) });
   }
 }

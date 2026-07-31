@@ -139,9 +139,11 @@ export default async function handler(req, res) {
     candidatos.sort((a, b) => a.recommendationMean - b.recommendationMean || b.numeroAnalistas - a.numeroAnalistas);
 
     if (candidatos.length < N_MIN) {
-      throw new Error(
+      const e = new Error(
         `Hacen falta al menos ${N_MIN} componentes con consenso de analistas fiable (≥ ${MIN_ANALISTAS} analistas), y solo hay ${candidatos.length} en este momento.`
       );
+      e.insuficiente = true;
+      throw e;
     }
 
     // 2) Descargar los precios de los top N_MAX candidatos.
@@ -200,6 +202,10 @@ export default async function handler(req, res) {
       rentabilidadIndice,
     });
   } catch (error) {
+    if (error.insuficiente) {
+      res.status(200).json({ insuficiente: true, mensaje: error.message });
+      return;
+    }
     res.status(500).json({ error: mensajeErrorAmigable(error) });
   }
 }
