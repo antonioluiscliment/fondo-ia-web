@@ -2,6 +2,8 @@ import { Fragment, useEffect, useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // Grupo 2: Comprobaciones — herramientas de consulta y auditoría.
 // Este grupo irá creciendo con el desarrollo de la aplicación.
@@ -73,6 +75,49 @@ export default function Comprobaciones() {
     } finally {
       setCargando(false);
     }
+  }
+
+  // Prueba de descarga en PDF: genera el PDF en el propio navegador
+  // (jsPDF), con la misma tabla que ya se ve en pantalla — sin volver
+  // a llamar a Yahoo Finance, usa los datos que ya están cargados. Si
+  // funciona bien aquí, se puede repetir el mismo patrón en las demás
+  // tablas de la aplicación.
+  function descargarPdf() {
+    if (!datos) return;
+    const doc = new jsPDF();
+    const nombreTicker = `${tickerVisible(datos.ticker)} — ${nombresEmpresas[datos.ticker] || ""}`;
+
+    doc.setFontSize(14);
+    doc.text(t.ultimosCierres(tickerVisible(datos.ticker), datos.cierres.length), 14, 15);
+    doc.setFontSize(10);
+    doc.text(nombreTicker, 14, 22);
+
+    const filas = datos.cierres.map((c, i) => {
+      const vxp = c.volumen !== undefined && c.volumen !== null ? (c.volumen * c.cierre) / 1000 : null;
+      const anterior = i > 0 ? datos.cierres[i - 1] : null;
+      const vxpAnterior =
+        anterior && anterior.volumen !== undefined && anterior.volumen !== null
+          ? (anterior.volumen * anterior.cierre) / 1000
+          : null;
+      return [
+        c.fecha.slice(0, 10),
+        c.cierre.toFixed(2),
+        i > 0 ? `${(datos.ratios[i - 1].incremento * 100).toFixed(3)}%` : "",
+        c.volumen !== undefined && c.volumen !== null ? c.volumen.toLocaleString() : "-",
+        vxp !== null ? vxp.toLocaleString(undefined, { maximumFractionDigits: 1 }) : "-",
+        vxp !== null && vxpAnterior !== null ? `${((vxp / vxpAnterior - 1) * 100).toFixed(3)}%` : "-",
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 28,
+      head: [[t.colFecha, t.colPrecio, t.colIncremento, t.colVolumen, t.colVxP, t.colVariacionVxP]],
+      body: filas,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [45, 106, 45] },
+    });
+
+    doc.save(`${datos.ticker}-comprobacion.pdf`);
   }
 
   async function consultarPuntuaciones() {
@@ -176,38 +221,43 @@ export default function Comprobaciones() {
       {datos && (
         <>
           <h2>{t.ultimosCierres(tickerVisible(datos.ticker), datos.cierres.length)}</h2>
-          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
-            <thead>
-              <tr>
-                <th>{t.colFecha}</th>
-                <th>{t.colPrecio}</th>
-                <th>{t.colIncremento}</th>
-                <th>{t.colVolumen}</th>
-                <th>{t.colVxP}</th>
-                <th>{t.colVariacionVxP}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {datos.cierres.map((c, i) => {
-                const vxp = c.volumen !== undefined && c.volumen !== null ? (c.volumen * c.cierre) / 1000 : null;
-                const anterior = i > 0 ? datos.cierres[i - 1] : null;
-                const vxpAnterior =
-                  anterior && anterior.volumen !== undefined && anterior.volumen !== null
-                    ? (anterior.volumen * anterior.cierre) / 1000
-                    : null;
-                return (
-                  <tr key={i}>
-                    <td>{c.fecha.slice(0, 10)}</td>
-                    <td>{c.cierre.toFixed(2)}</td>
-                    <td>{i > 0 ? `${(datos.ratios[i - 1].incremento * 100).toFixed(3)}%` : ""}</td>
-                    <td>{c.volumen !== undefined && c.volumen !== null ? c.volumen.toLocaleString() : "-"}</td>
-                    <td>{vxp !== null ? vxp.toLocaleString(undefined, { maximumFractionDigits: 1 }) : "-"}</td>
-                    <td>{vxp !== null && vxpAnterior !== null ? `${((vxp / vxpAnterior - 1) * 100).toFixed(3)}%` : "-"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <button onClick={descargarPdf} style={{ marginBottom: 12 }}>
+            {t.descargarPdfBoton}
+          </button>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.colFecha}</th>
+                  <th>{t.colPrecio}</th>
+                  <th>{t.colIncremento}</th>
+                  <th>{t.colVolumen}</th>
+                  <th>{t.colVxP}</th>
+                  <th>{t.colVariacionVxP}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {datos.cierres.map((c, i) => {
+                  const vxp = c.volumen !== undefined && c.volumen !== null ? (c.volumen * c.cierre) / 1000 : null;
+                  const anterior = i > 0 ? datos.cierres[i - 1] : null;
+                  const vxpAnterior =
+                    anterior && anterior.volumen !== undefined && anterior.volumen !== null
+                      ? (anterior.volumen * anterior.cierre) / 1000
+                      : null;
+                  return (
+                    <tr key={i}>
+                      <td>{c.fecha.slice(0, 10)}</td>
+                      <td>{c.cierre.toFixed(2)}</td>
+                      <td>{i > 0 ? `${(datos.ratios[i - 1].incremento * 100).toFixed(3)}%` : ""}</td>
+                      <td>{c.volumen !== undefined && c.volumen !== null ? c.volumen.toLocaleString() : "-"}</td>
+                      <td>{vxp !== null ? vxp.toLocaleString(undefined, { maximumFractionDigits: 1 }) : "-"}</td>
+                      <td>{vxp !== null && vxpAnterior !== null ? `${((vxp / vxpAnterior - 1) * 100).toFixed(3)}%` : "-"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
@@ -290,15 +340,14 @@ export default function Comprobaciones() {
             <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16 }}>
               <thead>
                 <tr>
-                  <th>{t.colFecha}</th>
                   {variacionIndices.indices.map((ind) => (
-                    <th key={ind.id} colSpan={2}>{ind.abreviatura}</th>
+                    <th key={ind.id} colSpan={3}>{ind.abreviatura}</th>
                   ))}
                 </tr>
                 <tr>
-                  <th></th>
                   {variacionIndices.indices.map((ind) => (
                     <Fragment key={ind.id}>
+                      <th>{t.colFecha}</th>
                       <th>{t.colValor}</th>
                       <th>{t.colIncremento}</th>
                     </Fragment>
@@ -306,15 +355,24 @@ export default function Comprobaciones() {
                 </tr>
               </thead>
               <tbody>
-                {variacionIndices.filas.map((f) => (
-                  <tr key={f.fecha}>
-                    <td>{f.fecha.slice(0, 10)}</td>
+                {Array.from({ length: diasVentana }).map((_, fila) => (
+                  <tr key={fila}>
                     {variacionIndices.indices.map((ind) => {
-                      const v = f.valores[ind.id];
+                      const datosIndice = variacionIndices.porIndice[ind.id];
+                      const f = datosIndice && datosIndice.filas[fila];
+                      if (datosIndice && datosIndice.error && fila === 0) {
+                        return (
+                          <td key={ind.id} colSpan={3} rowSpan={diasVentana} style={{ color: "crimson", verticalAlign: "top" }}>
+                            {t.error}: {datosIndice.error}
+                          </td>
+                        );
+                      }
+                      if (datosIndice && datosIndice.error) return null;
                       return (
                         <Fragment key={ind.id}>
-                          <td>{v.cierre.toLocaleString()}</td>
-                          <td>{v.incremento !== null ? `${v.incremento.toFixed(3)}%` : "-"}</td>
+                          <td>{f ? f.fecha.slice(0, 10) : "-"}</td>
+                          <td>{f ? f.cierre.toLocaleString() : "-"}</td>
+                          <td>{f && f.incremento !== null ? `${f.incremento.toFixed(3)}%` : "-"}</td>
                         </Fragment>
                       );
                     })}
