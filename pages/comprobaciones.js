@@ -2,8 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { descargarTablaPdf } from "../lib/pdfComun";
 
 // Grupo 2: Comprobaciones — herramientas de consulta y auditoría.
 // Este grupo irá creciendo con el desarrollo de la aplicación.
@@ -79,18 +78,10 @@ export default function Comprobaciones() {
 
   // Prueba de descarga en PDF: genera el PDF en el propio navegador
   // (jsPDF), con la misma tabla que ya se ve en pantalla — sin volver
-  // a llamar a Yahoo Finance, usa los datos que ya están cargados. Si
-  // funciona bien aquí, se puede repetir el mismo patrón en las demás
-  // tablas de la aplicación.
+  // a llamar a Yahoo Finance, usa los datos que ya están cargados.
   function descargarPdf() {
     if (!datos) return;
-    const doc = new jsPDF();
     const nombreTicker = `${tickerVisible(datos.ticker)} — ${nombresEmpresas[datos.ticker] || ""}`;
-
-    doc.setFontSize(14);
-    doc.text(t.ultimosCierres(tickerVisible(datos.ticker), datos.cierres.length), 14, 15);
-    doc.setFontSize(10);
-    doc.text(nombreTicker, 14, 22);
 
     const filas = datos.cierres.map((c, i) => {
       const vxp = c.volumen !== undefined && c.volumen !== null ? (c.volumen * c.cierre) / 1000 : null;
@@ -109,15 +100,13 @@ export default function Comprobaciones() {
       ];
     });
 
-    autoTable(doc, {
-      startY: 28,
-      head: [[t.colFecha, t.colPrecio, t.colIncremento, t.colVolumen, t.colVxP, t.colVariacionVxP]],
-      body: filas,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [45, 106, 45] },
+    descargarTablaPdf({
+      titulo: t.ultimosCierres(tickerVisible(datos.ticker), datos.cierres.length),
+      subtitulo: nombreTicker,
+      columnas: [t.colFecha, t.colPrecio, t.colIncremento, t.colVolumen, t.colVxP, t.colVariacionVxP],
+      filas,
+      nombreArchivo: `${datos.ticker}-comprobacion.pdf`,
     });
-
-    doc.save(`${datos.ticker}-comprobacion.pdf`);
   }
 
   async function consultarPuntuaciones() {
@@ -221,9 +210,6 @@ export default function Comprobaciones() {
       {datos && (
         <>
           <h2>{t.ultimosCierres(tickerVisible(datos.ticker), datos.cierres.length)}</h2>
-          <button onClick={descargarPdf} style={{ marginBottom: 12 }}>
-            {t.descargarPdfBoton}
-          </button>
           <div style={{ overflowX: "auto" }}>
             <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
               <thead>
@@ -258,6 +244,9 @@ export default function Comprobaciones() {
               </tbody>
             </table>
           </div>
+          <button onClick={descargarPdf} style={{ marginTop: 12 }}>
+            {t.descargarPdfBoton}
+          </button>
         </>
       )}
 
@@ -319,6 +308,23 @@ export default function Comprobaciones() {
               ))}
             </tbody>
           </table>
+          <button
+            onClick={() =>
+              descargarTablaPdf({
+                titulo: t.puntuacionesResultadoTitulo(resultadoPuntuaciones.fecha, resultadoPuntuaciones.numeroSesion),
+                columnas: [t.colTicker, t.colPuntuacion, t.colPrecio],
+                filas: resultadoPuntuaciones.puntuaciones.map((p) => [
+                  `${tickerVisible(p.ticker)} — ${nombresEmpresas[p.ticker]}`,
+                  p.puntuacion,
+                  p.precio,
+                ]),
+                nombreArchivo: `puntuaciones-sesion-${resultadoPuntuaciones.numeroSesion}.pdf`,
+              })
+            }
+            style={{ marginTop: 12 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </>
       )}
 
@@ -381,6 +387,36 @@ export default function Comprobaciones() {
               </tbody>
             </table>
           </div>
+          <button
+            onClick={() => {
+              const columnas = variacionIndices.indices.flatMap((ind) => [
+                `${ind.abreviatura} ${t.colFecha}`,
+                `${ind.abreviatura} ${t.colValor}`,
+                `${ind.abreviatura} ${t.colIncremento}`,
+              ]);
+              const filas = Array.from({ length: diasVentana }).map((_, fila) =>
+                variacionIndices.indices.flatMap((ind) => {
+                  const datosIndice = variacionIndices.porIndice[ind.id];
+                  if (datosIndice && datosIndice.error) return ["-", "-", "-"];
+                  const f = datosIndice && datosIndice.filas[fila];
+                  return [
+                    f ? f.fecha.slice(0, 10) : "-",
+                    f ? f.cierre.toLocaleString() : "-",
+                    f && f.incremento !== null ? `${f.incremento.toFixed(3)}%` : "-",
+                  ];
+                })
+              );
+              descargarTablaPdf({
+                titulo: t.variacionIndicesTitulo,
+                columnas,
+                filas,
+                nombreArchivo: "variacion-indices.pdf",
+              });
+            }}
+            style={{ marginTop: 12 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </>
       )}
 
@@ -420,6 +456,30 @@ export default function Comprobaciones() {
                 ))}
               </tbody>
             </table>
+          )}
+          {componentesEtf && (
+            <button
+              onClick={() =>
+                descargarTablaPdf({
+                  titulo: t.componentesEtfTitulo,
+                  subtitulo: `${indice.nombre[idioma]} — ${indice.etfReferencia}`,
+                  columnas: [t.colTicker, t.colPeso, t.colEnNuestraLista],
+                  filas: componentesEtf.holdings.map((h) => [
+                    `${tickerVisible(h.ticker)} — ${h.nombre}`,
+                    `${h.porcentaje}%`,
+                    h.enNuestraLista
+                      ? h.notaBolsa
+                        ? `${t.enNuestraListaSi} (${h.notaBolsa})`
+                        : t.enNuestraListaSi
+                      : t.enNuestraListaNo,
+                  ]),
+                  nombreArchivo: `componentes-etf-${indice.id}.pdf`,
+                })
+              }
+              style={{ marginTop: 12 }}
+            >
+              {t.descargarPdfBoton}
+            </button>
           )}
         </>
       ) : (
@@ -477,6 +537,37 @@ export default function Comprobaciones() {
           </table>
         </div>
       )}
+      {fundamentales && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.fundamentalesTitulo,
+              subtitulo: indice.nombre[idioma],
+              columnas: [
+                t.colTicker, t.colPER, t.colPERFuturo, t.colEPS, t.colEPSFuturo,
+                t.colPVC, t.colDividendo, t.colPrecioActual, t.colVariacionDia, t.colMax52, t.colMin52,
+              ],
+              filas: fundamentales.filas.map((f) => [
+                `${tickerVisible(f.ticker)} — ${f.nombre}`,
+                f.trailingPE !== null ? f.trailingPE.toFixed(2) : t.nd,
+                f.forwardPE !== null ? f.forwardPE.toFixed(2) : t.nd,
+                f.epsTrailingTwelveMonths !== null ? f.epsTrailingTwelveMonths.toFixed(2) : t.nd,
+                f.epsForward !== null ? f.epsForward.toFixed(2) : t.nd,
+                f.priceToBook !== null ? f.priceToBook.toFixed(2) : t.nd,
+                f.dividendYield !== null ? `${f.dividendYield.toFixed(2)}%` : t.nd,
+                f.regularMarketPrice !== null ? f.regularMarketPrice.toFixed(2) : t.nd,
+                f.regularMarketChangePercent !== null ? `${f.regularMarketChangePercent.toFixed(2)}%` : t.nd,
+                f.fiftyTwoWeekHigh !== null ? f.fiftyTwoWeekHigh.toFixed(2) : t.nd,
+                f.fiftyTwoWeekLow !== null ? f.fiftyTwoWeekLow.toFixed(2) : t.nd,
+              ]),
+              nombreArchivo: `datos-fundamentales-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
+      )}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -519,6 +610,28 @@ export default function Comprobaciones() {
             </tbody>
           </table>
         </div>
+      )}
+      {recomendacionesAnalistas && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.recomendacionesAnalistasTitulo,
+              subtitulo: indice.nombre[idioma],
+              columnas: [t.colTicker, t.colConsenso, t.colNumAnalistas],
+              filas: recomendacionesAnalistas.filas.map((f) => [
+                `${tickerVisible(f.ticker)} — ${f.nombre}`,
+                f.recommendationMean !== null
+                  ? `${f.recommendationMean.toFixed(2)}${f.recommendationKey ? ` (${f.recommendationKey})` : ""}`
+                  : t.nd,
+                f.numeroAnalistas !== null ? f.numeroAnalistas : t.nd,
+              ]),
+              nombreArchivo: `recomendaciones-analistas-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
       )}
     </MenuLayout>
   );

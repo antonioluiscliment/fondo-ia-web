@@ -2,6 +2,7 @@ import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
+import { descargarTablaPdf } from "../lib/pdfComun";
 
 // Página de aterrizaje ("/"): "Selección de cartera por parámetros
 // técnicos" — selección de componentes por precio, por volumen, por
@@ -296,6 +297,24 @@ export default function Home() {
         </div>
       )}
 
+      {seleccion && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.seleccionTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
+              filas: seleccion.historico.flatMap((dia) =>
+                dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
+              ),
+              nombreArchivo: `seleccion-precio-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
+      )}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -426,6 +445,26 @@ export default function Home() {
       )}
 
 
+
+      {seleccionVolumen && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.seleccionVolumenTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
+              filas: seleccionVolumen.historico.flatMap((dia) =>
+                dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
+              ),
+              nombreArchivo: `seleccion-volumen-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
+      )}
+
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.seleccionFlujoTitulo}</h2>
@@ -555,6 +594,26 @@ export default function Home() {
       )}
 
 
+
+      {seleccionFlujo && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.seleccionFlujoTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
+              filas: seleccionFlujo.historico.flatMap((dia) =>
+                dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
+              ),
+              nombreArchivo: `seleccion-flujo-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
+      )}
+
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.seleccionPrecioBajoTitulo}</h2>
@@ -681,6 +740,26 @@ export default function Home() {
             </p>
           )}
         </div>
+      )}
+
+
+      {seleccionPrecioBajo && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.seleccionPrecioBajoTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
+              filas: seleccionPrecioBajo.historico.flatMap((dia) =>
+                dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
+              ),
+              nombreArchivo: `seleccion-precio-bajo-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
       )}
 
       <hr style={{ margin: "32px 0" }} />
@@ -811,6 +890,26 @@ export default function Home() {
         </div>
       )}
 
+
+      {seleccionVolumenBajo && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.seleccionVolumenBajoTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
+              filas: seleccionVolumenBajo.historico.flatMap((dia) =>
+                dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
+              ),
+              nombreArchivo: `seleccion-volumen-bajo-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
+      )}
+
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.seleccionFlujoBajoTitulo}</h2>
@@ -937,6 +1036,25 @@ export default function Home() {
             </p>
           )}
         </div>
+      )}
+
+      {seleccionFlujoBajo && (
+        <button
+          onClick={() =>
+            descargarTablaPdf({
+              titulo: t.seleccionFlujoBajoTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
+              filas: seleccionFlujoBajo.historico.flatMap((dia) =>
+                dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
+              ),
+              nombreArchivo: `seleccion-flujo-bajo-${indice.id}.pdf`,
+            })
+          }
+          style={{ marginTop: 12 }}
+        >
+          {t.descargarPdfBoton}
+        </button>
       )}
     </MenuLayout>
   );
