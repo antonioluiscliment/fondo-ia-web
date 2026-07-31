@@ -197,7 +197,13 @@ export default function Analisis() {
 
       {errorCorrelacionAnalistas && <p style={{ color: "crimson" }}>{t.error}: {errorCorrelacionAnalistas}</p>}
 
-      {correlacionAnalistas && (
+      {correlacionAnalistas && correlacionAnalistas.insuficiente && (
+        <p style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 12, color: "#3d4a5c" }}>
+          {correlacionAnalistas.mensaje}
+        </p>
+      )}
+
+      {correlacionAnalistas && !correlacionAnalistas.insuficiente && (
         <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
           <h3 style={{ marginTop: 0 }}>{t.correlacionAnalistasResumenTitulo}</h3>
           <div style={{ overflowX: "auto" }}>
@@ -312,6 +318,8 @@ export default function Analisis() {
                   <td>{r.nombreIndice}</td>
                   {r.error ? (
                     <td colSpan={4} style={{ color: "crimson" }}>{t.error}: {r.error}</td>
+                  ) : r.insuficiente ? (
+                    <td colSpan={4} style={{ color: "#3d4a5c" }}>{r.mensaje}</td>
                   ) : (
                     ["meses1", "meses2", "meses3", "meses6"].map((clave) => (
                       <td key={clave}>
@@ -326,7 +334,7 @@ export default function Analisis() {
           </table>
 
           {correlacionAnalistasIndices.resultados
-            .filter((r) => !r.error)
+            .filter((r) => !r.error && !r.insuficiente)
             .map((r) => (
               <p key={r.indice} style={{ marginTop: 12 }}>
                 <b>{r.nombreIndice}:</b> {r.conclusion}

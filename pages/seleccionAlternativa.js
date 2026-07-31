@@ -241,6 +241,10 @@ export default function SeleccionAlternativa() {
 
           {r.error ? (
             <p style={{ color: "crimson" }}>{t.error}: {r.error}</p>
+          ) : r.insuficiente ? (
+            <p style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 12, color: "#3d4a5c" }}>
+              {r.mensaje}
+            </p>
           ) : (
             <>
               <p>{t.mejorFundamentalNComponentes(r.nComponentes)}</p>
@@ -314,7 +318,13 @@ export default function SeleccionAlternativa() {
 
       {errorMejorAnalistas && <p style={{ color: "crimson" }}>{t.error}: {errorMejorAnalistas}</p>}
 
-      {mejorAnalistas && (
+      {mejorAnalistas && mejorAnalistas.insuficiente && (
+        <p style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 12, color: "#3d4a5c" }}>
+          {mejorAnalistas.mensaje}
+        </p>
+      )}
+
+      {mejorAnalistas && !mejorAnalistas.insuficiente && (
         <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
           <p>{t.mejorFundamentalNComponentes(mejorAnalistas.nComponentes)}</p>
           <div style={{ overflowX: "auto" }}>
