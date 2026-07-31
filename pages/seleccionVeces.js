@@ -2,6 +2,7 @@ import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
+import { descargarTablaPdf } from "../lib/pdfComun";
 
 // Página HUÉRFANA a propósito: no tiene enlace en el menú hamburguesa
 // (ver components/MenuLayout.js) desde la reestructuración del menú
@@ -126,6 +127,25 @@ export default function SeleccionVeces() {
               ))}
             </tbody>
           </table>
+          <button
+            onClick={() =>
+              descargarTablaPdf({
+                titulo: t.carteraHoyTitulo(seleccionVeces.fechaReferencia),
+                subtitulo: nombreIndice,
+                columnas: [t.colTicker, t.colVecesEnPeriodo, t.colPeso, t.colPrecio],
+                filas: seleccionVeces.carteraHoy.map((c) => [
+                  `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`,
+                  c.veces,
+                  `${c.peso}%`,
+                  c.precio,
+                ]),
+                nombreArchivo: `veces-cartera-hoy-${indice.id}.pdf`,
+              })
+            }
+            style={{ marginTop: 8 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </div>
       )}
 
@@ -187,9 +207,27 @@ export default function SeleccionVeces() {
               </p>
             </>
           )}
+          <button
+            onClick={() =>
+              descargarTablaPdf({
+                titulo: t.carteraFijaTitulo(seleccionVeces.historico[seleccionVeces.historico.length - 1].fecha),
+                subtitulo: nombreIndice,
+                columnas: [t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio],
+                filas: seleccionVeces.historico[seleccionVeces.historico.length - 1].cartera.map((c) => [
+                  `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`,
+                  `${c.peso}%`,
+                  c.puntuacion,
+                  c.precio,
+                ]),
+                nombreArchivo: `veces-cartera-fija-${indice.id}.pdf`,
+              })
+            }
+            style={{ marginTop: 8 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </div>
       )}
-
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -236,6 +274,25 @@ export default function SeleccionVeces() {
               ))}
             </tbody>
           </table>
+          <button
+            onClick={() =>
+              descargarTablaPdf({
+                titulo: t.carteraHoyTitulo(seleccionVecesVolumen.fechaReferencia),
+                subtitulo: nombreIndice,
+                columnas: [t.colTicker, t.colVecesEnPeriodo, t.colPeso, t.colPrecio],
+                filas: seleccionVecesVolumen.carteraHoy.map((c) => [
+                  `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`,
+                  c.veces,
+                  `${c.peso}%`,
+                  c.precio,
+                ]),
+                nombreArchivo: `veces-volumen-cartera-hoy-${indice.id}.pdf`,
+              })
+            }
+            style={{ marginTop: 8 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </div>
       )}
 
@@ -297,6 +354,25 @@ export default function SeleccionVeces() {
               </p>
             </>
           )}
+          <button
+            onClick={() =>
+              descargarTablaPdf({
+                titulo: t.carteraFijaTitulo(seleccionVecesVolumen.historico[seleccionVecesVolumen.historico.length - 1].fecha),
+                subtitulo: nombreIndice,
+                columnas: [t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio],
+                filas: seleccionVecesVolumen.historico[seleccionVecesVolumen.historico.length - 1].cartera.map((c) => [
+                  `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`,
+                  `${c.peso}%`,
+                  c.puntuacion,
+                  c.precio,
+                ]),
+                nombreArchivo: `veces-volumen-cartera-fija-${indice.id}.pdf`,
+              })
+            }
+            style={{ marginTop: 8 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </div>
       )}
 
