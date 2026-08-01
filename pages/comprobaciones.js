@@ -575,7 +575,6 @@ export default function Comprobaciones() {
           </>
         );
       })()}
-      )}
 
       <hr style={{ margin: "32px 0" }} />
 
