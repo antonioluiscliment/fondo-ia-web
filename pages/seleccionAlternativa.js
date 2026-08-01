@@ -38,6 +38,10 @@ export default function SeleccionAlternativa() {
   const [cargandoMejorAnalistas, setCargandoMejorAnalistas] = useState(false);
   const [errorMejorAnalistas, setErrorMejorAnalistas] = useState(null);
 
+  const [multifactor, setMultifactor] = useState(null);
+  const [cargandoMultifactor, setCargandoMultifactor] = useState(false);
+  const [errorMultifactor, setErrorMultifactor] = useState(null);
+
   async function realizarSeleccionAleatoria() {
     setCargandoSeleccionAleatoria(true);
     setErrorSeleccionAleatoria(null);
@@ -83,6 +87,22 @@ export default function SeleccionAlternativa() {
       setErrorMejorAnalistas(e.message);
     } finally {
       setCargandoMejorAnalistas(false);
+    }
+  }
+
+  async function realizarMultifactor() {
+    setCargandoMultifactor(true);
+    setErrorMultifactor(null);
+    setMultifactor(null);
+    try {
+      const resp = await fetch(`/api/multifactor?indice=${indiceId}&sesiones=${sesionesPuntuacion}&max=${pesoMaximo}&n=${nComponentes}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setMultifactor(json);
+    } catch (e) {
+      setErrorMultifactor(e.message);
+    } finally {
+      setCargandoMultifactor(false);
     }
   }
 
@@ -430,6 +450,118 @@ export default function SeleccionAlternativa() {
                   `${c.peso}%`,
                 ]),
                 nombreArchivo: `mejor-analistas-${indice.id}.pdf`,
+              })
+            }
+            style={{ marginTop: 12 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.multifactorTitulo}</h2>
+      <p>{t.multifactorDesc}</p>
+
+      <button onClick={realizarMultifactor} disabled={cargandoMultifactor}>
+        {cargandoMultifactor ? t.multifactorBotonCargando : t.multifactorBoton}
+      </button>
+
+      {errorMultifactor && <p style={{ color: "crimson" }}>{t.error}: {errorMultifactor}</p>}
+
+      {multifactor && multifactor.insuficiente && (
+        <p style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 12, color: "#3d4a5c" }}>
+          {multifactor.mensaje}
+        </p>
+      )}
+
+      {multifactor && !multifactor.insuficiente && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          {multifactor.avisoMuestraPequena && (
+            <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 12, color: "#7a5c00" }}>
+              {t.multifactorAvisoMuestraPequena}
+            </p>
+          )}
+
+          <h3 style={{ marginTop: 0 }}>{t.multifactorAjusteTitulo}</h3>
+          <p>{t.multifactorFilasTitulo(multifactor.nFilasEntrenamiento, multifactor.nFilasValidacion)}</p>
+          <p>{t.multifactorR2Entrenamiento(multifactor.r2Entrenamiento)}</p>
+          <p style={{ fontWeight: "bold" }}>{t.multifactorR2Validacion(multifactor.r2Validacion)}</p>
+
+          <h3>{t.multifactorPesosTitulo}</h3>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr><th>{t.colVariable}</th><th>{t.colPesoModelo}</th></tr>
+              </thead>
+              <tbody>
+                {[
+                  ["intercept", t.varIntercept],
+                  ["momentumPrecio", t.varMomentumPrecio],
+                  ["momentumVolumen", t.varMomentumVolumen],
+                  ["momentumFlujo", t.varMomentumFlujo],
+                  ["dispersion", t.varDispersion],
+                  ["per", t.varPer],
+                  ["epsPrecio", t.varEpsPrecio],
+                  ["pvc", t.varPvc],
+                  ["consenso", t.varConsenso],
+                ].map(([clave, etiqueta]) => (
+                  <tr key={clave}>
+                    <td>{etiqueta}</td>
+                    <td style={{ color: multifactor.pesos[clave] >= 0 ? "green" : "crimson" }}>{multifactor.pesos[clave].toFixed(4)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h3>{t.multifactorTitulo} — {t.expectativaRentabilidad}</h3>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.colTicker}</th>
+                  <th>{t.colPuntuacionModelo}</th>
+                  <th>{t.colPrecio}</th>
+                  <th>{t.colPeso}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {multifactor.cartera.map((c) => (
+                  <tr key={c.ticker}>
+                    <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
+                    <td style={{ color: c.puntuacionModelo >= 0 ? "green" : "crimson" }}>{c.puntuacionModelo.toFixed(3)}%</td>
+                    <td>{c.precio}</td>
+                    <td>{c.peso}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {multifactor.excluidos.length > 0 && (
+            <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorAnalistasExcluidos(multifactor.excluidos.length)}</p>
+          )}
+
+          <button
+            onClick={() =>
+              descargarTablaPdf({
+                titulo: t.multifactorTitulo,
+                subtitulo: nombreIndice,
+                parrafos: [
+                  t.multifactorFilasTitulo(multifactor.nFilasEntrenamiento, multifactor.nFilasValidacion),
+                  t.multifactorR2Entrenamiento(multifactor.r2Entrenamiento),
+                  t.multifactorR2Validacion(multifactor.r2Validacion),
+                ],
+                columnas: [t.colTicker, t.colPuntuacionModelo, t.colPrecio, t.colPeso],
+                filas: multifactor.cartera.map((c) => [
+                  `${tickerVisible(c.ticker)} — ${c.nombre}`,
+                  `${c.puntuacionModelo.toFixed(3)}%`,
+                  c.precio,
+                  `${c.peso}%`,
+                ]),
+                nombreArchivo: `multifactor-${indice.id}.pdf`,
               })
             }
             style={{ marginTop: 12 }}
