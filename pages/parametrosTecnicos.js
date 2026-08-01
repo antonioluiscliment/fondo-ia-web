@@ -1,5 +1,6 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
+import IconoInfo from "../components/IconoInfo";
 import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { FACTOR_PENALIZACION_DEFECTO_DISPLAY } from "../lib/i18n";
@@ -184,6 +185,7 @@ export default function ParametrosTecnicos() {
     <MenuLayout>
       <div style={{ border: "3px solid #2d6a2d", borderRadius: 8, padding: 16, background: "#f3fff3" }}>
         <h2 style={{ marginTop: 0 }}>{t.cadenaTitulo}</h2>
+        <IconoInfo>{t.cadenaInfo}</IconoInfo>
         <p>{t.cadenaDesc}</p>
         <button onClick={ejecutarCadena} disabled={bloqueadoPorDiasEfectivos || cargandoCadena}>
           {cargandoCadena ? t.cadenaBotonCargando : t.cadenaBoton}

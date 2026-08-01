@@ -1,5 +1,6 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
+import IconoInfo from "../components/IconoInfo";
 import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
@@ -86,6 +87,7 @@ export default function SeleccionVeces() {
   return (
     <MenuLayout>
       <h2>{t.seleccionVecesTitulo}</h2>
+      <IconoInfo>{t.seleccionVecesInfo}</IconoInfo>
       <p>{modoVeces === "real" ? t.seleccionVecesDescReal(sesionesVeces) : t.seleccionVecesDescAnalisis(sesionesVeces, indice.tickers.length)}</p>
 
       <p>

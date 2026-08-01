@@ -1,6 +1,7 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import BotonCompartirPdf from "../components/BotonCompartirPdf";
+import IconoInfo from "../components/IconoInfo";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
 import { descargarTablaPdf } from "../lib/pdfComun";
@@ -258,6 +259,7 @@ export default function SeleccionAlternativa() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.mejorFundamentalTitulo}</h2>
+      <IconoInfo>{t.mejorFundamentalInfo}</IconoInfo>
       <p>{t.mejorFundamentalDesc}</p>
       <p>
         {t.mejorFundamentalCriterioEtiqueta}{" "}
@@ -481,6 +483,7 @@ export default function SeleccionAlternativa() {
       <hr style={{ margin: "32px 0" }} />
 
       <h2>{t.multifactorTitulo}</h2>
+      <IconoInfo>{t.multifactorInfo}</IconoInfo>
       <p>{t.multifactorDesc}</p>
 
       <button onClick={realizarMultifactor} disabled={cargandoMultifactor}>
