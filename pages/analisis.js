@@ -2,6 +2,7 @@ import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible, INDICES } from "../lib/indices";
+import { descargarTablaPdf } from "../lib/pdfComun";
 
 // Grupo 4: Análisis — de momento solo el análisis de correlación con
 // el índice, usando los parámetros ajustados en "Formas de
@@ -184,6 +185,39 @@ export default function Analisis() {
               </tbody>
             </table>
           </div>
+          <button
+            onClick={() => {
+              const filasOrdenadas = [...analisisCorrelacion.filas].sort(
+                (a, b) => a.duracion - b.duracion || ORDEN_METODOS.indexOf(a.metodo) - ORDEN_METODOS.indexOf(b.metodo)
+              );
+              descargarTablaPdf({
+                titulo: t.analisisCorrelacionTitulo,
+                subtitulo: nombreIndice,
+                parrafos: [analisisCorrelacion.conclusion],
+                columnas: [
+                  t.colMetodo, t.colDuracion, t.colRepeticiones, t.colCorrelacionMedia,
+                  t.colRentCarteraMedia, t.colRentIndiceMedia(indice.abreviatura), t.colRentIndiceReciente(indice.abreviatura),
+                ],
+                filas: filasOrdenadas.map((fila) => [
+                  NOMBRE_METODO(t)[fila.metodo],
+                  fila.duracion,
+                  fila.repeticiones,
+                  fila.correlacionMedia !== null
+                    ? `${fila.correlacionMedia.toFixed(3)}${fila.correlacionRango ? ` [${fila.correlacionRango.min.toFixed(3)}, ${fila.correlacionRango.max.toFixed(3)}]` : ""}`
+                    : "-",
+                  fila.rentabilidadCarteraMedia !== null
+                    ? `${fila.rentabilidadCarteraMedia.toFixed(3)}%${fila.rentabilidadCarteraRango ? ` [${fila.rentabilidadCarteraRango.min.toFixed(2)}%, ${fila.rentabilidadCarteraRango.max.toFixed(2)}%]` : ""}`
+                    : "-",
+                  fila.rentabilidadIndiceMedia !== null ? `${fila.rentabilidadIndiceMedia.toFixed(3)}%` : "-",
+                  fila.rentabilidadIndiceReciente !== null ? `${fila.rentabilidadIndiceReciente.toFixed(3)}%` : "-",
+                ]),
+                nombreArchivo: `analisis-correlacion-${indice.id}.pdf`,
+              });
+            }}
+            style={{ marginTop: 12 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </div>
       )}
 
@@ -277,6 +311,35 @@ export default function Analisis() {
               </tbody>
             </table>
           </div>
+          <button
+            onClick={() => {
+              const resumen = ["meses1", "meses2", "meses3", "meses6"]
+                .map((clave, i) => {
+                  const etiqueta = [t.col1Mes, t.col2Meses, t.col3Meses, t.col6Meses][i];
+                  const c = correlacionAnalistas.correlaciones[clave];
+                  return `${etiqueta}: ${c.valor !== null ? c.valor.toFixed(3) : "-"} (n=${c.n})`;
+                })
+                .join("  |  ");
+              descargarTablaPdf({
+                titulo: t.correlacionAnalistasTitulo,
+                subtitulo: nombreIndice,
+                parrafos: [resumen, ...(correlacionAnalistas.conclusion ? [correlacionAnalistas.conclusion] : [])],
+                columnas: [t.colTicker, t.colConsenso, t.colNumAnalistas, t.col1Mes, t.col2Meses, t.col3Meses, t.col6Meses],
+                filas: correlacionAnalistas.filas.map((f) => [
+                  `${tickerVisible(f.ticker)} — ${f.nombre}`,
+                  f.recommendationMean.toFixed(2),
+                  f.numeroAnalistas,
+                  ...["incremento1m", "incremento2m", "incremento3m", "incremento6m"].map((campo) =>
+                    f[campo] !== null ? `${f[campo].toFixed(2)}%` : t.nd
+                  ),
+                ]),
+                nombreArchivo: `correlacion-analistas-${indice.id}.pdf`,
+              });
+            }}
+            style={{ marginTop: 12 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </div>
       )}
 
@@ -345,6 +408,30 @@ export default function Analisis() {
                 <b>{r.nombreIndice}:</b> {r.conclusion}
               </p>
             ))}
+
+          <button
+            onClick={() =>
+              descargarTablaPdf({
+                titulo: t.correlacionAnalistasIndicesTitulo,
+                columnas: [t.colIndice, t.col1Mes, t.col2Meses, t.col3Meses, t.col6Meses],
+                filas: correlacionAnalistasIndices.resultados.map((r) => {
+                  if (r.error) return [r.nombreIndice, `${t.error}: ${r.error}`, "", "", ""];
+                  if (r.insuficiente) return [r.nombreIndice, r.mensaje, "", "", ""];
+                  return [
+                    r.nombreIndice,
+                    ...["meses1", "meses2", "meses3", "meses6"].map((clave) => {
+                      const c = r.correlaciones[clave];
+                      return c.valor !== null ? `${c.valor.toFixed(3)} (n=${c.n})` : "-";
+                    }),
+                  ];
+                }),
+                nombreArchivo: "correlacion-analistas-indices.pdf",
+              })
+            }
+            style={{ marginTop: 12 }}
+          >
+            {t.descargarPdfBoton}
+          </button>
         </div>
       )}
 
@@ -403,6 +490,31 @@ export default function Analisis() {
                 </tbody>
             </table>
             </div>
+          )}
+          {rentabilidadEtfs && (
+            <button
+              onClick={() =>
+                descargarTablaPdf({
+                  titulo: t.rentabilidadEtfsTitulo,
+                  subtitulo: nombreIndice,
+                  columnas: [
+                    t.colEtf, t.col60Sesiones, t.col120Sesiones, t.col1Anio, t.col2Anios, t.col3Anios,
+                    t.colVolumen(rentabilidadEtfs.anioVolumen, rentabilidadEtfs.esYTD),
+                  ],
+                  filas: rentabilidadEtfs.filas.map((fila) => [
+                    fila.nombre,
+                    ...["sesiones60", "sesiones120", "anio1", "anio2", "anio3"].map((campo) =>
+                      fila[campo] !== null ? `${fila[campo].toFixed(2)}%` : "-"
+                    ),
+                    fila.volumen !== null ? fila.volumen.toLocaleString() : "-",
+                  ]),
+                  nombreArchivo: `rentabilidad-etfs-${indice.id}.pdf`,
+                })
+              }
+              style={{ marginTop: 12 }}
+            >
+              {t.descargarPdfBoton}
+            </button>
           )}
         </>
       ) : (
