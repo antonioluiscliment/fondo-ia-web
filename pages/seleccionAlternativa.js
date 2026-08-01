@@ -1,5 +1,6 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
+import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
 import { descargarTablaPdf } from "../lib/pdfComun";
@@ -234,10 +235,8 @@ export default function SeleccionAlternativa() {
         </div>
       )}
 
-      {seleccionAleatoria && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
+      {seleccionAleatoria && (() => {
+        const opciones = {
               titulo: t.seleccionAleatoriaTitulo,
               subtitulo: nombreIndice,
               columnas: [t.colFecha, t.colTicker, t.colPeso, t.colAleatorio, t.colPrecio, t.colVeces],
@@ -245,13 +244,16 @@ export default function SeleccionAlternativa() {
                 dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
               ),
               nombreArchivo: `seleccion-aleatoria-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
-      )}
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -355,6 +357,20 @@ export default function SeleccionAlternativa() {
               >
                 {t.descargarPdfBoton}
               </button>
+              <BotonCompartirPdf
+                opciones={{
+                  titulo: t.mejorFundamentalTitulo,
+                  subtitulo: r.nombreIndice,
+                  columnas: [t.colTicker, t.colValorCriterio, t.colRentabilidadPeriodo, t.colPeso],
+                  filas: r.cartera.map((c) => [
+                    `${tickerVisible(c.ticker)} — ${c.nombre}`,
+                    `${c.valor.toFixed(2)}${(criterioFundamental === "eps" || criterioFundamental === "epsFuturo") ? "%" : ""}`,
+                    `${c.retornoPeriodoPct.toFixed(2)}%`,
+                    `${c.peso}%`,
+                  ]),
+                  nombreArchivo: `mejor-fundamental-${r.indice}.pdf`,
+                }}
+              />
             </>
           )}
         </div>
@@ -436,26 +452,29 @@ export default function SeleccionAlternativa() {
               </p>
             </>
           )}
-          <button
-            onClick={() =>
-              descargarTablaPdf({
-                titulo: t.mejorAnalistasTitulo,
-                subtitulo: nombreIndice,
-                columnas: [t.colTicker, t.colConsenso, t.colNumAnalistas, t.colRentabilidadPeriodo, t.colPeso],
-                filas: mejorAnalistas.cartera.map((c) => [
-                  `${tickerVisible(c.ticker)} — ${c.nombre}`,
-                  `${c.recommendationMean.toFixed(2)}${c.recommendationKey ? ` (${c.recommendationKey})` : ""}`,
-                  c.numeroAnalistas,
-                  `${c.retornoPeriodoPct.toFixed(2)}%`,
-                  `${c.peso}%`,
-                ]),
-                nombreArchivo: `mejor-analistas-${indice.id}.pdf`,
-              })
-            }
-            style={{ marginTop: 12 }}
-          >
-            {t.descargarPdfBoton}
-          </button>
+          {(() => {
+            const opciones = {
+              titulo: t.mejorAnalistasTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colTicker, t.colConsenso, t.colNumAnalistas, t.colRentabilidadPeriodo, t.colPeso],
+              filas: mejorAnalistas.cartera.map((c) => [
+                `${tickerVisible(c.ticker)} — ${c.nombre}`,
+                `${c.recommendationMean.toFixed(2)}${c.recommendationKey ? ` (${c.recommendationKey})` : ""}`,
+                c.numeroAnalistas,
+                `${c.retornoPeriodoPct.toFixed(2)}%`,
+                `${c.peso}%`,
+              ]),
+              nombreArchivo: `mejor-analistas-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -544,30 +563,33 @@ export default function SeleccionAlternativa() {
             <p style={{ color: "#555", fontStyle: "italic" }}>{t.mejorAnalistasExcluidos(multifactor.excluidos.length)}</p>
           )}
 
-          <button
-            onClick={() =>
-              descargarTablaPdf({
-                titulo: t.multifactorTitulo,
-                subtitulo: nombreIndice,
-                parrafos: [
-                  t.multifactorFilasTitulo(multifactor.nFilasEntrenamiento, multifactor.nFilasValidacion),
-                  t.multifactorR2Entrenamiento(multifactor.r2Entrenamiento),
-                  t.multifactorR2Validacion(multifactor.r2Validacion),
-                ],
-                columnas: [t.colTicker, t.colPuntuacionModelo, t.colPrecio, t.colPeso],
-                filas: multifactor.cartera.map((c) => [
-                  `${tickerVisible(c.ticker)} — ${c.nombre}`,
-                  `${c.puntuacionModelo.toFixed(3)}%`,
-                  c.precio,
-                  `${c.peso}%`,
-                ]),
-                nombreArchivo: `multifactor-${indice.id}.pdf`,
-              })
-            }
-            style={{ marginTop: 12 }}
-          >
-            {t.descargarPdfBoton}
-          </button>
+          {(() => {
+            const opciones = {
+              titulo: t.multifactorTitulo,
+              subtitulo: nombreIndice,
+              parrafos: [
+                t.multifactorFilasTitulo(multifactor.nFilasEntrenamiento, multifactor.nFilasValidacion),
+                t.multifactorR2Entrenamiento(multifactor.r2Entrenamiento),
+                t.multifactorR2Validacion(multifactor.r2Validacion),
+              ],
+              columnas: [t.colTicker, t.colPuntuacionModelo, t.colPrecio, t.colPeso],
+              filas: multifactor.cartera.map((c) => [
+                `${tickerVisible(c.ticker)} — ${c.nombre}`,
+                `${c.puntuacionModelo.toFixed(3)}%`,
+                c.precio,
+                `${c.peso}%`,
+              ]),
+              nombreArchivo: `multifactor-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </div>
       )}
     </MenuLayout>

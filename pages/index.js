@@ -1,5 +1,6 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
+import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
 import { descargarTablaPdf } from "../lib/pdfComun";
@@ -297,10 +298,8 @@ export default function Home() {
         </div>
       )}
 
-      {seleccion && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
+      {seleccion && (() => {
+        const opciones = {
               titulo: t.seleccionTitulo,
               subtitulo: nombreIndice,
               columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
@@ -308,13 +307,16 @@ export default function Home() {
                 dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
               ),
               nombreArchivo: `seleccion-precio-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
-      )}
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -446,10 +448,8 @@ export default function Home() {
 
 
 
-      {seleccionVolumen && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
+      {seleccionVolumen && (() => {
+        const opciones = {
               titulo: t.seleccionVolumenTitulo,
               subtitulo: nombreIndice,
               columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
@@ -457,13 +457,16 @@ export default function Home() {
                 dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
               ),
               nombreArchivo: `seleccion-volumen-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
-      )}
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -595,10 +598,8 @@ export default function Home() {
 
 
 
-      {seleccionFlujo && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
+      {seleccionFlujo && (() => {
+        const opciones = {
               titulo: t.seleccionFlujoTitulo,
               subtitulo: nombreIndice,
               columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
@@ -606,13 +607,16 @@ export default function Home() {
                 dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
               ),
               nombreArchivo: `seleccion-flujo-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
-      )}
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -743,10 +747,8 @@ export default function Home() {
       )}
 
 
-      {seleccionPrecioBajo && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
+      {seleccionPrecioBajo && (() => {
+        const opciones = {
               titulo: t.seleccionPrecioBajoTitulo,
               subtitulo: nombreIndice,
               columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
@@ -754,13 +756,16 @@ export default function Home() {
                 dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
               ),
               nombreArchivo: `seleccion-precio-bajo-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
-      )}
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -891,10 +896,8 @@ export default function Home() {
       )}
 
 
-      {seleccionVolumenBajo && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
+      {seleccionVolumenBajo && (() => {
+        const opciones = {
               titulo: t.seleccionVolumenBajoTitulo,
               subtitulo: nombreIndice,
               columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
@@ -902,13 +905,16 @@ export default function Home() {
                 dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
               ),
               nombreArchivo: `seleccion-volumen-bajo-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
-      )}
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
 
       <hr style={{ margin: "32px 0" }} />
 
@@ -1038,10 +1044,8 @@ export default function Home() {
         </div>
       )}
 
-      {seleccionFlujoBajo && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
+      {seleccionFlujoBajo && (() => {
+        const opciones = {
               titulo: t.seleccionFlujoBajoTitulo,
               subtitulo: nombreIndice,
               columnas: [t.colFecha, t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
@@ -1049,13 +1053,16 @@ export default function Home() {
                 dia.cartera.map((c) => [dia.fecha, `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`, `${c.peso}%`, c.puntuacion, c.precio, c.vecesSeleccionado])
               ),
               nombreArchivo: `seleccion-flujo-bajo-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
-      )}
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
     </MenuLayout>
   );
 }

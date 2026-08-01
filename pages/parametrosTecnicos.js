@@ -1,5 +1,6 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
+import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { FACTOR_PENALIZACION_DEFECTO_DISPLAY } from "../lib/i18n";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
@@ -209,26 +210,29 @@ export default function ParametrosTecnicos() {
                 ))}
               </tbody>
             </table>
-            <button
-              onClick={() =>
-                descargarTablaPdf({
-                  titulo: t.cadenaTitulo,
-                  subtitulo: `${nombreIndice} — ${resultadoCadena.seleccion.historico[resultadoCadena.seleccion.historico.length - 1].fecha}`,
-                  columnas: [t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
-                  filas: resultadoCadena.seleccion.historico[resultadoCadena.seleccion.historico.length - 1].cartera.map((c) => [
-                    `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`,
-                    `${c.peso}%`,
-                    c.puntuacion,
-                    c.precio,
-                    c.vecesSeleccionado,
-                  ]),
-                  nombreArchivo: `cadena-seleccion-${indice.id}.pdf`,
-                })
-              }
-              style={{ marginTop: 8 }}
-            >
-              {t.descargarPdfBoton}
-            </button>
+            {(() => {
+              const opciones = {
+                titulo: t.cadenaTitulo,
+                subtitulo: `${nombreIndice} — ${resultadoCadena.seleccion.historico[resultadoCadena.seleccion.historico.length - 1].fecha}`,
+                columnas: [t.colTicker, t.colPeso, t.colPuntuacion, t.colPrecio, t.colVeces],
+                filas: resultadoCadena.seleccion.historico[resultadoCadena.seleccion.historico.length - 1].cartera.map((c) => [
+                  `${tickerVisible(c.ticker)} — ${nombresEmpresas[c.ticker]}`,
+                  `${c.peso}%`,
+                  c.puntuacion,
+                  c.precio,
+                  c.vecesSeleccionado,
+                ]),
+                nombreArchivo: `cadena-seleccion-${indice.id}.pdf`,
+              };
+              return (
+                <>
+                  <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 8 }}>
+                    {t.descargarPdfBoton}
+                  </button>
+                  <BotonCompartirPdf opciones={opciones} />
+                </>
+              );
+            })()}
 
             <h3>{t.expectativaRentabilidad}</h3>
             <p style={{ fontSize: "1.2em" }}>
@@ -292,20 +296,23 @@ export default function ParametrosTecnicos() {
               ))}
             </tbody>
           </table>
-          <button
-            onClick={() =>
-              descargarTablaPdf({
+          {(() => {
+            const opciones = {
                 titulo: t.optFactorTitulo,
                 subtitulo: nombreIndice,
                 columnas: [t.colFactor, t.colSumaBeneficio],
                 filas: resultadosOptimizacion.resultados.map((r) => [r.factor, r.sumaBeneficioSinCambio]),
                 nombreArchivo: `optimizar-factor-${indice.id}.pdf`,
-              })
-            }
-            style={{ marginTop: 8 }}
-          >
-            {t.descargarPdfBoton}
-          </button>
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 8 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </details>
       )}
 
@@ -341,20 +348,23 @@ export default function ParametrosTecnicos() {
               ))}
             </tbody>
           </table>
-          <button
-            onClick={() =>
-              descargarTablaPdf({
+          {(() => {
+            const opciones = {
                 titulo: t.optNTitulo,
                 subtitulo: nombreIndice,
                 columnas: [t.colNComponentes, t.colSumaBeneficio],
                 filas: resultadosOptimizacionN.resultados.map((r) => [r.nComponentes, r.sumaBeneficioSinCambio]),
                 nombreArchivo: `optimizar-n-${indice.id}.pdf`,
-              })
-            }
-            style={{ marginTop: 8 }}
-          >
-            {t.descargarPdfBoton}
-          </button>
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 8 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </details>
       )}
 
@@ -390,20 +400,23 @@ export default function ParametrosTecnicos() {
               ))}
             </tbody>
           </table>
-          <button
-            onClick={() =>
-              descargarTablaPdf({
+          {(() => {
+            const opciones = {
                 titulo: t.optMaxTitulo,
                 subtitulo: nombreIndice,
                 columnas: [t.colTopePct, t.colSumaBeneficio],
                 filas: resultadosOptimizacionMax.resultados.map((r) => [r.pesoMaximo, r.sumaBeneficioSinCambio]),
                 nombreArchivo: `optimizar-max-${indice.id}.pdf`,
-              })
-            }
-            style={{ marginTop: 8 }}
-          >
-            {t.descargarPdfBoton}
-          </button>
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 8 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </details>
       )}
 
@@ -452,20 +465,23 @@ export default function ParametrosTecnicos() {
               ))}
             </tbody>
           </table>
-          <button
-            onClick={() =>
-              descargarTablaPdf({
+          {(() => {
+            const opciones = {
                 titulo: t.optFrecuenciaTitulo,
                 subtitulo: nombreIndice,
                 columnas: [t.colFrecuenciaProbada, t.colSumaBeneficio],
                 filas: resultadosOptimizacionFrecuencia.resultados.map((r) => [r.frecuencia === "diario" ? t.frecuenciaDiaria : t.frecuenciaUmbral(r.frecuencia), r.sumaBeneficioSinCambio]),
                 nombreArchivo: `optimizar-frecuencia-${indice.id}.pdf`,
-              })
-            }
-            style={{ marginTop: 8 }}
-          >
-            {t.descargarPdfBoton}
-          </button>
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 8 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </details>
       )}
 
