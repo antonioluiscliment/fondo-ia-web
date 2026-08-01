@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import MenuLayout from "../components/MenuLayout";
+import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
 import { descargarTablaPdf } from "../lib/pdfComun";
@@ -79,8 +80,10 @@ export default function Comprobaciones() {
   // Prueba de descarga en PDF: genera el PDF en el propio navegador
   // (jsPDF), con la misma tabla que ya se ve en pantalla — sin volver
   // a llamar a Yahoo Finance, usa los datos que ya están cargados.
-  function descargarPdf() {
-    if (!datos) return;
+  // Devuelve las opciones (no genera nada por sí misma) para que las
+  // pueda usar tanto el botón de descargar como el de compartir.
+  function opcionesPdfComprobacion() {
+    if (!datos) return null;
     const nombreTicker = `${tickerVisible(datos.ticker)} — ${nombresEmpresas[datos.ticker] || ""}`;
 
     const filas = datos.cierres.map((c, i) => {
@@ -100,13 +103,13 @@ export default function Comprobaciones() {
       ];
     });
 
-    descargarTablaPdf({
+    return {
       titulo: t.ultimosCierres(tickerVisible(datos.ticker), datos.cierres.length),
       subtitulo: nombreTicker,
       columnas: [t.colFecha, t.colPrecio, t.colIncremento, t.colVolumen, t.colVxP, t.colVariacionVxP],
       filas,
       nombreArchivo: `${datos.ticker}-comprobacion.pdf`,
-    });
+    };
   }
 
   async function consultarPuntuaciones() {
@@ -244,9 +247,10 @@ export default function Comprobaciones() {
               </tbody>
             </table>
           </div>
-          <button onClick={descargarPdf} style={{ marginTop: 12 }}>
+          <button onClick={() => descargarTablaPdf(opcionesPdfComprobacion())} style={{ marginTop: 12 }}>
             {t.descargarPdfBoton}
           </button>
+          <BotonCompartirPdf opciones={opcionesPdfComprobacion()} />
         </>
       )}
 
@@ -308,23 +312,26 @@ export default function Comprobaciones() {
               ))}
             </tbody>
           </table>
-          <button
-            onClick={() =>
-              descargarTablaPdf({
-                titulo: t.puntuacionesResultadoTitulo(resultadoPuntuaciones.fecha, resultadoPuntuaciones.numeroSesion),
-                columnas: [t.colTicker, t.colPuntuacion, t.colPrecio],
-                filas: resultadoPuntuaciones.puntuaciones.map((p) => [
-                  `${tickerVisible(p.ticker)} — ${nombresEmpresas[p.ticker]}`,
-                  p.puntuacion,
-                  p.precio,
-                ]),
-                nombreArchivo: `puntuaciones-sesion-${resultadoPuntuaciones.numeroSesion}.pdf`,
-              })
-            }
-            style={{ marginTop: 12 }}
-          >
-            {t.descargarPdfBoton}
-          </button>
+          {(() => {
+            const opciones = {
+              titulo: t.puntuacionesResultadoTitulo(resultadoPuntuaciones.fecha, resultadoPuntuaciones.numeroSesion),
+              columnas: [t.colTicker, t.colPuntuacion, t.colPrecio],
+              filas: resultadoPuntuaciones.puntuaciones.map((p) => [
+                `${tickerVisible(p.ticker)} — ${nombresEmpresas[p.ticker]}`,
+                p.puntuacion,
+                p.precio,
+              ]),
+              nombreArchivo: `puntuaciones-sesion-${resultadoPuntuaciones.numeroSesion}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </>
       )}
 
@@ -387,36 +394,34 @@ export default function Comprobaciones() {
               </tbody>
             </table>
           </div>
-          <button
-            onClick={() => {
-              const columnas = variacionIndices.indices.flatMap((ind) => [
-                `${ind.abreviatura} ${t.colFecha}`,
-                `${ind.abreviatura} ${t.colValor}`,
-                `${ind.abreviatura} ${t.colIncremento}`,
-              ]);
-              const filas = Array.from({ length: diasVentana }).map((_, fila) =>
-                variacionIndices.indices.flatMap((ind) => {
-                  const datosIndice = variacionIndices.porIndice[ind.id];
-                  if (datosIndice && datosIndice.error) return ["-", "-", "-"];
-                  const f = datosIndice && datosIndice.filas[fila];
-                  return [
-                    f ? f.fecha.slice(0, 10) : "-",
-                    f ? f.cierre.toLocaleString() : "-",
-                    f && f.incremento !== null ? `${f.incremento.toFixed(3)}%` : "-",
-                  ];
-                })
-              );
-              descargarTablaPdf({
-                titulo: t.variacionIndicesTitulo,
-                columnas,
-                filas,
-                nombreArchivo: "variacion-indices.pdf",
-              });
-            }}
-            style={{ marginTop: 12 }}
-          >
-            {t.descargarPdfBoton}
-          </button>
+          {(() => {
+            const columnas = variacionIndices.indices.flatMap((ind) => [
+              `${ind.abreviatura} ${t.colFecha}`,
+              `${ind.abreviatura} ${t.colValor}`,
+              `${ind.abreviatura} ${t.colIncremento}`,
+            ]);
+            const filas = Array.from({ length: diasVentana }).map((_, fila) =>
+              variacionIndices.indices.flatMap((ind) => {
+                const datosIndice = variacionIndices.porIndice[ind.id];
+                if (datosIndice && datosIndice.error) return ["-", "-", "-"];
+                const f = datosIndice && datosIndice.filas[fila];
+                return [
+                  f ? f.fecha.slice(0, 10) : "-",
+                  f ? f.cierre.toLocaleString() : "-",
+                  f && f.incremento !== null ? `${f.incremento.toFixed(3)}%` : "-",
+                ];
+              })
+            );
+            const opciones = { titulo: t.variacionIndicesTitulo, columnas, filas, nombreArchivo: "variacion-indices.pdf" };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </>
       )}
 
@@ -457,30 +462,31 @@ export default function Comprobaciones() {
               </tbody>
             </table>
           )}
-          {componentesEtf && (
-            <button
-              onClick={() =>
-                descargarTablaPdf({
-                  titulo: t.componentesEtfTitulo,
-                  subtitulo: `${indice.nombre[idioma]} — ${indice.etfReferencia}`,
-                  columnas: [t.colTicker, t.colPeso, t.colEnNuestraLista],
-                  filas: componentesEtf.holdings.map((h) => [
-                    `${tickerVisible(h.ticker)} — ${h.nombre}`,
-                    `${h.porcentaje}%`,
-                    h.enNuestraLista
-                      ? h.notaBolsa
-                        ? `${t.enNuestraListaSi} (${h.notaBolsa})`
-                        : t.enNuestraListaSi
-                      : t.enNuestraListaNo,
-                  ]),
-                  nombreArchivo: `componentes-etf-${indice.id}.pdf`,
-                })
-              }
-              style={{ marginTop: 12 }}
-            >
-              {t.descargarPdfBoton}
-            </button>
-          )}
+          {componentesEtf && (() => {
+            const opciones = {
+              titulo: t.componentesEtfTitulo,
+              subtitulo: `${indice.nombre[idioma]} — ${indice.etfReferencia}`,
+              columnas: [t.colTicker, t.colPeso, t.colEnNuestraLista],
+              filas: componentesEtf.holdings.map((h) => [
+                `${tickerVisible(h.ticker)} — ${h.nombre}`,
+                `${h.porcentaje}%`,
+                h.enNuestraLista
+                  ? h.notaBolsa
+                    ? `${t.enNuestraListaSi} (${h.notaBolsa})`
+                    : t.enNuestraListaSi
+                  : t.enNuestraListaNo,
+              ]),
+              nombreArchivo: `componentes-etf-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
         </>
       ) : (
         <p style={{ color: "#555" }}>{t.sinEtfsDisponibles}</p>
@@ -537,36 +543,38 @@ export default function Comprobaciones() {
           </table>
         </div>
       )}
-      {fundamentales && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
-              titulo: t.fundamentalesTitulo,
-              subtitulo: indice.nombre[idioma],
-              columnas: [
-                t.colTicker, t.colPER, t.colPERFuturo, t.colEPS, t.colEPSFuturo,
-                t.colPVC, t.colDividendo, t.colPrecioActual, t.colVariacionDia, t.colMax52, t.colMin52,
-              ],
-              filas: fundamentales.filas.map((f) => [
-                `${tickerVisible(f.ticker)} — ${f.nombre}`,
-                f.trailingPE !== null ? f.trailingPE.toFixed(2) : t.nd,
-                f.forwardPE !== null ? f.forwardPE.toFixed(2) : t.nd,
-                f.epsTrailingTwelveMonths !== null ? f.epsTrailingTwelveMonths.toFixed(2) : t.nd,
-                f.epsForward !== null ? f.epsForward.toFixed(2) : t.nd,
-                f.priceToBook !== null ? f.priceToBook.toFixed(2) : t.nd,
-                f.dividendYield !== null ? `${f.dividendYield.toFixed(2)}%` : t.nd,
-                f.regularMarketPrice !== null ? f.regularMarketPrice.toFixed(2) : t.nd,
-                f.regularMarketChangePercent !== null ? `${f.regularMarketChangePercent.toFixed(2)}%` : t.nd,
-                f.fiftyTwoWeekHigh !== null ? f.fiftyTwoWeekHigh.toFixed(2) : t.nd,
-                f.fiftyTwoWeekLow !== null ? f.fiftyTwoWeekLow.toFixed(2) : t.nd,
-              ]),
-              nombreArchivo: `datos-fundamentales-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
+      {fundamentales && (() => {
+        const opciones = {
+          titulo: t.fundamentalesTitulo,
+          subtitulo: indice.nombre[idioma],
+          columnas: [
+            t.colTicker, t.colPER, t.colPERFuturo, t.colEPS, t.colEPSFuturo,
+            t.colPVC, t.colDividendo, t.colPrecioActual, t.colVariacionDia, t.colMax52, t.colMin52,
+          ],
+          filas: fundamentales.filas.map((f) => [
+            `${tickerVisible(f.ticker)} — ${f.nombre}`,
+            f.trailingPE !== null ? f.trailingPE.toFixed(2) : t.nd,
+            f.forwardPE !== null ? f.forwardPE.toFixed(2) : t.nd,
+            f.epsTrailingTwelveMonths !== null ? f.epsTrailingTwelveMonths.toFixed(2) : t.nd,
+            f.epsForward !== null ? f.epsForward.toFixed(2) : t.nd,
+            f.priceToBook !== null ? f.priceToBook.toFixed(2) : t.nd,
+            f.dividendYield !== null ? `${f.dividendYield.toFixed(2)}%` : t.nd,
+            f.regularMarketPrice !== null ? f.regularMarketPrice.toFixed(2) : t.nd,
+            f.regularMarketChangePercent !== null ? `${f.regularMarketChangePercent.toFixed(2)}%` : t.nd,
+            f.fiftyTwoWeekHigh !== null ? f.fiftyTwoWeekHigh.toFixed(2) : t.nd,
+            f.fiftyTwoWeekLow !== null ? f.fiftyTwoWeekLow.toFixed(2) : t.nd,
+          ]),
+          nombreArchivo: `datos-fundamentales-${indice.id}.pdf`,
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
       )}
 
       <hr style={{ margin: "32px 0" }} />
@@ -611,28 +619,29 @@ export default function Comprobaciones() {
           </table>
         </div>
       )}
-      {recomendacionesAnalistas && (
-        <button
-          onClick={() =>
-            descargarTablaPdf({
-              titulo: t.recomendacionesAnalistasTitulo,
-              subtitulo: indice.nombre[idioma],
-              columnas: [t.colTicker, t.colConsenso, t.colNumAnalistas],
-              filas: recomendacionesAnalistas.filas.map((f) => [
-                `${tickerVisible(f.ticker)} — ${f.nombre}`,
-                f.recommendationMean !== null
-                  ? `${f.recommendationMean.toFixed(2)}${f.recommendationKey ? ` (${f.recommendationKey})` : ""}`
-                  : t.nd,
-                f.numeroAnalistas !== null ? f.numeroAnalistas : t.nd,
-              ]),
-              nombreArchivo: `recomendaciones-analistas-${indice.id}.pdf`,
-            })
-          }
-          style={{ marginTop: 12 }}
-        >
-          {t.descargarPdfBoton}
-        </button>
-      )}
+      {recomendacionesAnalistas && (() => {
+        const opciones = {
+          titulo: t.recomendacionesAnalistasTitulo,
+          subtitulo: indice.nombre[idioma],
+          columnas: [t.colTicker, t.colConsenso, t.colNumAnalistas],
+          filas: recomendacionesAnalistas.filas.map((f) => [
+            `${tickerVisible(f.ticker)} — ${f.nombre}`,
+            f.recommendationMean !== null
+              ? `${f.recommendationMean.toFixed(2)}${f.recommendationKey ? ` (${f.recommendationKey})` : ""}`
+              : t.nd,
+            f.numeroAnalistas !== null ? f.numeroAnalistas : t.nd,
+          ]),
+          nombreArchivo: `recomendaciones-analistas-${indice.id}.pdf`,
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
     </MenuLayout>
   );
 }
