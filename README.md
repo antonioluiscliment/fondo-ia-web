@@ -1,7 +1,17 @@
-# Fondo IA — Paso 1 (web)
+# Fondo IA (repo fondo-ia-web)
 
-Aplicación web mínima para probar el cálculo de ratios sobre los últimos
-20 cierres diarios de los componentes del Dow Jones, usando `yahoo-finance2`.
+Aplicación web de análisis y selección de carteras bursátiles con backtesting, construida en Next.js (Pages Router) + React 18, que consume datos de Yahoo Finance. Desarrollo en solitario, desplegada en Vercel desde GitHub, gestionada a menudo desde el móvil.
+
+Estado actual
+
+Arquitectura multi-página con sidebar hamburguesa, contextos globales IdiomaContext e IndiceContext, layout persistente.
+8 índices soportados: Dow Jones, IBEX 35, CAC 40, PSI 20, DAX, AEX, FTSE MIB, Nasdaq 100.
+Parámetro global "sesiones promediadas": 3, 5, 8 o 13 (Fibonacci).
+6 métodos de selección de cartera (incluyendo 3 "antítesis").
+Análisis fundamental y rentabilidad de ETFs implementados.
+Correlación con recomendaciones de analistas (single y multi-índice).
+Lógica central en lib/motor.js, i18n en lib/i18n.js, índices en lib/indices/.
+pages/seleccionVeces.js existe pero está huérfana (sin enlace en menú).
 
 ## Cómo desplegarlo en Vercel sin escribir código
 
