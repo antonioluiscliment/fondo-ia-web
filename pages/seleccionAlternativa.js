@@ -44,6 +44,10 @@ export default function SeleccionAlternativa() {
   const [cargandoMultifactor, setCargandoMultifactor] = useState(false);
   const [errorMultifactor, setErrorMultifactor] = useState(null);
 
+  const [replica, setReplica] = useState(null);
+  const [cargandoReplica, setCargandoReplica] = useState(false);
+  const [errorReplica, setErrorReplica] = useState(null);
+
   async function realizarSeleccionAleatoria() {
     setCargandoSeleccionAleatoria(true);
     setErrorSeleccionAleatoria(null);
@@ -105,6 +109,22 @@ export default function SeleccionAlternativa() {
       setErrorMultifactor(e.message);
     } finally {
       setCargandoMultifactor(false);
+    }
+  }
+
+  async function realizarReplica() {
+    setCargandoReplica(true);
+    setErrorReplica(null);
+    setReplica(null);
+    try {
+      const resp = await fetch(`/api/replicaIndice?indice=${indiceId}&dias=${diasVentana}&max=${pesoMaximo}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setReplica(json);
+    } catch (e) {
+      setErrorReplica(e.message);
+    } finally {
+      setCargandoReplica(false);
     }
   }
 
@@ -583,6 +603,86 @@ export default function SeleccionAlternativa() {
                 `${c.peso}%`,
               ]),
               nombreArchivo: `multifactor-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.replicaTitulo}</h2>
+      <IconoInfo>{t.replicaInfo}</IconoInfo>
+      <p>{t.replicaDesc}</p>
+      {indice.etfReferencia && (
+        <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 12, color: "#7a5c00" }}>
+          {t.replicaAvisoConEtf(indice.etfReferencia)}
+        </p>
+      )}
+
+      <button onClick={realizarReplica} disabled={cargandoReplica}>
+        {cargandoReplica ? t.replicaBotonCargando : t.replicaBoton}
+      </button>
+
+      {errorReplica && <p style={{ color: "crimson" }}>{t.error}: {errorReplica}</p>}
+
+      {replica && replica.insuficiente && (
+        <p style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 12, color: "#3d4a5c" }}>
+          {replica.mensaje}
+        </p>
+      )}
+
+      {replica && !replica.insuficiente && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{t.replicaResultadoTitulo}</h3>
+          <p>{t.replicaErrorSeguimiento(replica.rmse)}</p>
+          <p>{t.replicaCorrelacion(replica.correlacion)}</p>
+
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr><th>{t.colTicker}</th><th>{t.colPesoReplica}</th></tr>
+              </thead>
+              <tbody>
+                {replica.cartera.map((c) => (
+                  <tr key={c.ticker}>
+                    <td>{tickerVisible(c.ticker)} — {c.nombre}</td>
+                    <td>{c.peso}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <h3>{t.replicaComparacionTitulo}</h3>
+          <p style={{ fontSize: "1.2em" }}>
+            {t.modelo}{" "}
+            <b style={{ color: replica.rentabilidadCarteraPct >= 0 ? "green" : "crimson" }}>
+              {replica.rentabilidadCarteraPct.toFixed(3)}%
+            </b>
+          </p>
+          <p style={{ fontSize: "1.2em" }}>
+            {t.indiceFechas(nombreIndice, replica.fechaInicio, replica.fechaFin)}{" "}
+            <b style={{ color: replica.rentabilidadIndicePct >= 0 ? "green" : "crimson" }}>
+              {replica.rentabilidadIndicePct.toFixed(3)}%
+            </b>
+          </p>
+
+          {(() => {
+            const opciones = {
+              titulo: t.replicaTitulo,
+              subtitulo: nombreIndice,
+              parrafos: [t.replicaErrorSeguimiento(replica.rmse), t.replicaCorrelacion(replica.correlacion)],
+              columnas: [t.colTicker, t.colPesoReplica],
+              filas: replica.cartera.map((c) => [`${tickerVisible(c.ticker)} — ${c.nombre}`, `${c.peso}%`]),
+              nombreArchivo: `replica-indice-${indice.id}.pdf`,
             };
             return (
               <>
