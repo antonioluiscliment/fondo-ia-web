@@ -40,7 +40,7 @@
 
 import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerCierresConActual, PESO_MAXIMO, DIAS } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
-import { calcularIncrementosSerie, buscarMejorReplica, MAX_TICKERS_FUERZA_BRUTA } from "../../lib/replicaComun";
+import { calcularIncrementosSerie, buscarMejorReplica, MAX_TICKERS_TOTAL } from "../../lib/replicaComun";
 
 let yahooFinance;
 let errorInicializacion = null;
@@ -79,11 +79,11 @@ export default async function handler(req, res) {
     }
     const pesoMaximo = req.query.max !== undefined ? Number(req.query.max) : PESO_MAXIMO;
 
-    if (indice.tickers.length > MAX_TICKERS_FUERZA_BRUTA) {
+    if (indice.tickers.length > MAX_TICKERS_TOTAL) {
       throw errorInsuficiente(
         indice.etfReferencia
-          ? `Este índice tiene ${indice.tickers.length} componentes — demasiados para probar todas las combinaciones posibles. Para este índice existe además un ETF de verdad (${indice.etfReferencia}), que ya lo replica sin necesidad de aproximarlo con unos pocos valores: mira "Rentabilidad de los ETFs" en Análisis.`
-          : `Este índice tiene ${indice.tickers.length} componentes — demasiados para probar todas las combinaciones posibles (el número de combinaciones se dispara). Esta herramienta está pensada para índices más pequeños.`
+          ? `Este índice tiene ${indice.tickers.length} componentes — demasiados incluso para la búsqueda por pasos. Para este índice existe además un ETF de verdad (${indice.etfReferencia}), que ya lo replica sin necesidad de aproximarlo con unos pocos valores: mira "Rentabilidad de los ETFs" en Análisis.`
+          : `Este índice tiene ${indice.tickers.length} componentes — demasiados incluso para la búsqueda por pasos. Esta herramienta está pensada para índices más pequeños.`
       );
     }
     if (indice.tickers.length < 3) {
@@ -127,11 +127,13 @@ export default async function handler(req, res) {
         const ref = valorEnFechaOAntes(cierres, fecha);
         return ref ? ref.cierre : null;
       });
-      // Si falta más de un 10% de las fechas para este valor, se
+      // Si falta más de un 25% de las fechas para este valor, se
       // descarta — con demasiados huecos, sus incrementos dejarían de
-      // ser representativos de la ventana real.
+      // ser representativos de la ventana real. (Antes el umbral era
+      // del 10%, demasiado estricto para ADR poco líquidos: excluía
+      // casi todo en varios índices pequeños de la serie.)
       const huecos = serie.filter((v) => v === null).length;
-      if (huecos > diasVentana * 0.1) {
+      if (huecos > diasVentana * 0.25) {
         excluidos.push({ ticker, nombre: indice.nombresEmpresas[ticker], motivo: "datosIncompletos" });
         continue;
       }
@@ -141,7 +143,7 @@ export default async function handler(req, res) {
 
     if (tickersValidos.length < 3) {
       throw errorInsuficiente(
-        `Hacen falta al menos 3 componentes con precio disponible y alineado al calendario del índice, y solo hay ${tickersValidos.length} en este momento.`
+        `Hacen falta al menos 3 componentes con precio disponible y alineado al calendario del índice, y solo hay ${tickersValidos.length} en este momento (de ${indice.tickers.length} en total; ${excluidos.length} excluidos por falta de datos).`
       );
     }
 
@@ -165,7 +167,9 @@ export default async function handler(req, res) {
 
     const resultado = buscarMejorReplica(tickersValidos, retornosPorTicker, incrementosIndice, pesoMaximo);
     if (!resultado) {
-      throw errorInsuficiente("No se ha podido calcular ninguna combinación válida con los datos disponibles en este momento.");
+      throw errorInsuficiente(
+        `No se ha podido calcular ninguna combinación válida con los ${tickersValidos.length} componentes disponibles en esta ventana de ${diasVentana} sesiones — probablemente varios se mueven de forma casi idéntica entre sí. Prueba con una ventana más larga (más sesiones) desde "Parámetros técnicos".`
+      );
     }
 
     // Rentabilidad acumulada de la cartera elegida y del índice en la
