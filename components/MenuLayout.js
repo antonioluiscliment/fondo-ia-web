@@ -282,7 +282,20 @@ export default function MenuLayout({ children }) {
 
           {errorObservaciones && <p style={{ color: "crimson" }}>{t.error}: {errorObservaciones}</p>}
           {mostrarObservaciones && observaciones && (
-            <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: observaciones }} />
+            <>
+              <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: observaciones }} />
+              <button
+                onClick={() =>
+                  descargarHtmlPdf({ titulo: t.observacionesMostrar, html: observaciones, nombreArchivo: "observaciones.pdf" })
+                }
+              >
+                {t.descargarPdfBoton}
+              </button>
+              <BotonCompartirPdf
+                opciones={{ titulo: t.observacionesMostrar, html: observaciones, nombreArchivo: "observaciones.pdf" }}
+                compartirFn={compartirHtmlPdf}
+              />
+            </>
           )}
 
           {errorHistoria && <p style={{ color: "crimson" }}>{t.error}: {errorHistoria}</p>}
