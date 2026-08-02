@@ -15,12 +15,22 @@
 // referencia — para los índices que sí lo tienen, comprar el ETF
 // sigue siendo la opción más sencilla y fiable de replicarlos.
 //
-// La búsqueda es por fuerza bruta (prueba todas las combinaciones
-// posibles de 3 a 6 valores), factible solo porque estos índices son
-// pequeños. Por eso esta herramienta rechaza índices con más de
-// MAX_TICKERS_FUERZA_BRUTA componentes — no porque no se pueda
-// calcular nada, sino porque el número de combinaciones se dispara
-// y, además, esos índices grandes ya suelen tener ETF de verdad.
+// Cada valor se descarga POR SEPARADO, con su propio calendario, y se
+// alinea al calendario del índice buscando el cierre en cada fecha o
+// el más próximo anterior — no se exige que TODOS los valores
+// (típicamente 15-18 en estos índices) coincidan exactamente en las
+// mismas fechas de cotización a la vez, porque eso resultó ser
+// demasiado frágil (ver el mismo cambio ya hecho en
+// pages/api/variacionIndices.js): basta un hueco de datos en un solo
+// valor para que la intersección se quede corta o vacía. Si un valor
+// concreto falla al descargar (símbolo puntual caído, etc.), se
+// excluye de la búsqueda sin romper el resto — con que queden al
+// menos 3 valores válidos, la herramienta sigue funcionando.
+//
+// La búsqueda de la mejor combinación es por fuerza bruta (prueba
+// todas las combinaciones posibles de 3 a 6 valores), factible solo
+// porque estos índices son pequeños. Por eso esta herramienta rechaza
+// índices con más de MAX_TICKERS_FUERZA_BRUTA componentes.
 //
 // Parámetros de la query:
 //   indice - id del índice a analizar.
@@ -28,7 +38,7 @@
 //            defecto, la ventana de backtest compartida de la app).
 //   max    - tope de diversificación por valor.
 
-import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerDatosAlineados, PESO_MAXIMO, DIAS } from "../../lib/motor";
+import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerCierresConActual, PESO_MAXIMO, DIAS } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
 import { calcularIncrementosSerie, buscarMejorReplica, MAX_TICKERS_FUERZA_BRUTA } from "../../lib/replicaComun";
 
@@ -44,6 +54,18 @@ function errorInsuficiente(mensaje) {
   const e = new Error(mensaje);
   e.insuficiente = true;
   return e;
+}
+
+// Último cierre disponible en la fecha exacta o antes (los cierres
+// vienen ordenados cronológicamente ascendente). Null si no hay
+// ninguno anterior a esa fecha.
+function valorEnFechaOAntes(cierres, fechaObjetivoISO) {
+  let elegido = null;
+  for (const c of cierres) {
+    if (c.fecha <= fechaObjetivoISO) elegido = c;
+    else break;
+  }
+  return elegido;
 }
 
 export default async function handler(req, res) {
@@ -70,18 +92,78 @@ export default async function handler(req, res) {
       );
     }
 
-    // Se descargan a la vez los componentes y el propio índice (como
-    // un ticker más), para que todas las series queden alineadas
-    // exactamente a las mismas fechas.
-    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasVentana, [...indice.tickers, indice.simboloIndice]);
+    // Margen para poder alinear con holgura (algunos festivos propios
+    // no coincidentes no deberían dejar la ventana corta).
+    const sesionesDescarga = diasVentana + 15;
 
-    const incrementosIndice = calcularIncrementosSerie(datos[indice.simboloIndice].map((d) => d.cierre)).slice(1);
-    const retornosPorTicker = {};
+    // 1) El índice, con su propio calendario. Si esto falla, es un
+    // fallo real (no hay nada que replicar sin el índice).
+    const cierresIndice = await obtenerCierresConActual(yahooFinance, indice.simboloIndice, sesionesDescarga);
+    const fechasIndice = cierresIndice.slice(-diasVentana).map((c) => c.fecha);
+
+    // 2) Cada componente, por separado — si uno falla, se excluye sin
+    // romper los demás.
+    const excluidos = [];
+    const cierresPorTicker = {};
+    await Promise.all(
+      indice.tickers.map(async (ticker) => {
+        try {
+          cierresPorTicker[ticker] = await obtenerCierresConActual(yahooFinance, ticker, sesionesDescarga);
+        } catch {
+          excluidos.push({ ticker, nombre: indice.nombresEmpresas[ticker], motivo: "sinPrecio" });
+        }
+      })
+    );
+
+    // 3) Alinear cada componente válido al calendario del índice
+    // (cierre en cada fecha del índice, o el más próximo anterior).
+    const tickersValidos = [];
+    const cierresAlineados = {};
     for (const ticker of indice.tickers) {
-      retornosPorTicker[ticker] = calcularIncrementosSerie(datos[ticker].map((d) => d.cierre)).slice(1);
+      const cierres = cierresPorTicker[ticker];
+      if (!cierres) continue; // ya excluido en el paso anterior
+
+      const serie = fechasIndice.map((fecha) => {
+        const ref = valorEnFechaOAntes(cierres, fecha);
+        return ref ? ref.cierre : null;
+      });
+      // Si falta más de un 10% de las fechas para este valor, se
+      // descarta — con demasiados huecos, sus incrementos dejarían de
+      // ser representativos de la ventana real.
+      const huecos = serie.filter((v) => v === null).length;
+      if (huecos > diasVentana * 0.1) {
+        excluidos.push({ ticker, nombre: indice.nombresEmpresas[ticker], motivo: "datosIncompletos" });
+        continue;
+      }
+      tickersValidos.push(ticker);
+      cierresAlineados[ticker] = serie;
     }
 
-    const resultado = buscarMejorReplica(indice.tickers, retornosPorTicker, incrementosIndice, pesoMaximo);
+    if (tickersValidos.length < 3) {
+      throw errorInsuficiente(
+        `Hacen falta al menos 3 componentes con precio disponible y alineado al calendario del índice, y solo hay ${tickersValidos.length} en este momento.`
+      );
+    }
+
+    // 4) Incrementos diarios — para el cálculo, se rellena cualquier
+    // hueco puntual que haya quedado repitiendo el último valor
+    // disponible (equivale a un incremento de 0% ese día para ese
+    // valor concreto, en vez de tirar la fila entera).
+    const rellenarHuecos = (serie) => {
+      const resultado = [...serie];
+      for (let i = 1; i < resultado.length; i++) {
+        if (resultado[i] === null) resultado[i] = resultado[i - 1];
+      }
+      return resultado;
+    };
+
+    const incrementosIndice = calcularIncrementosSerie(cierresIndice.slice(-diasVentana).map((c) => c.cierre)).slice(1);
+    const retornosPorTicker = {};
+    for (const ticker of tickersValidos) {
+      retornosPorTicker[ticker] = calcularIncrementosSerie(rellenarHuecos(cierresAlineados[ticker])).slice(1);
+    }
+
+    const resultado = buscarMejorReplica(tickersValidos, retornosPorTicker, incrementosIndice, pesoMaximo);
     if (!resultado) {
       throw errorInsuficiente("No se ha podido calcular ninguna combinación válida con los datos disponibles en este momento.");
     }
@@ -99,8 +181,8 @@ export default async function handler(req, res) {
     res.status(200).json({
       indice: indice.id,
       diasVentana,
-      fechaInicio: fechas[1], // fechas[0] se pierde al calcular el primer incremento
-      fechaFin: fechas[fechas.length - 1],
+      fechaInicio: fechasIndice[1], // fechasIndice[0] se pierde al calcular el primer incremento
+      fechaFin: fechasIndice[fechasIndice.length - 1],
       nComponentes: resultado.n,
       cartera: resultado.tickers.map((ticker, i) => ({
         ticker,
@@ -112,6 +194,7 @@ export default async function handler(req, res) {
       rentabilidadCarteraPct,
       rentabilidadIndicePct,
       tieneEtf: !!indice.etfReferencia,
+      excluidos,
     });
   } catch (error) {
     if (error.insuficiente) {
