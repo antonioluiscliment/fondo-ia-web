@@ -3,7 +3,7 @@ import MenuLayout from "../components/MenuLayout";
 import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible, INDICES } from "../lib/indices";
-import { descargarTablaPdf } from "../lib/pdfComun";
+import { descargarTablaPdf, descargarMultiplesTablasPdf, compartirMultiplesTablasPdf } from "../lib/pdfComun";
 
 // Grupo 4: Análisis — de momento solo el análisis de correlación con
 // el índice, usando los parámetros ajustados en "Formas de
@@ -58,6 +58,10 @@ export default function Analisis() {
   const [rentabilidadEtfs, setRentabilidadEtfs] = useState(null);
   const [cargandoRentabilidadEtfs, setCargandoRentabilidadEtfs] = useState(false);
   const [errorRentabilidadEtfs, setErrorRentabilidadEtfs] = useState(null);
+
+  const [rentabilidadEtfsTodos, setRentabilidadEtfsTodos] = useState(null);
+  const [cargandoRentabilidadEtfsTodos, setCargandoRentabilidadEtfsTodos] = useState(false);
+  const [errorRentabilidadEtfsTodos, setErrorRentabilidadEtfsTodos] = useState(null);
 
   async function realizarAnalisisCorrelacion() {
     setCargandoAnalisisCorrelacion(true);
@@ -126,6 +130,22 @@ export default function Analisis() {
       setErrorRentabilidadEtfs(e.message);
     } finally {
       setCargandoRentabilidadEtfs(false);
+    }
+  }
+
+  async function consultarRentabilidadEtfsTodos() {
+    setCargandoRentabilidadEtfsTodos(true);
+    setErrorRentabilidadEtfsTodos(null);
+    setRentabilidadEtfsTodos(null);
+    try {
+      const resp = await fetch(`/api/rentabilidadEtfsTodos`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setRentabilidadEtfsTodos(json);
+    } catch (e) {
+      setErrorRentabilidadEtfsTodos(e.message);
+    } finally {
+      setCargandoRentabilidadEtfsTodos(false);
     }
   }
 
@@ -530,6 +550,105 @@ export default function Analisis() {
         </>
       ) : (
         <p style={{ color: "#555" }}>{t.sinEtfsDisponibles}</p>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.rentabilidadEtfsTodosTitulo}</h2>
+      <p>{t.rentabilidadEtfsTodosDesc}</p>
+
+      <button onClick={consultarRentabilidadEtfsTodos} disabled={cargandoRentabilidadEtfsTodos}>
+        {cargandoRentabilidadEtfsTodos ? t.rentabilidadEtfsTodosBotonCargando : t.rentabilidadEtfsTodosBoton}
+      </button>
+
+      {errorRentabilidadEtfsTodos && <p style={{ color: "crimson" }}>{t.error}: {errorRentabilidadEtfsTodos}</p>}
+
+      {rentabilidadEtfsTodos && (
+        <>
+          {rentabilidadEtfsTodos.resultados.map((r) => (
+            <div key={r.indice} style={{ marginTop: 24 }}>
+              <h3>{r.nombreIndice}</h3>
+              {r.error ? (
+                <p style={{ color: "crimson" }}>{t.error}: {r.error}</p>
+              ) : (
+                <div style={{ overflowX: "auto" }}>
+                  <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+                    <thead>
+                      <tr>
+                        <th>{t.colEtf}</th>
+                        <th>{t.col60Sesiones}</th>
+                        <th>{t.col120Sesiones}</th>
+                        <th>{t.col1Anio}</th>
+                        <th>{t.col2Anios}</th>
+                        <th>{t.col3Anios}</th>
+                        <th>{t.colVolumen(rentabilidadEtfsTodos.anioVolumen, rentabilidadEtfsTodos.esYTD)}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {r.filas.map((fila) => {
+                        const filaIndice = r.filas[0];
+                        return (
+                          <tr key={fila.ticker} style={{ fontWeight: fila.esIndice ? "bold" : "normal" }}>
+                            <td style={fila.esComparable === false ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
+                              {fila.nombre}
+                            </td>
+                            {["sesiones60", "sesiones120", "anio1", "anio2", "anio3"].map((campo) => {
+                              const valor = fila[campo];
+                              const valorIndice = filaIndice[campo];
+                              let color = "inherit";
+                              if (!fila.esIndice && valor !== null && valorIndice !== null) {
+                                if (valor > valorIndice) color = "green";
+                                else if (valor < valorIndice) color = "crimson";
+                              }
+                              return (
+                                <td key={campo} style={{ color }}>
+                                  {valor !== null ? `${valor.toFixed(2)}%` : "-"}
+                                </td>
+                              );
+                            })}
+                            <td>{fila.volumen !== null ? fila.volumen.toLocaleString() : "-"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {(() => {
+            const columnasComunes = [
+              t.colEtf, t.col60Sesiones, t.col120Sesiones, t.col1Anio, t.col2Anios, t.col3Anios,
+              t.colVolumen(rentabilidadEtfsTodos.anioVolumen, rentabilidadEtfsTodos.esYTD),
+            ];
+            const opciones = {
+              titulo: t.rentabilidadEtfsTodosTitulo,
+              secciones: rentabilidadEtfsTodos.resultados.map((r) => ({
+                subtitulo: r.nombreIndice,
+                columnas: columnasComunes,
+                filas: r.error
+                  ? [[`${t.error}: ${r.error}`, "", "", "", "", "", ""]]
+                  : r.filas.map((fila) => [
+                      fila.nombre,
+                      ...["sesiones60", "sesiones120", "anio1", "anio2", "anio3"].map((campo) =>
+                        fila[campo] !== null ? `${fila[campo].toFixed(2)}%` : "-"
+                      ),
+                      fila.volumen !== null ? fila.volumen.toLocaleString() : "-",
+                    ]),
+              })),
+              nombreArchivo: "rentabilidad-todos-los-etfs.pdf",
+            };
+            return (
+              <>
+                <button onClick={() => descargarMultiplesTablasPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} compartirFn={compartirMultiplesTablasPdf} />
+              </>
+            );
+          })()}
+        </>
       )}
     </MenuLayout>
   );
