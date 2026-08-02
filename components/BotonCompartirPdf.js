@@ -15,13 +15,18 @@
 //   <button onClick={() => descargarTablaPdf(opciones)}>{t.descargarPdfBoton}</button>
 //   <BotonCompartirPdf opciones={opciones} />
 // donde "opciones" es el mismo objeto que ya se le pasa a
-// descargarTablaPdf (títuloS, columnas, filas, nombreArchivo...).
+// descargarTablaPdf (título, columnas, filas, nombreArchivo...).
+//
+// Para el caso de un PDF con varias tablas (una por índice, ver
+// "Rentabilidad de todos los ETFs"), se le pasa la función de
+// compartir correspondiente en compartirFn:
+//   <BotonCompartirPdf opciones={opciones} compartirFn={compartirMultiplesTablasPdf} />
 
 import { useState } from "react";
 import { useAppConfig } from "../lib/appConfig";
 import { compartirTablaPdf, compartirDisponible } from "../lib/pdfComun";
 
-export default function BotonCompartirPdf({ opciones, style }) {
+export default function BotonCompartirPdf({ opciones, style, compartirFn = compartirTablaPdf }) {
   const { t } = useAppConfig();
   const [cargando, setCargando] = useState(false);
   const [noDisponible, setNoDisponible] = useState(false);
@@ -35,7 +40,7 @@ export default function BotonCompartirPdf({ opciones, style }) {
     setCargando(true);
     setNoDisponible(false);
     try {
-      await compartirTablaPdf(opciones);
+      await compartirFn(opciones);
     } catch {
       setNoDisponible(true);
     } finally {
