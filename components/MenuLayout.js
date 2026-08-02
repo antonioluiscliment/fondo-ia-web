@@ -3,6 +3,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAppConfig } from "../lib/appConfig";
 import { INDICES, obtenerIndice } from "../lib/indices";
+import BotonCompartirPdf from "./BotonCompartirPdf";
+import { descargarHtmlPdf, compartirHtmlPdf } from "../lib/pdfComun";
 
 // "General" ya no es una opción del menú hamburguesa: el selector de
 // índice e idioma viven siempre visibles en el marco exterior (más
@@ -262,7 +264,20 @@ export default function MenuLayout({ children }) {
 
           {errorEspecificaciones && <p style={{ color: "crimson" }}>{t.error}: {errorEspecificaciones}</p>}
           {mostrarEspecificaciones && especificaciones && (
-            <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: especificaciones }} />
+            <>
+              <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: especificaciones }} />
+              <button
+                onClick={() =>
+                  descargarHtmlPdf({ titulo: t.especificacionesMostrar, html: especificaciones, nombreArchivo: "especificaciones.pdf" })
+                }
+              >
+                {t.descargarPdfBoton}
+              </button>
+              <BotonCompartirPdf
+                opciones={{ titulo: t.especificacionesMostrar, html: especificaciones, nombreArchivo: "especificaciones.pdf" }}
+                compartirFn={compartirHtmlPdf}
+              />
+            </>
           )}
 
           {errorObservaciones && <p style={{ color: "crimson" }}>{t.error}: {errorObservaciones}</p>}
