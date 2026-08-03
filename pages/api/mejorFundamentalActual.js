@@ -88,6 +88,7 @@ function numeroValido(valor) {
 function retornoTotal(cierres) {
   const inicial = cierres[0].cierre;
   const final = cierres[cierres.length - 1].cierre;
+  if (inicial === null || inicial === undefined || inicial === 0 || final === null || final === undefined) return null;
   return final / inicial - 1;
 }
 

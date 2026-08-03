@@ -68,6 +68,9 @@ function rentabilidadIndiceEnPeriodo(cierresIndice, fechaInicioObjetivo, fechaFi
   const inicio = cierresIndice.find((c) => c.fecha === fechaInicioObjetivo) || cierresIndice[0];
   const fin =
     [...cierresIndice].reverse().find((c) => c.fecha === fechaFinObjetivo) || cierresIndice[cierresIndice.length - 1];
+  if (inicio.cierre === null || inicio.cierre === undefined || inicio.cierre === 0 || fin.cierre === null || fin.cierre === undefined) {
+    return null;
+  }
   return Number(((fin.cierre / inicio.cierre - 1) * 100).toFixed(4));
 }
 
