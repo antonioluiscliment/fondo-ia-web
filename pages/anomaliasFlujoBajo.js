@@ -24,14 +24,22 @@ export default function AnomaliasFlujoBajo() {
   const [cargandoConcentracion, setCargandoConcentracion] = useState(false);
   const [errorConcentracion, setErrorConcentracion] = useState(null);
 
+  const [caidas, setCaidas] = useState(null);
+  const [cargandoCaidas, setCargandoCaidas] = useState(false);
+  const [errorCaidas, setErrorCaidas] = useState(null);
+
+  const [volumen, setVolumen] = useState(null);
+  const [cargandoVolumen, setCargandoVolumen] = useState(false);
+  const [errorVolumen, setErrorVolumen] = useState(null);
+
+  const queryComun = `indice=${indiceId}&sesiones=${sesionesPuntuacion}&factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}`;
+
   async function realizarConcentracion() {
     setCargandoConcentracion(true);
     setErrorConcentracion(null);
     setConcentracion(null);
     try {
-      const resp = await fetch(
-        `/api/concentracionSeleccion?indice=${indiceId}&sesiones=${sesionesPuntuacion}&factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}`
-      );
+      const resp = await fetch(`/api/concentracionSeleccion?${queryComun}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setConcentracion(json);
@@ -39,6 +47,38 @@ export default function AnomaliasFlujoBajo() {
       setErrorConcentracion(e.message);
     } finally {
       setCargandoConcentracion(false);
+    }
+  }
+
+  async function realizarCaidas() {
+    setCargandoCaidas(true);
+    setErrorCaidas(null);
+    setCaidas(null);
+    try {
+      const resp = await fetch(`/api/caidasPrevias?${queryComun}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setCaidas(json);
+    } catch (e) {
+      setErrorCaidas(e.message);
+    } finally {
+      setCargandoCaidas(false);
+    }
+  }
+
+  async function realizarVolumen() {
+    setCargandoVolumen(true);
+    setErrorVolumen(null);
+    setVolumen(null);
+    try {
+      const resp = await fetch(`/api/perfilVolumenPrevio?${queryComun}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setVolumen(json);
+    } catch (e) {
+      setErrorVolumen(e.message);
+    } finally {
+      setCargandoVolumen(false);
     }
   }
 
@@ -125,6 +165,149 @@ export default function AnomaliasFlujoBajo() {
                 ];
               }),
               nombreArchivo: `concentracion-seleccion-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.caidasPreviasTitulo}</h2>
+      <p>{t.caidasPreviasDesc}</p>
+
+      <button onClick={realizarCaidas} disabled={cargandoCaidas}>
+        {cargandoCaidas ? t.caidasPreviasBotonCargando : t.caidasPreviasBoton}
+      </button>
+
+      {errorCaidas && <p style={{ color: "crimson" }}>{t.error}: {errorCaidas}</p>}
+
+      {caidas && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.colMetodo}</th>
+                  <th>{t.colUmbralCaida}</th>
+                  <th>{t.colPctAlcanzado}</th>
+                  <th>{t.colSesionesAtras}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {["flujoBajo", "flujo"].flatMap((metodo) =>
+                  caidas.resultados[metodo].porUmbral.map((u, i) => (
+                    <tr key={`${metodo}-${u.umbral}`}>
+                      {i === 0 && (
+                        <td rowSpan={caidas.resultados[metodo].porUmbral.length} style={{ fontWeight: "bold", verticalAlign: "top" }}>
+                          {metodo === "flujoBajo" ? t.metodoFlujoBajo : t.metodoFlujo}
+                          <br />
+                          <span style={{ fontWeight: "normal", color: "#555" }}>
+                            ({caidas.resultados[metodo].totalSelecciones} {t.seleccionesEtiqueta})
+                          </span>
+                        </td>
+                      )}
+                      <td>{u.umbral}%</td>
+                      <td>{u.pctAlcanzado !== null ? `${u.pctAlcanzado}%` : "-"}</td>
+                      <td>{u.xMedio !== null ? u.xMedio : "-"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {(() => {
+            const opciones = {
+              titulo: t.caidasPreviasTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colMetodo, t.colUmbralCaida, t.colPctAlcanzado, t.colSesionesAtras],
+              filas: ["flujoBajo", "flujo"].flatMap((metodo) =>
+                caidas.resultados[metodo].porUmbral.map((u) => [
+                  metodo === "flujoBajo" ? t.metodoFlujoBajo : t.metodoFlujo,
+                  `${u.umbral}%`,
+                  u.pctAlcanzado !== null ? `${u.pctAlcanzado}%` : "-",
+                  u.xMedio !== null ? u.xMedio : "-",
+                ])
+              ),
+              nombreArchivo: `caidas-previas-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.perfilVolumenTitulo}</h2>
+      <p>{t.perfilVolumenDesc}</p>
+
+      <button onClick={realizarVolumen} disabled={cargandoVolumen}>
+        {cargandoVolumen ? t.perfilVolumenBotonCargando : t.perfilVolumenBoton}
+      </button>
+
+      {errorVolumen && <p style={{ color: "crimson" }}>{t.error}: {errorVolumen}</p>}
+
+      {volumen && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.colMetodo}</th>
+                  <th>{t.colSelecciones}</th>
+                  <th>{t.colPicoRatioMedio}</th>
+                  <th>{t.colPctConPico}</th>
+                  <th>{t.colPctSinPico}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {["flujoBajo", "flujo"].map((metodo) => {
+                  const r = volumen.resultados[metodo];
+                  return (
+                    <tr key={metodo}>
+                      <td style={{ fontWeight: "bold" }}>{metodo === "flujoBajo" ? t.metodoFlujoBajo : t.metodoFlujo}</td>
+                      <td>{r.totalSelecciones}</td>
+                      <td>{r.picoRatioMedio !== null ? `${r.picoRatioMedio}×` : "-"}</td>
+                      <td>{r.pctConPico !== null ? `${r.pctConPico}%` : "-"}</td>
+                      <td>{r.pctSinPico !== null ? `${r.pctSinPico}%` : "-"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {(() => {
+            const opciones = {
+              titulo: t.perfilVolumenTitulo,
+              subtitulo: nombreIndice,
+              columnas: [t.colMetodo, t.colSelecciones, t.colPicoRatioMedio, t.colPctConPico, t.colPctSinPico],
+              filas: ["flujoBajo", "flujo"].map((metodo) => {
+                const r = volumen.resultados[metodo];
+                return [
+                  metodo === "flujoBajo" ? t.metodoFlujoBajo : t.metodoFlujo,
+                  r.totalSelecciones,
+                  r.picoRatioMedio !== null ? `${r.picoRatioMedio}×` : "-",
+                  r.pctConPico !== null ? `${r.pctConPico}%` : "-",
+                  r.pctSinPico !== null ? `${r.pctSinPico}%` : "-",
+                ];
+              }),
+              nombreArchivo: `perfil-volumen-previo-${indice.id}.pdf`,
             };
             return (
               <>
