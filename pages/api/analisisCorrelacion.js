@@ -29,6 +29,7 @@ import {
   SESIONES_PUNTUACION_DEFECTO,
 } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
+import { DURACIONES, MAX_REPETICIONES, cortarDatos, calcularVentanas, descomponerMetodo, calcularDiasTotal } from "../../lib/ventanasBacktestComun";
 
 let yahooFinance;
 let errorInicializacion = null;
@@ -38,27 +39,7 @@ try {
   errorInicializacion = e;
 }
 
-const DURACIONES = [20, 30, 50, 80, 120];
-const MAX_REPETICIONES = 6; // ventanas históricas distintas, sin solape, por duración
 const SEMILLAS_ALEATORIO = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // semillas de control, distintas de la semilla por defecto (42) de la app
-
-function cortarDatos(datos, desde, hasta) {
-  return Object.fromEntries(Object.keys(datos).map((tk) => [tk, datos[tk].slice(desde, hasta)]));
-}
-
-// Devuelve las ventanas [inicio, fin) no solapadas de tamaño
-// (duracion + sesionesPuntuacion), tantas como quepan hacia atrás
-// desde el final del histórico descargado, hasta MAX_REPETICIONES.
-function calcularVentanas(totalDias, duracion, sesionesPuntuacion) {
-  const tamano = duracion + sesionesPuntuacion;
-  const ventanas = [];
-  let fin = totalDias;
-  while (ventanas.length < MAX_REPETICIONES && fin - tamano >= 0) {
-    ventanas.push({ inicio: fin - tamano, fin });
-    fin -= duracion;
-  }
-  return ventanas;
-}
 
 // Rentabilidad del índice entre las fechas de inicio y fin de una
 // ventana concreta, a partir de los cierres del índice ya descargados
@@ -77,14 +58,6 @@ function rentabilidadIndiceEnPeriodo(cierresIndice, fechaInicioObjetivo, fechaFi
 // Ejecuta un backtest sobre una ventana concreta y devuelve su
 // correlación con el índice y su rentabilidad (de la cartera y del
 // propio índice en ese mismo periodo).
-// Los métodos "Bajo" (precioBajo, volumenBajo, flujoBajo) son la
-// antítesis de precio/volumen/flujo: mismo cálculo de puntuación,
-// pero seleccionando los últimos de la clasificación en vez de los
-// primeros.
-function descomponerMetodo(metodo) {
-  const invertido = metodo.endsWith("Bajo");
-  return { criterioPuntuacion: invertido ? metodo.slice(0, -"Bajo".length) : metodo, invertido };
-}
 
 function ejecutarVentana(fechas, datos, ventana, criterioPuntuacion, semillaAleatoria, incrementosIndice, cierresIndice, params, invertido = false) {
   const fechasV = fechas.slice(ventana.inicio, ventana.fin);
@@ -266,7 +239,7 @@ export default async function handler(req, res) {
     }
     params.sesionesPuntuacion = sesionesPuntuacion;
 
-    const diasTotal = Math.max(...DURACIONES) * MAX_REPETICIONES + sesionesPuntuacion + 20;
+    const diasTotal = calcularDiasTotal(sesionesPuntuacion);
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, diasTotal, indice.tickers);
     const { incrementos: incrementosIndice, cierres: cierresIndice } = await obtenerIncrementosIndice(
       yahooFinance,
