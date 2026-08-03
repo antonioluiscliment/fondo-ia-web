@@ -16,6 +16,7 @@ const ENLACES = [
   { href: "/", labelKey: "menuSeleccionTecnica" },
   { href: "/seleccionAlternativa", labelKey: "menuSeleccionAlternativa" },
   { href: "/analisis", labelKey: "menuAnalisis" },
+  { href: "/anomaliasFlujoBajo", labelKey: "menuAnomaliasFlujoBajo" },
 ];
 
 // Icono de tres rayas (hamburguesa), dibujado a mano con <span> para no
