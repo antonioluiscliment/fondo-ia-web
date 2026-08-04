@@ -41,8 +41,8 @@ try {
   errorInicializacion = e;
 }
 
-export const SESIONES_PROMEDIADAS = [2, 3, 4];
-export const DURACIONES_REDUCIDAS = [20, 50, 120];
+export const SESIONES_PROMEDIADAS = [2, 3];
+export const DURACIONES_REDUCIDAS = [30, 40, 50, 60];
 
 // Solo los índices "tradicionales" (con ETF de referencia real, o el
 // PSI 20, que no tiene ETF activo pero tampoco es un índice ADR) —
