@@ -107,14 +107,30 @@ async function procesarIndice(indice, params) {
 
       const media = (arr) => (arr.length > 0 ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(3)) : null);
 
+      const rentCarteraMinVal = rentabilidadesCartera.length > 0 ? Number(Math.min(...rentabilidadesCartera).toFixed(3)) : null;
+      const rentCarteraMaxVal = rentabilidadesCartera.length > 0 ? Number(Math.max(...rentabilidadesCartera).toFixed(3)) : null;
+      const rentIndiceMediaVal = media(rentabilidadesIndice);
+
+      // Distancia de cada extremo del rango de la cartera respecto a
+      // la rentabilidad del índice (no respecto a la propia media de
+      // la cartera) — para poder ver de un vistazo si un extremo se
+      // aleja más del índice que el otro (asimetría real frente al
+      // punto de referencia que de verdad importa).
+      const distanciaInferior =
+        rentCarteraMinVal !== null && rentIndiceMediaVal !== null ? Number((rentIndiceMediaVal - rentCarteraMinVal).toFixed(3)) : null;
+      const distanciaSuperior =
+        rentCarteraMaxVal !== null && rentIndiceMediaVal !== null ? Number((rentCarteraMaxVal - rentIndiceMediaVal).toFixed(3)) : null;
+
       porCombinacion.push({
         sesionesPromediadas,
         duracion,
         repeticiones: ventanas.length,
         rentCarteraMedia: media(rentabilidadesCartera),
-        rentCarteraMin: rentabilidadesCartera.length > 0 ? Number(Math.min(...rentabilidadesCartera).toFixed(3)) : null,
-        rentCarteraMax: rentabilidadesCartera.length > 0 ? Number(Math.max(...rentabilidadesCartera).toFixed(3)) : null,
-        rentIndiceMedia: media(rentabilidadesIndice),
+        rentCarteraMin: rentCarteraMinVal,
+        rentCarteraMax: rentCarteraMaxVal,
+        rentIndiceMedia: rentIndiceMediaVal,
+        distanciaInferior,
+        distanciaSuperior,
       });
     }
   }
