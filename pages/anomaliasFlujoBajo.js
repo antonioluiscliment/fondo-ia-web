@@ -412,7 +412,9 @@ export default function AnomaliasFlujoBajo() {
                             return (
                               <tr key={r.indice}>
                                 <td>{r.nombreIndice}</td>
-                                <td>{c.repeticiones}</td>
+                                <td style={c.repeticiones < 6 ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
+                                  {c.repeticiones}{c.repeticiones < 6 ? ` (${t.repeticionesInsuficientesAviso})` : ""}
+                                </td>
                                 <td>{c.rentCarteraMedia !== null ? `${c.rentCarteraMedia}%` : "-"}</td>
                                 <td>
                                   {c.rentCarteraMin !== null && c.rentCarteraMax !== null
