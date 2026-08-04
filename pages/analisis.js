@@ -198,6 +198,11 @@ export default function Analisis() {
                         {fila.rentabilidadCarteraRango && (
                           <span style={{ color: "#666" }}> [{fila.rentabilidadCarteraRango.min.toFixed(2)}%, {fila.rentabilidadCarteraRango.max.toFixed(2)}%]</span>
                         )}
+                        {fila.ventanasImplausibles > 0 && (
+                          <span style={{ color: "#cc5500", fontWeight: "bold" }} title={t.avisoResultadoNoFiableCorto(fila.ventanasImplausibles)}>
+                            {" "}*
+                          </span>
+                        )}
                       </td>
                       <td>{fila.rentabilidadIndiceMedia !== null ? `${fila.rentabilidadIndiceMedia.toFixed(3)}%` : "-"}</td>
                       <td>{fila.rentabilidadIndiceReciente !== null ? `${fila.rentabilidadIndiceReciente.toFixed(3)}%` : "-"}</td>
