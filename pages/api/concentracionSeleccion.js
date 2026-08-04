@@ -106,6 +106,44 @@ function construirFrecuencias(contador, totalApariciones, nombresEmpresas) {
   return { frecuencias, top3Pct };
 }
 
+// Rentabilidad REAL de un ticker desde hoy (el último cierre
+// descargado) hasta hace "duracion" sesiones — no la rentabilidad
+// dentro de ninguna ventana del backtest, sino la cotización actual
+// tal cual, para poder responder directamente "¿cómo le ha ido de
+// verdad a este valor en el tramo donde más se le seleccionó?". Usa
+// datos ya descargados, sin ninguna llamada nueva a Yahoo Finance.
+function rentabilidadRealTicker(datos, ticker, duracion) {
+  const serie = datos[ticker];
+  if (!serie || serie.length === 0) return null;
+  const hoy = serie[serie.length - 1];
+  const indiceHaceN = serie.length - 1 - duracion;
+  if (indiceHaceN < 0) return null;
+  const haceN = serie[indiceHaceN];
+  if (
+    !hoy || !haceN ||
+    hoy.cierre === null || hoy.cierre === undefined ||
+    haceN.cierre === null || haceN.cierre === undefined || haceN.cierre === 0
+  ) {
+    return null;
+  }
+  return Number(((hoy.cierre / haceN.cierre - 1) * 100).toFixed(2));
+}
+
+// Para las duraciones de un método, añade a cada entrada de
+// porDuracion los 3 valores más seleccionados junto con su
+// rentabilidad real (hoy frente a hace "duracion" sesiones).
+function anadirTop3ConRentabilidad(porDuracion, datos) {
+  return porDuracion.map((entrada) => ({
+    ...entrada,
+    top3ConRentabilidad: entrada.frecuencias.slice(0, 3).map((f) => ({
+      ticker: f.ticker,
+      nombre: f.nombre,
+      veces: f.veces,
+      rentabilidadPct: rentabilidadRealTicker(datos, f.ticker, entrada.duracion),
+    })),
+  }));
+}
+
 export default async function handler(req, res) {
   try {
     if (errorInicializacion) throw errorInicializacion;
@@ -160,7 +198,7 @@ export default async function handler(req, res) {
       );
 
       resultados[metodo] = {
-        porDuracion,
+        porDuracion: anadirTop3ConRentabilidad(porDuracion, datos),
         global: { totalApariciones: totalGlobal, frecuencias: frecuenciasGlobal, top3Pct: top3PctGlobal },
       };
     }
