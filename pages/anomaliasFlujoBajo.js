@@ -36,6 +36,19 @@ export default function AnomaliasFlujoBajo() {
   const [indicesRentFlujoBajo, setIndicesRentFlujoBajo] = useState(() =>
     Object.fromEntries(INDICES_DISPONIBLES_RENT.map((i) => [i.id, false]))
   );
+  // Factores de penalización disponibles para probar: 0, 1, 2 fijos,
+  // más "óptimo" (el que esté configurado ahora mismo en el marco
+  // exterior de la app, que puede no coincidir con ninguno de los
+  // tres fijos si se ha optimizado antes desde "Parámetros técnicos").
+  const FACTORES_DISPONIBLES = [
+    { etiqueta: "0", valor: 0 },
+    { etiqueta: "1", valor: 1 },
+    { etiqueta: "2", valor: 2 },
+    { etiqueta: `${t.factorOptimoEtiqueta} (${factorPenalizacion})`, valor: factorPenalizacion },
+  ];
+  const [factoresRentFlujoBajo, setFactoresRentFlujoBajo] = useState(() =>
+    Object.fromEntries(FACTORES_DISPONIBLES.map((f) => [f.etiqueta, false]))
+  );
   const [rentFlujoBajo, setRentFlujoBajo] = useState(null);
   const [cargandoRentFlujoBajo, setCargandoRentFlujoBajo] = useState(false);
   const [errorRentFlujoBajo, setErrorRentFlujoBajo] = useState(null);
@@ -99,8 +112,12 @@ export default function AnomaliasFlujoBajo() {
         .filter(([, marcado]) => marcado)
         .map(([id]) => id);
       if (idsElegidos.length === 0) throw new Error("Marca al menos un índice.");
+
+      const factoresElegidos = FACTORES_DISPONIBLES.filter((f) => factoresRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
+      if (factoresElegidos.length === 0) throw new Error("Marca al menos un factor de penalización.");
+
       const resp = await fetch(
-        `/api/rentabilidadFlujoBajo?indices=${idsElegidos.join(",")}&factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}`
+        `/api/rentabilidadFlujoBajo?indices=${idsElegidos.join(",")}&factores=${factoresElegidos.join(",")}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}`
       );
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
@@ -398,6 +415,20 @@ export default function AnomaliasFlujoBajo() {
         ))}
       </div>
 
+      <p style={{ fontWeight: "bold", marginBottom: 4 }}>{t.rentFlujoBajoEtiquetaFactores}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 12 }}>
+        {FACTORES_DISPONIBLES.map((f) => (
+          <label key={f.etiqueta} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={!!factoresRentFlujoBajo[f.etiqueta]}
+              onChange={(e) => setFactoresRentFlujoBajo((prev) => ({ ...prev, [f.etiqueta]: e.target.checked }))}
+            />
+            {f.etiqueta}
+          </label>
+        ))}
+      </div>
+
       <button onClick={realizarRentFlujoBajo} disabled={cargandoRentFlujoBajo}>
         {cargandoRentFlujoBajo ? t.rentFlujoBajoBotonCargando : t.rentFlujoBajoBoton}
       </button>
@@ -406,6 +437,14 @@ export default function AnomaliasFlujoBajo() {
 
       {rentFlujoBajo && (
         <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <div style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 12, marginBottom: 16 }}>
+            <p style={{ fontWeight: "bold", marginTop: 0 }}>{t.factoresSeleccionCarterasTitulo}</p>
+            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionNComponentes(rentFlujoBajo.parametrosComunes.n)}</p>
+            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionPesoMaximo(rentFlujoBajo.parametrosComunes.max)}</p>
+            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionFrecuencia(rentFlujoBajo.parametrosComunes.frecuencia)}</p>
+            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionFactoresProbados(rentFlujoBajo.factoresProbados.join(", "))}</p>
+          </div>
+
           {rentFlujoBajo.resultados
             .filter((r) => r.error)
             .map((r) => (
@@ -425,38 +464,57 @@ export default function AnomaliasFlujoBajo() {
                       <thead>
                         <tr>
                           <th>{t.colIndice}</th>
+                          <th>{t.colFactorPenalizacion}</th>
                           <th>{t.colRepeticiones}</th>
                           <th>{t.colRentCarteraMedia}</th>
                           <th>{t.colRentCarteraRango}</th>
                           <th>{t.colRentIndiceMediaSimple}</th>
                           <th>{t.colDistanciaInferior}</th>
                           <th>{t.colDistanciaSuperior}</th>
+                          <th>{t.colTop3Compacto}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {rentFlujoBajo.resultados
                           .filter((r) => !r.error)
-                          .map((r) => {
-                            const c = r.porCombinacion.find((x) => x.sesionesPromediadas === sesiones && x.duracion === duracion);
-                            if (!c) return null;
-                            return (
-                              <tr key={r.indice}>
-                                <td>{r.nombreIndice}</td>
-                                <td style={c.repeticiones < 6 ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
-                                  {c.repeticiones}{c.repeticiones < 6 ? ` (${t.repeticionesInsuficientesAviso})` : ""}
-                                </td>
-                                <td>{c.rentCarteraMedia !== null ? `${c.rentCarteraMedia}%` : "-"}</td>
-                                <td>
-                                  {c.rentCarteraMin !== null && c.rentCarteraMax !== null
-                                    ? `[${c.rentCarteraMin}%, ${c.rentCarteraMax}%]`
-                                    : "-"}
-                                </td>
-                                <td>{c.rentIndiceMedia !== null ? `${c.rentIndiceMedia}%` : "-"}</td>
-                                <td>{c.distanciaInferior !== null ? `${c.distanciaInferior}` : "-"}</td>
-                                <td>{c.distanciaSuperior !== null ? `${c.distanciaSuperior}` : "-"}</td>
-                              </tr>
-                            );
-                          })}
+                          .flatMap((r) =>
+                            r.porFactor.map((pf) => {
+                              const c = pf.porCombinacion.find((x) => x.sesionesPromediadas === sesiones && x.duracion === duracion);
+                              if (!c) return null;
+                              return (
+                                <tr key={`${r.indice}-${pf.factor}`}>
+                                  <td>{r.nombreIndice}</td>
+                                  <td>{pf.factor}</td>
+                                  <td style={c.repeticiones < 6 ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
+                                    {c.repeticiones}{c.repeticiones < 6 ? ` (${t.repeticionesInsuficientesAviso})` : ""}
+                                  </td>
+                                  <td>{c.rentCarteraMedia !== null ? `${c.rentCarteraMedia}%` : "-"}</td>
+                                  <td>
+                                    {c.rentCarteraMin !== null && c.rentCarteraMax !== null
+                                      ? `[${c.rentCarteraMin}%, ${c.rentCarteraMax}%]`
+                                      : "-"}
+                                  </td>
+                                  <td>{c.rentIndiceMedia !== null ? `${c.rentIndiceMedia}%` : "-"}</td>
+                                  <td>{c.distanciaInferior !== null ? `${c.distanciaInferior}` : "-"}</td>
+                                  <td>{c.distanciaSuperior !== null ? `${c.distanciaSuperior}` : "-"}</td>
+                                  <td>
+                                    {c.top3ConRentabilidad.length === 0
+                                      ? "-"
+                                      : c.top3ConRentabilidad.map((f, i) => (
+                                          <span key={f.ticker}>
+                                            {i > 0 && ", "}
+                                            {tickerVisible(f.ticker)}{" ("}
+                                            <span style={{ color: f.rentabilidadPct === null ? "inherit" : f.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                                              {f.rentabilidadPct !== null ? `${f.rentabilidadPct}%` : "-"}
+                                            </span>
+                                            {`, ${f.veces}× )`}
+                                          </span>
+                                        ))}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
                       </tbody>
                     </table>
                   </div>
@@ -468,26 +526,39 @@ export default function AnomaliasFlujoBajo() {
           {(() => {
             const opciones = {
               titulo: t.rentFlujoBajoTitulo,
-              columnas: [t.colIndice, t.sesionesPromediadasEtiqueta, t.colDuracion, t.colRepeticiones, t.colRentCarteraMedia, t.colRentCarteraRango, t.colRentIndiceMediaSimple, t.colDistanciaInferior, t.colDistanciaSuperior],
+              parrafos: [
+                t.factoresSeleccionNComponentes(rentFlujoBajo.parametrosComunes.n),
+                t.factoresSeleccionPesoMaximo(rentFlujoBajo.parametrosComunes.max),
+                t.factoresSeleccionFrecuencia(rentFlujoBajo.parametrosComunes.frecuencia),
+                t.factoresSeleccionFactoresProbados(rentFlujoBajo.factoresProbados.join(", ")),
+              ],
+              columnas: [t.colIndice, t.colFactorPenalizacion, t.sesionesPromediadasEtiqueta, t.colDuracion, t.colRepeticiones, t.colRentCarteraMedia, t.colRentCarteraRango, t.colRentIndiceMediaSimple, t.colDistanciaInferior, t.colDistanciaSuperior, t.colTop3Compacto],
               filas: rentFlujoBajo.sesionesPromediadas.flatMap((sesiones) =>
                 rentFlujoBajo.duraciones.flatMap((duracion) =>
                   rentFlujoBajo.resultados
                     .filter((r) => !r.error)
-                    .map((r) => {
-                      const c = r.porCombinacion.find((x) => x.sesionesPromediadas === sesiones && x.duracion === duracion);
-                      if (!c) return null;
-                      return [
-                        r.nombreIndice,
-                        sesiones,
-                        duracion,
-                        c.repeticiones,
-                        c.rentCarteraMedia !== null ? `${c.rentCarteraMedia}%` : "-",
-                        c.rentCarteraMin !== null && c.rentCarteraMax !== null ? `[${c.rentCarteraMin}%, ${c.rentCarteraMax}%]` : "-",
-                        c.rentIndiceMedia !== null ? `${c.rentIndiceMedia}%` : "-",
-                        c.distanciaInferior !== null ? c.distanciaInferior : "-",
-                        c.distanciaSuperior !== null ? c.distanciaSuperior : "-",
-                      ];
-                    })
+                    .flatMap((r) =>
+                      r.porFactor.map((pf) => {
+                        const c = pf.porCombinacion.find((x) => x.sesionesPromediadas === sesiones && x.duracion === duracion);
+                        if (!c) return null;
+                        const top3Texto = c.top3ConRentabilidad
+                          .map((f) => `${tickerVisible(f.ticker)} (${f.rentabilidadPct !== null ? f.rentabilidadPct + "%" : "-"}, ${f.veces}×)`)
+                          .join(", ");
+                        return [
+                          r.nombreIndice,
+                          pf.factor,
+                          sesiones,
+                          duracion,
+                          c.repeticiones,
+                          c.rentCarteraMedia !== null ? `${c.rentCarteraMedia}%` : "-",
+                          c.rentCarteraMin !== null && c.rentCarteraMax !== null ? `[${c.rentCarteraMin}%, ${c.rentCarteraMax}%]` : "-",
+                          c.rentIndiceMedia !== null ? `${c.rentIndiceMedia}%` : "-",
+                          c.distanciaInferior !== null ? c.distanciaInferior : "-",
+                          c.distanciaSuperior !== null ? c.distanciaSuperior : "-",
+                          top3Texto || "-",
+                        ];
+                      })
+                    )
                     .filter(Boolean)
                 )
               ),
