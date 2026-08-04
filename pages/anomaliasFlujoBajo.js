@@ -40,15 +40,21 @@ export default function AnomaliasFlujoBajo() {
   // más "óptimo" (el que esté configurado ahora mismo en el marco
   // exterior de la app, que puede no coincidir con ninguno de los
   // tres fijos si se ha optimizado antes desde "Parámetros técnicos").
+  //
+  // Selección ÚNICA en los 4 parámetros de cartera (a diferencia de
+  // los índices, que sí admiten varios a la vez): mezclar, por
+  // ejemplo, "nunca rebalancear" y "rebalancear con 1 superviviente"
+  // en la misma comparación mezclaría dos filosofías de cartera
+  // distintas, no solo dos valores de un mismo parámetro — lo mismo
+  // con distintos tamaños de cartera o distintos topes de
+  // diversificación. Por eso son botones de radio, no casillas.
   const FACTORES_DISPONIBLES = [
     { etiqueta: "0", valor: 0 },
     { etiqueta: "1", valor: 1 },
     { etiqueta: "2", valor: 2 },
     { etiqueta: `${t.factorOptimoEtiqueta} (${factorPenalizacion})`, valor: factorPenalizacion },
   ];
-  const [factoresRentFlujoBajo, setFactoresRentFlujoBajo] = useState(() =>
-    Object.fromEntries(FACTORES_DISPONIBLES.map((f) => [f.etiqueta, false]))
-  );
+  const [factorRentFlujoBajo, setFactorRentFlujoBajo] = useState(FACTORES_DISPONIBLES[3].etiqueta);
 
   const NS_DISPONIBLES = [
     { etiqueta: "3", valor: 3 },
@@ -56,7 +62,7 @@ export default function AnomaliasFlujoBajo() {
     { etiqueta: "6", valor: 6 },
     { etiqueta: `${t.factorOptimoEtiqueta} (${nComponentes})`, valor: nComponentes },
   ];
-  const [nsRentFlujoBajo, setNsRentFlujoBajo] = useState(() => Object.fromEntries(NS_DISPONIBLES.map((f) => [f.etiqueta, false])));
+  const [nRentFlujoBajo, setNRentFlujoBajo] = useState(NS_DISPONIBLES[3].etiqueta);
 
   const MAXS_DISPONIBLES = [
     { etiqueta: "40%", valor: 40 },
@@ -64,7 +70,7 @@ export default function AnomaliasFlujoBajo() {
     { etiqueta: "60%", valor: 60 },
     { etiqueta: `${t.factorOptimoEtiqueta} (${pesoMaximo}%)`, valor: pesoMaximo },
   ];
-  const [maxsRentFlujoBajo, setMaxsRentFlujoBajo] = useState(() => Object.fromEntries(MAXS_DISPONIBLES.map((f) => [f.etiqueta, false])));
+  const [maxRentFlujoBajo, setMaxRentFlujoBajo] = useState(MAXS_DISPONIBLES[3].etiqueta);
 
   const FRECUENCIAS_DISPONIBLES = [
     { etiqueta: t.frecuenciaNuncaEtiqueta, valor: "nunca" },
@@ -72,9 +78,7 @@ export default function AnomaliasFlujoBajo() {
     { etiqueta: t.frecuenciaSupervivientesEtiqueta(2), valor: 2 },
     { etiqueta: `${t.factorOptimoEtiqueta} (${frecuenciaRebalanceo === "diario" ? t.frecuenciaDiariaEtiqueta : t.frecuenciaSupervivientesEtiqueta(frecuenciaRebalanceo)})`, valor: frecuenciaRebalanceo },
   ];
-  const [frecuenciasRentFlujoBajo, setFrecuenciasRentFlujoBajo] = useState(() =>
-    Object.fromEntries(FRECUENCIAS_DISPONIBLES.map((f) => [f.etiqueta, false]))
-  );
+  const [frecuenciaRentFlujoBajo, setFrecuenciaRentFlujoBajo] = useState(FRECUENCIAS_DISPONIBLES[3].etiqueta);
 
   const [rentFlujoBajo, setRentFlujoBajo] = useState(null);
   const [cargandoRentFlujoBajo, setCargandoRentFlujoBajo] = useState(false);
@@ -85,12 +89,11 @@ export default function AnomaliasFlujoBajo() {
   // en la interfaz ANTES de lanzar, para poder ajustar la selección
   // si el coste parece demasiado alto.
   const numIndicesMarcados = Object.values(indicesRentFlujoBajo).filter(Boolean).length;
-  const numFactoresMarcados = Object.values(factoresRentFlujoBajo).filter(Boolean).length;
-  const numNsMarcados = Object.values(nsRentFlujoBajo).filter(Boolean).length;
-  const numMaxsMarcados = Object.values(maxsRentFlujoBajo).filter(Boolean).length;
-  const numFrecuenciasMarcadas = Object.values(frecuenciasRentFlujoBajo).filter(Boolean).length;
-  const combinacionesParametros = numFactoresMarcados * numNsMarcados * numMaxsMarcados * numFrecuenciasMarcadas;
-  const totalEjecucionesEstimado = numIndicesMarcados * combinacionesParametros * 2 * 4; // 2 sesiones × 4 duraciones, fijos
+  // Con selección única en los 4 parámetros de cartera, el único
+  // factor que puede multiplicar el coste es el nº de índices
+  // marcados — mucho más seguro que antes, cuando cada parámetro
+  // también podía multiplicar.
+  const totalEjecucionesEstimado = numIndicesMarcados * 2 * 4; // 2 sesiones × 4 duraciones, fijos
 
   const queryComun = `indice=${indiceId}&sesiones=${sesionesPuntuacion}&factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}`;
 
@@ -152,20 +155,13 @@ export default function AnomaliasFlujoBajo() {
         .map(([id]) => id);
       if (idsElegidos.length === 0) throw new Error("Marca al menos un índice.");
 
-      const factoresElegidos = FACTORES_DISPONIBLES.filter((f) => factoresRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
-      if (factoresElegidos.length === 0) throw new Error("Marca al menos un factor de penalización.");
-
-      const nsElegidos = NS_DISPONIBLES.filter((f) => nsRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
-      if (nsElegidos.length === 0) throw new Error("Marca al menos un nº de componentes.");
-
-      const maxsElegidos = MAXS_DISPONIBLES.filter((f) => maxsRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
-      if (maxsElegidos.length === 0) throw new Error("Marca al menos un tope de diversificación.");
-
-      const frecuenciasElegidas = FRECUENCIAS_DISPONIBLES.filter((f) => frecuenciasRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
-      if (frecuenciasElegidas.length === 0) throw new Error("Marca al menos una frecuencia de rebalanceo.");
+      const factorElegido = FACTORES_DISPONIBLES.find((f) => f.etiqueta === factorRentFlujoBajo).valor;
+      const nElegido = NS_DISPONIBLES.find((f) => f.etiqueta === nRentFlujoBajo).valor;
+      const maxElegido = MAXS_DISPONIBLES.find((f) => f.etiqueta === maxRentFlujoBajo).valor;
+      const frecuenciaElegida = FRECUENCIAS_DISPONIBLES.find((f) => f.etiqueta === frecuenciaRentFlujoBajo).valor;
 
       const resp = await fetch(
-        `/api/rentabilidadFlujoBajo?indices=${idsElegidos.join(",")}&factores=${factoresElegidos.join(",")}&ns=${nsElegidos.join(",")}&maxs=${maxsElegidos.join(",")}&frecuencias=${frecuenciasElegidas.join(",")}`
+        `/api/rentabilidadFlujoBajo?indices=${idsElegidos.join(",")}&factores=${factorElegido}&ns=${nElegido}&maxs=${maxElegido}&frecuencias=${frecuenciaElegida}`
       );
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
@@ -468,9 +464,10 @@ export default function AnomaliasFlujoBajo() {
         {FACTORES_DISPONIBLES.map((f) => (
           <label key={f.etiqueta} style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <input
-              type="checkbox"
-              checked={!!factoresRentFlujoBajo[f.etiqueta]}
-              onChange={(e) => setFactoresRentFlujoBajo((prev) => ({ ...prev, [f.etiqueta]: e.target.checked }))}
+              type="radio"
+              name="factorRentFlujoBajo"
+              checked={factorRentFlujoBajo === f.etiqueta}
+              onChange={() => setFactorRentFlujoBajo(f.etiqueta)}
             />
             {f.etiqueta}
           </label>
@@ -482,9 +479,10 @@ export default function AnomaliasFlujoBajo() {
         {NS_DISPONIBLES.map((f) => (
           <label key={f.etiqueta} style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <input
-              type="checkbox"
-              checked={!!nsRentFlujoBajo[f.etiqueta]}
-              onChange={(e) => setNsRentFlujoBajo((prev) => ({ ...prev, [f.etiqueta]: e.target.checked }))}
+              type="radio"
+              name="nRentFlujoBajo"
+              checked={nRentFlujoBajo === f.etiqueta}
+              onChange={() => setNRentFlujoBajo(f.etiqueta)}
             />
             {f.etiqueta}
           </label>
@@ -496,9 +494,10 @@ export default function AnomaliasFlujoBajo() {
         {MAXS_DISPONIBLES.map((f) => (
           <label key={f.etiqueta} style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <input
-              type="checkbox"
-              checked={!!maxsRentFlujoBajo[f.etiqueta]}
-              onChange={(e) => setMaxsRentFlujoBajo((prev) => ({ ...prev, [f.etiqueta]: e.target.checked }))}
+              type="radio"
+              name="maxRentFlujoBajo"
+              checked={maxRentFlujoBajo === f.etiqueta}
+              onChange={() => setMaxRentFlujoBajo(f.etiqueta)}
             />
             {f.etiqueta}
           </label>
@@ -510,9 +509,10 @@ export default function AnomaliasFlujoBajo() {
         {FRECUENCIAS_DISPONIBLES.map((f) => (
           <label key={f.etiqueta} style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <input
-              type="checkbox"
-              checked={!!frecuenciasRentFlujoBajo[f.etiqueta]}
-              onChange={(e) => setFrecuenciasRentFlujoBajo((prev) => ({ ...prev, [f.etiqueta]: e.target.checked }))}
+              type="radio"
+              name="frecuenciaRentFlujoBajo"
+              checked={frecuenciaRentFlujoBajo === f.etiqueta}
+              onChange={() => setFrecuenciaRentFlujoBajo(f.etiqueta)}
             />
             {f.etiqueta}
           </label>
@@ -534,10 +534,10 @@ export default function AnomaliasFlujoBajo() {
         <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
           <div style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 12, marginBottom: 16 }}>
             <p style={{ fontWeight: "bold", marginTop: 0 }}>{t.factoresSeleccionCarterasTitulo}</p>
-            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionFactoresProbados(rentFlujoBajo.factoresProbados.join(", "))}</p>
-            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoNsProbados(rentFlujoBajo.nsProbados.join(", "))}</p>
-            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoMaxsProbados(rentFlujoBajo.maxsProbados.join(", "))}</p>
-            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoFrecuenciasProbadas(rentFlujoBajo.frecuenciasProbadas.map(formatearFrecuencia).join(", "))}</p>
+            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionFactoresProbados(rentFlujoBajo.factoresProbados[0])}</p>
+            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoNsProbados(rentFlujoBajo.nsProbados[0])}</p>
+            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoMaxsProbados(rentFlujoBajo.maxsProbados[0])}</p>
+            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoFrecuenciasProbadas(formatearFrecuencia(rentFlujoBajo.frecuenciasProbadas[0]))}</p>
             <p style={{ margin: "4px 0" }}>{t.totalEjecucionesEtiqueta(rentFlujoBajo.totalEjecuciones)}</p>
             <p style={{ margin: "4px 0" }}>{t.repeticionesEsperadasEtiqueta}</p>
           </div>
@@ -634,10 +634,10 @@ export default function AnomaliasFlujoBajo() {
             const opciones = {
               titulo: t.rentFlujoBajoTitulo,
               parrafos: [
-                t.factoresSeleccionFactoresProbados(rentFlujoBajo.factoresProbados.join(", ")),
-                t.rentFlujoBajoNsProbados(rentFlujoBajo.nsProbados.join(", ")),
-                t.rentFlujoBajoMaxsProbados(rentFlujoBajo.maxsProbados.join(", ")),
-                t.rentFlujoBajoFrecuenciasProbadas(rentFlujoBajo.frecuenciasProbadas.map(formatearFrecuencia).join(", ")),
+                t.factoresSeleccionFactoresProbados(rentFlujoBajo.factoresProbados[0]),
+                t.rentFlujoBajoNsProbados(rentFlujoBajo.nsProbados[0]),
+                t.rentFlujoBajoMaxsProbados(rentFlujoBajo.maxsProbados[0]),
+                t.rentFlujoBajoFrecuenciasProbadas(formatearFrecuencia(rentFlujoBajo.frecuenciasProbadas[0])),
               ],
               columnas: [t.colIndice, t.colParametrosCompacto, t.sesionesPromediadasEtiqueta, t.colDuracion, t.colRepeticiones, t.colRentCarteraMedia, t.colRentCarteraRango, t.colRentIndiceMediaSimple, t.colDistanciaInferior, t.colDistanciaSuperior, t.colTop3Compacto],
               filas: rentFlujoBajo.sesionesPromediadas.flatMap((sesiones) =>
