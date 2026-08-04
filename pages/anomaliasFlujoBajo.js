@@ -175,6 +175,34 @@ export default function AnomaliasFlujoBajo() {
                       {t.concentracionTop3(d.top3Pct)}
                     </p>
                     {tablaFrecuencias(d.frecuencias)}
+
+                    {d.top3ConRentabilidad && d.top3ConRentabilidad.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <p style={{ fontStyle: "italic", color: "#555", marginBottom: 4 }}>{t.top3RentabilidadRealTitulo(d.duracion)}</p>
+                        <div style={{ overflowX: "auto" }}>
+                          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+                            <thead>
+                              <tr>
+                                <th>{t.colTicker}</th>
+                                <th>{t.colVecesSeleccionadoConcentracion}</th>
+                                <th>{t.colRentabilidadRealTicker}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {d.top3ConRentabilidad.map((f) => (
+                                <tr key={f.ticker}>
+                                  <td>{tickerVisible(f.ticker)} — {f.nombre}</td>
+                                  <td>{f.veces}</td>
+                                  <td style={f.rentabilidadPct !== null ? { color: f.rentabilidadPct >= 0 ? "green" : "crimson" } : undefined}>
+                                    {f.rentabilidadPct !== null ? `${f.rentabilidadPct}%` : "-"}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -401,6 +429,8 @@ export default function AnomaliasFlujoBajo() {
                           <th>{t.colRentCarteraMedia}</th>
                           <th>{t.colRentCarteraRango}</th>
                           <th>{t.colRentIndiceMediaSimple}</th>
+                          <th>{t.colDistanciaInferior}</th>
+                          <th>{t.colDistanciaSuperior}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -422,6 +452,8 @@ export default function AnomaliasFlujoBajo() {
                                     : "-"}
                                 </td>
                                 <td>{c.rentIndiceMedia !== null ? `${c.rentIndiceMedia}%` : "-"}</td>
+                                <td>{c.distanciaInferior !== null ? `${c.distanciaInferior}` : "-"}</td>
+                                <td>{c.distanciaSuperior !== null ? `${c.distanciaSuperior}` : "-"}</td>
                               </tr>
                             );
                           })}
@@ -436,7 +468,7 @@ export default function AnomaliasFlujoBajo() {
           {(() => {
             const opciones = {
               titulo: t.rentFlujoBajoTitulo,
-              columnas: [t.colIndice, t.sesionesPromediadasEtiqueta, t.colDuracion, t.colRepeticiones, t.colRentCarteraMedia, t.colRentCarteraRango, t.colRentIndiceMediaSimple],
+              columnas: [t.colIndice, t.sesionesPromediadasEtiqueta, t.colDuracion, t.colRepeticiones, t.colRentCarteraMedia, t.colRentCarteraRango, t.colRentIndiceMediaSimple, t.colDistanciaInferior, t.colDistanciaSuperior],
               filas: rentFlujoBajo.sesionesPromediadas.flatMap((sesiones) =>
                 rentFlujoBajo.duraciones.flatMap((duracion) =>
                   rentFlujoBajo.resultados
@@ -452,6 +484,8 @@ export default function AnomaliasFlujoBajo() {
                         c.rentCarteraMedia !== null ? `${c.rentCarteraMedia}%` : "-",
                         c.rentCarteraMin !== null && c.rentCarteraMax !== null ? `[${c.rentCarteraMin}%, ${c.rentCarteraMax}%]` : "-",
                         c.rentIndiceMedia !== null ? `${c.rentIndiceMedia}%` : "-",
+                        c.distanciaInferior !== null ? c.distanciaInferior : "-",
+                        c.distanciaSuperior !== null ? c.distanciaSuperior : "-",
                       ];
                     })
                     .filter(Boolean)
