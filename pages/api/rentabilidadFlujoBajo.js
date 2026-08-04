@@ -108,6 +108,7 @@ function ejecutarCombinacion(fechas, datos, cierresIndice, nombresEmpresas, para
       const rentabilidadesIndice = [];
       const contadorSeleccion = {};
       let totalSelecciones = 0;
+      let ventanasImplausibles = 0;
 
       for (const ventana of ventanas) {
         const fechasV = fechas.slice(ventana.inicio, ventana.fin);
@@ -126,8 +127,19 @@ function ejecutarCombinacion(fechas, datos, cierresIndice, nombresEmpresas, para
           true // invertido: flujo bajo
         );
 
-        const { rentabilidadPct } = calcularRentabilidadTotalCarteraAnterior(historico);
-        if (rentabilidadPct !== null && rentabilidadPct !== undefined) rentabilidadesCartera.push(rentabilidadPct);
+        // Ver UMBRAL_RENTABILIDAD_IMPLAUSIBLE en lib/motor.js: una
+        // caída así de extrema en tan pocas semanas, con una cartera
+        // de varios valores grandes y líquidos, es prácticamente
+        // descartable — más probable que sea un fallo interno no
+        // resuelto que una pérdida real. Se excluye esa ventana
+        // concreta del promedio/rango en vez de dejar que contamine
+        // el resultado agregado, y se cuenta para poder avisar.
+        const { rentabilidadPct, implausible } = calcularRentabilidadTotalCarteraAnterior(historico);
+        if (implausible) {
+          ventanasImplausibles++;
+        } else if (rentabilidadPct !== null && rentabilidadPct !== undefined) {
+          rentabilidadesCartera.push(rentabilidadPct);
+        }
 
         if (historico.length > 1) {
           const rentIndice = rentabilidadIndiceEnPeriodo(cierresIndice, historico[0].fecha, historico[historico.length - 1].fecha);
@@ -143,6 +155,12 @@ function ejecutarCombinacion(fechas, datos, cierresIndice, nombresEmpresas, para
       }
 
       const media = (arr) => (arr.length > 0 ? Number((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(3)) : null);
+
+      // Si TODAS las ventanas de esta combinación resultaron
+      // implausibles, no queda ningún dato fiable que agregar — se
+      // marca aparte (huboSoloImplausibles) para poder avisar de
+      // forma distinta a "no hay suficientes datos" sin más.
+      const huboSoloImplausibles = ventanas.length > 0 && rentabilidadesCartera.length === 0 && ventanasImplausibles > 0;
 
       const rentCarteraMinVal = rentabilidadesCartera.length > 0 ? Number(Math.min(...rentabilidadesCartera).toFixed(3)) : null;
       const rentCarteraMaxVal = rentabilidadesCartera.length > 0 ? Number(Math.max(...rentabilidadesCartera).toFixed(3)) : null;
@@ -169,9 +187,11 @@ function ejecutarCombinacion(fechas, datos, cierresIndice, nombresEmpresas, para
         sesionesPromediadas,
         duracion,
         repeticiones: ventanas.length,
-        rentCarteraMedia: media(rentabilidadesCartera),
-        rentCarteraMin: rentCarteraMinVal,
-        rentCarteraMax: rentCarteraMaxVal,
+        ventanasImplausibles,
+        huboSoloImplausibles,
+        rentCarteraMedia: huboSoloImplausibles ? null : media(rentabilidadesCartera),
+        rentCarteraMin: huboSoloImplausibles ? null : rentCarteraMinVal,
+        rentCarteraMax: huboSoloImplausibles ? null : rentCarteraMaxVal,
         rentIndiceMedia: rentIndiceMediaVal,
         distanciaInferior,
         distanciaSuperior,

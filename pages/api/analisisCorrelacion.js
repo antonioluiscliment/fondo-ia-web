@@ -87,14 +87,14 @@ function ejecutarVentana(fechas, datos, ventana, criterioPuntuacion, semillaAlea
     .map((dia) => [(dia.beneficio - 1) * 100, dia.incrementoIndice]);
   const correlacion = calcularCorrelacion(pares);
 
-  const rentabilidadCartera = calcularRentabilidadTotalCarteraAnterior(historico).rentabilidadPct;
+  const { rentabilidadPct: rentabilidadCartera, implausible: rentabilidadImplausible } = calcularRentabilidadTotalCarteraAnterior(historico);
 
   const rentabilidadIndice =
     historico.length > 1
       ? rentabilidadIndiceEnPeriodo(cierresIndice, historico[0].fecha, historico[historico.length - 1].fecha)
       : null;
 
-  return { correlacion, rentabilidadCartera, rentabilidadIndice };
+  return { correlacion, rentabilidadCartera, rentabilidadImplausible, rentabilidadIndice };
 }
 
 // Media de un array de correlaciones usando la transformación de
@@ -259,13 +259,19 @@ export default async function handler(req, res) {
           ejecutarVentana(fechas, datos, v, criterioPuntuacion, undefined, incrementosIndice, cierresIndice, params, invertido)
         );
         const correlaciones = resultados.map((r) => r.correlacion);
-        const rentabilidadesCartera = resultados.map((r) => r.rentabilidadCartera);
+        // Ver UMBRAL_RENTABILIDAD_IMPLAUSIBLE en lib/motor.js: una
+        // ventana con una caída tan extrema que es más probable que
+        // sea un fallo interno no resuelto que una pérdida real se
+        // excluye del promedio/rango, y se cuenta para poder avisar.
+        const rentabilidadesCartera = resultados.filter((r) => !r.rentabilidadImplausible).map((r) => r.rentabilidadCartera);
+        const ventanasImplausibles = resultados.filter((r) => r.rentabilidadImplausible).length;
         const rentabilidadesIndice = resultados.map((r) => r.rentabilidadIndice);
         const rentCarteraMedia = media(rentabilidadesCartera);
         filas.push({
           metodo,
           duracion,
           repeticiones: ventanas.length,
+          ventanasImplausibles,
           correlacionMedia: mediaFisher(correlaciones),
           correlacionRango: rango(correlaciones),
           rentabilidadCarteraMedia: rentCarteraMedia,
@@ -286,13 +292,15 @@ export default async function handler(req, res) {
         }
       }
       const correlacionesA = resultadosAleatorio.map((r) => r.correlacion);
-      const rentabilidadesCarteraA = resultadosAleatorio.map((r) => r.rentabilidadCartera);
+      const rentabilidadesCarteraA = resultadosAleatorio.filter((r) => !r.rentabilidadImplausible).map((r) => r.rentabilidadCartera);
+      const ventanasImplausiblesA = resultadosAleatorio.filter((r) => r.rentabilidadImplausible).length;
       const rentabilidadesIndiceA = resultadosAleatorio.map((r) => r.rentabilidadIndice);
       const rentCarteraMediaA = media(rentabilidadesCarteraA);
       filas.push({
         metodo: "aleatorio",
         duracion,
         repeticiones: resultadosAleatorio.length,
+        ventanasImplausibles: ventanasImplausiblesA,
         correlacionMedia: mediaFisher(correlacionesA),
         correlacionRango: rango(correlacionesA),
         rentabilidadCarteraMedia: rentCarteraMediaA,
