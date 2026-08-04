@@ -591,8 +591,16 @@ export default function AnomaliasFlujoBajo() {
                               <td style={f.repeticiones < 6 ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
                                 {f.repeticiones < 6 ? `${f.repeticiones} (${t.repeticionesInsuficientesAviso})` : "-"}
                               </td>
-                              <td>{f.rentCarteraMedia !== null ? `${f.rentCarteraMedia}%` : "-"}</td>
-                              <td>{f.rentCarteraMin !== null && f.rentCarteraMax !== null ? `[${f.rentCarteraMin}%, ${f.rentCarteraMax}%]` : "-"}</td>
+                              <td style={f.huboSoloImplausibles ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
+                                {f.huboSoloImplausibles ? t.resultadoNoFiableMarcador : f.rentCarteraMedia !== null ? `${f.rentCarteraMedia}%` : "-"}
+                              </td>
+                              <td style={f.huboSoloImplausibles ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
+                                {f.huboSoloImplausibles
+                                  ? t.resultadoNoFiableMarcador
+                                  : f.rentCarteraMin !== null && f.rentCarteraMax !== null
+                                    ? `[${f.rentCarteraMin}%, ${f.rentCarteraMax}%]`
+                                    : "-"}
+                              </td>
                               <td>{f.rentIndiceMedia !== null ? `${f.rentIndiceMedia}%` : "-"}</td>
                               <td>{f.distanciaInferior !== null ? `${f.distanciaInferior}` : "-"}</td>
                               <td>{f.distanciaSuperior !== null ? `${f.distanciaSuperior}` : "-"}</td>
@@ -601,6 +609,12 @@ export default function AnomaliasFlujoBajo() {
                         </tbody>
                       </table>
                     </div>
+
+                    {filas.some((f) => f.ventanasImplausibles > 0) && (
+                      <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 10, color: "#7a5c00", marginTop: 8 }}>
+                        {t.avisoResultadoNoFiable(filas.reduce((s, f) => s + f.ventanasImplausibles, 0))}
+                      </p>
+                    )}
 
                     {filas.some((f) => f.top3ConRentabilidad.length > 0) && (
                       <div style={{ marginTop: 8 }}>
