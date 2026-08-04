@@ -49,9 +49,48 @@ export default function AnomaliasFlujoBajo() {
   const [factoresRentFlujoBajo, setFactoresRentFlujoBajo] = useState(() =>
     Object.fromEntries(FACTORES_DISPONIBLES.map((f) => [f.etiqueta, false]))
   );
+
+  const NS_DISPONIBLES = [
+    { etiqueta: "3", valor: 3 },
+    { etiqueta: "5", valor: 5 },
+    { etiqueta: "6", valor: 6 },
+    { etiqueta: `${t.factorOptimoEtiqueta} (${nComponentes})`, valor: nComponentes },
+  ];
+  const [nsRentFlujoBajo, setNsRentFlujoBajo] = useState(() => Object.fromEntries(NS_DISPONIBLES.map((f) => [f.etiqueta, false])));
+
+  const MAXS_DISPONIBLES = [
+    { etiqueta: "40%", valor: 40 },
+    { etiqueta: "50%", valor: 50 },
+    { etiqueta: "60%", valor: 60 },
+    { etiqueta: `${t.factorOptimoEtiqueta} (${pesoMaximo}%)`, valor: pesoMaximo },
+  ];
+  const [maxsRentFlujoBajo, setMaxsRentFlujoBajo] = useState(() => Object.fromEntries(MAXS_DISPONIBLES.map((f) => [f.etiqueta, false])));
+
+  const FRECUENCIAS_DISPONIBLES = [
+    { etiqueta: t.frecuenciaNuncaEtiqueta, valor: "nunca" },
+    { etiqueta: t.frecuenciaSupervivientesEtiqueta(1), valor: 1 },
+    { etiqueta: t.frecuenciaSupervivientesEtiqueta(2), valor: 2 },
+    { etiqueta: `${t.factorOptimoEtiqueta} (${frecuenciaRebalanceo === "diario" ? t.frecuenciaDiariaEtiqueta : t.frecuenciaSupervivientesEtiqueta(frecuenciaRebalanceo)})`, valor: frecuenciaRebalanceo },
+  ];
+  const [frecuenciasRentFlujoBajo, setFrecuenciasRentFlujoBajo] = useState(() =>
+    Object.fromEntries(FRECUENCIAS_DISPONIBLES.map((f) => [f.etiqueta, false]))
+  );
+
   const [rentFlujoBajo, setRentFlujoBajo] = useState(null);
   const [cargandoRentFlujoBajo, setCargandoRentFlujoBajo] = useState(false);
   const [errorRentFlujoBajo, setErrorRentFlujoBajo] = useState(null);
+
+  // Nº de índices marcados × combinaciones de parámetros marcadas ×
+  // sesiones promediadas (2, fijo) × duraciones (4, fijo) — se enseña
+  // en la interfaz ANTES de lanzar, para poder ajustar la selección
+  // si el coste parece demasiado alto.
+  const numIndicesMarcados = Object.values(indicesRentFlujoBajo).filter(Boolean).length;
+  const numFactoresMarcados = Object.values(factoresRentFlujoBajo).filter(Boolean).length;
+  const numNsMarcados = Object.values(nsRentFlujoBajo).filter(Boolean).length;
+  const numMaxsMarcados = Object.values(maxsRentFlujoBajo).filter(Boolean).length;
+  const numFrecuenciasMarcadas = Object.values(frecuenciasRentFlujoBajo).filter(Boolean).length;
+  const combinacionesParametros = numFactoresMarcados * numNsMarcados * numMaxsMarcados * numFrecuenciasMarcadas;
+  const totalEjecucionesEstimado = numIndicesMarcados * combinacionesParametros * 2 * 4; // 2 sesiones × 4 duraciones, fijos
 
   const queryComun = `indice=${indiceId}&sesiones=${sesionesPuntuacion}&factor=${factorPenalizacion}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}`;
 
@@ -116,8 +155,17 @@ export default function AnomaliasFlujoBajo() {
       const factoresElegidos = FACTORES_DISPONIBLES.filter((f) => factoresRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
       if (factoresElegidos.length === 0) throw new Error("Marca al menos un factor de penalización.");
 
+      const nsElegidos = NS_DISPONIBLES.filter((f) => nsRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
+      if (nsElegidos.length === 0) throw new Error("Marca al menos un nº de componentes.");
+
+      const maxsElegidos = MAXS_DISPONIBLES.filter((f) => maxsRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
+      if (maxsElegidos.length === 0) throw new Error("Marca al menos un tope de diversificación.");
+
+      const frecuenciasElegidas = FRECUENCIAS_DISPONIBLES.filter((f) => frecuenciasRentFlujoBajo[f.etiqueta]).map((f) => f.valor);
+      if (frecuenciasElegidas.length === 0) throw new Error("Marca al menos una frecuencia de rebalanceo.");
+
       const resp = await fetch(
-        `/api/rentabilidadFlujoBajo?indices=${idsElegidos.join(",")}&factores=${factoresElegidos.join(",")}&n=${nComponentes}&max=${pesoMaximo}&frecuencia=${frecuenciaRebalanceo}`
+        `/api/rentabilidadFlujoBajo?indices=${idsElegidos.join(",")}&factores=${factoresElegidos.join(",")}&ns=${nsElegidos.join(",")}&maxs=${maxsElegidos.join(",")}&frecuencias=${frecuenciasElegidas.join(",")}`
       );
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
@@ -429,7 +477,54 @@ export default function AnomaliasFlujoBajo() {
         ))}
       </div>
 
-      <button onClick={realizarRentFlujoBajo} disabled={cargandoRentFlujoBajo}>
+      <p style={{ fontWeight: "bold", marginBottom: 4 }}>{t.rentFlujoBajoEtiquetaNs}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 12 }}>
+        {NS_DISPONIBLES.map((f) => (
+          <label key={f.etiqueta} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={!!nsRentFlujoBajo[f.etiqueta]}
+              onChange={(e) => setNsRentFlujoBajo((prev) => ({ ...prev, [f.etiqueta]: e.target.checked }))}
+            />
+            {f.etiqueta}
+          </label>
+        ))}
+      </div>
+
+      <p style={{ fontWeight: "bold", marginBottom: 4 }}>{t.rentFlujoBajoEtiquetaMaxs}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 12 }}>
+        {MAXS_DISPONIBLES.map((f) => (
+          <label key={f.etiqueta} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={!!maxsRentFlujoBajo[f.etiqueta]}
+              onChange={(e) => setMaxsRentFlujoBajo((prev) => ({ ...prev, [f.etiqueta]: e.target.checked }))}
+            />
+            {f.etiqueta}
+          </label>
+        ))}
+      </div>
+
+      <p style={{ fontWeight: "bold", marginBottom: 4 }}>{t.rentFlujoBajoEtiquetaFrecuencias}</p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 16px", marginBottom: 12 }}>
+        {FRECUENCIAS_DISPONIBLES.map((f) => (
+          <label key={f.etiqueta} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <input
+              type="checkbox"
+              checked={!!frecuenciasRentFlujoBajo[f.etiqueta]}
+              onChange={(e) => setFrecuenciasRentFlujoBajo((prev) => ({ ...prev, [f.etiqueta]: e.target.checked }))}
+            />
+            {f.etiqueta}
+          </label>
+        ))}
+      </div>
+
+      <p style={{ fontWeight: "bold", color: totalEjecucionesEstimado > 800 ? "crimson" : "inherit" }}>
+        {t.totalEjecucionesEtiqueta(totalEjecucionesEstimado)}
+        {totalEjecucionesEstimado > 800 && ` — ${t.totalEjecucionesAvisoExceso}`}
+      </p>
+
+      <button onClick={realizarRentFlujoBajo} disabled={cargandoRentFlujoBajo || totalEjecucionesEstimado > 800 || totalEjecucionesEstimado === 0}>
         {cargandoRentFlujoBajo ? t.rentFlujoBajoBotonCargando : t.rentFlujoBajoBoton}
       </button>
 
@@ -439,10 +534,12 @@ export default function AnomaliasFlujoBajo() {
         <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
           <div style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 12, marginBottom: 16 }}>
             <p style={{ fontWeight: "bold", marginTop: 0 }}>{t.factoresSeleccionCarterasTitulo}</p>
-            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionNComponentes(rentFlujoBajo.parametrosComunes.n)}</p>
-            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionPesoMaximo(rentFlujoBajo.parametrosComunes.max)}</p>
-            <p style={{ margin: "4px 0" }}>{t.factoresSeleccionFrecuencia(rentFlujoBajo.parametrosComunes.frecuencia)}</p>
             <p style={{ margin: "4px 0" }}>{t.factoresSeleccionFactoresProbados(rentFlujoBajo.factoresProbados.join(", "))}</p>
+            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoNsProbados(rentFlujoBajo.nsProbados.join(", "))}</p>
+            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoMaxsProbados(rentFlujoBajo.maxsProbados.join(", "))}</p>
+            <p style={{ margin: "4px 0" }}>{t.rentFlujoBajoFrecuenciasProbadas(rentFlujoBajo.frecuenciasProbadas.map(formatearFrecuencia).join(", "))}</p>
+            <p style={{ margin: "4px 0" }}>{t.totalEjecucionesEtiqueta(rentFlujoBajo.totalEjecuciones)}</p>
+            <p style={{ margin: "4px 0" }}>{t.repeticionesEsperadasEtiqueta}</p>
           </div>
 
           {rentFlujoBajo.resultados
@@ -456,70 +553,80 @@ export default function AnomaliasFlujoBajo() {
           {rentFlujoBajo.sesionesPromediadas.map((sesiones) => (
             <div key={sesiones} style={{ marginTop: 24 }}>
               <h3>{t.sesionesPromediadasEtiqueta}: {sesiones}</h3>
-              {rentFlujoBajo.duraciones.map((duracion) => (
-                <div key={duracion} style={{ marginTop: 12 }}>
-                  <h4>{duracion} {t.sesionesEtiqueta}</h4>
-                  <div style={{ overflowX: "auto" }}>
-                    <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
-                      <thead>
-                        <tr>
-                          <th>{t.colIndice}</th>
-                          <th>{t.colFactorPenalizacion}</th>
-                          <th>{t.colRepeticiones}</th>
-                          <th>{t.colRentCarteraMedia}</th>
-                          <th>{t.colRentCarteraRango}</th>
-                          <th>{t.colRentIndiceMediaSimple}</th>
-                          <th>{t.colDistanciaInferior}</th>
-                          <th>{t.colDistanciaSuperior}</th>
-                          <th>{t.colTop3Compacto}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rentFlujoBajo.resultados
-                          .filter((r) => !r.error)
-                          .flatMap((r) =>
-                            r.porFactor.map((pf) => {
-                              const c = pf.porCombinacion.find((x) => x.sesionesPromediadas === sesiones && x.duracion === duracion);
-                              if (!c) return null;
-                              return (
-                                <tr key={`${r.indice}-${pf.factor}`}>
-                                  <td>{r.nombreIndice}</td>
-                                  <td>{pf.factor}</td>
-                                  <td style={c.repeticiones < 6 ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
-                                    {c.repeticiones}{c.repeticiones < 6 ? ` (${t.repeticionesInsuficientesAviso})` : ""}
-                                  </td>
-                                  <td>{c.rentCarteraMedia !== null ? `${c.rentCarteraMedia}%` : "-"}</td>
-                                  <td>
-                                    {c.rentCarteraMin !== null && c.rentCarteraMax !== null
-                                      ? `[${c.rentCarteraMin}%, ${c.rentCarteraMax}%]`
-                                      : "-"}
-                                  </td>
-                                  <td>{c.rentIndiceMedia !== null ? `${c.rentIndiceMedia}%` : "-"}</td>
-                                  <td>{c.distanciaInferior !== null ? `${c.distanciaInferior}` : "-"}</td>
-                                  <td>{c.distanciaSuperior !== null ? `${c.distanciaSuperior}` : "-"}</td>
-                                  <td>
-                                    {c.top3ConRentabilidad.length === 0
-                                      ? "-"
-                                      : c.top3ConRentabilidad.map((f, i) => (
-                                          <span key={f.ticker}>
-                                            {i > 0 && ", "}
-                                            {tickerVisible(f.ticker)}{" ("}
-                                            <span style={{ color: f.rentabilidadPct === null ? "inherit" : f.rentabilidadPct >= 0 ? "green" : "crimson" }}>
-                                              {f.rentabilidadPct !== null ? `${f.rentabilidadPct}%` : "-"}
-                                            </span>
-                                            {`, ${f.veces}× )`}
-                                          </span>
-                                        ))}
-                                  </td>
-                                </tr>
-                              );
-                            })
-                          )}
-                      </tbody>
-                    </table>
+              {rentFlujoBajo.duraciones.map((duracion) => {
+                const filas = rentFlujoBajo.resultados
+                  .filter((r) => !r.error)
+                  .flatMap((r) =>
+                    r.ejecuciones
+                      .filter((e) => e.sesionesPromediadas === sesiones && e.duracion === duracion)
+                      .map((e) => ({ ...e, nombreIndice: r.nombreIndice, indiceId: r.indice }))
+                  );
+                const hayParametrosVariables =
+                  rentFlujoBajo.factoresProbados.length > 1 ||
+                  rentFlujoBajo.nsProbados.length > 1 ||
+                  rentFlujoBajo.maxsProbados.length > 1 ||
+                  rentFlujoBajo.frecuenciasProbadas.length > 1;
+                return (
+                  <div key={duracion} style={{ marginTop: 12 }}>
+                    <h4>{duracion} {t.sesionesEtiqueta}</h4>
+                    <div style={{ overflowX: "auto" }}>
+                      <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+                        <thead>
+                          <tr>
+                            <th>{t.colIndice}</th>
+                            {hayParametrosVariables && <th>{t.colParametrosCompacto}</th>}
+                            <th>{t.colRepeticiones}</th>
+                            <th>{t.colRentCarteraMedia}</th>
+                            <th>{t.colRentCarteraRango}</th>
+                            <th>{t.colRentIndiceMediaSimple}</th>
+                            <th>{t.colDistanciaInferior}</th>
+                            <th>{t.colDistanciaSuperior}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filas.map((f, i) => (
+                            <tr key={i}>
+                              <td>{f.nombreIndice}</td>
+                              {hayParametrosVariables && <td>{formatearParametrosCompacto(f, t, rentFlujoBajo)}</td>}
+                              <td style={f.repeticiones < 6 ? { color: "#cc5500", fontWeight: "bold" } : undefined}>
+                                {f.repeticiones < 6 ? `${f.repeticiones} (${t.repeticionesInsuficientesAviso})` : "-"}
+                              </td>
+                              <td>{f.rentCarteraMedia !== null ? `${f.rentCarteraMedia}%` : "-"}</td>
+                              <td>{f.rentCarteraMin !== null && f.rentCarteraMax !== null ? `[${f.rentCarteraMin}%, ${f.rentCarteraMax}%]` : "-"}</td>
+                              <td>{f.rentIndiceMedia !== null ? `${f.rentIndiceMedia}%` : "-"}</td>
+                              <td>{f.distanciaInferior !== null ? `${f.distanciaInferior}` : "-"}</td>
+                              <td>{f.distanciaSuperior !== null ? `${f.distanciaSuperior}` : "-"}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {filas.some((f) => f.top3ConRentabilidad.length > 0) && (
+                      <div style={{ marginTop: 8 }}>
+                        <p style={{ fontStyle: "italic", color: "#555", marginBottom: 4 }}>{t.top3SecuencialTitulo}</p>
+                        {filas.map((f, i) => (
+                          <p key={i} style={{ margin: "2px 0" }}>
+                            <b>{f.nombreIndice}</b> ({formatearParametrosCompacto(f, t, rentFlujoBajo)}):{" "}
+                            {f.top3ConRentabilidad.length === 0
+                              ? "-"
+                              : f.top3ConRentabilidad.map((tk, j) => (
+                                  <span key={tk.ticker}>
+                                    {j > 0 && ", "}
+                                    {tickerVisible(tk.ticker)} (
+                                    <span style={{ color: tk.rentabilidadPct === null ? "inherit" : tk.rentabilidadPct >= 0 ? "green" : "crimson" }}>
+                                      {tk.rentabilidadPct !== null ? `${tk.rentabilidadPct}%` : "-"}
+                                    </span>
+                                    {`, ${tk.veces}×)`}
+                                  </span>
+                                ))}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ))}
 
@@ -527,39 +634,38 @@ export default function AnomaliasFlujoBajo() {
             const opciones = {
               titulo: t.rentFlujoBajoTitulo,
               parrafos: [
-                t.factoresSeleccionNComponentes(rentFlujoBajo.parametrosComunes.n),
-                t.factoresSeleccionPesoMaximo(rentFlujoBajo.parametrosComunes.max),
-                t.factoresSeleccionFrecuencia(rentFlujoBajo.parametrosComunes.frecuencia),
                 t.factoresSeleccionFactoresProbados(rentFlujoBajo.factoresProbados.join(", ")),
+                t.rentFlujoBajoNsProbados(rentFlujoBajo.nsProbados.join(", ")),
+                t.rentFlujoBajoMaxsProbados(rentFlujoBajo.maxsProbados.join(", ")),
+                t.rentFlujoBajoFrecuenciasProbadas(rentFlujoBajo.frecuenciasProbadas.map(formatearFrecuencia).join(", ")),
               ],
-              columnas: [t.colIndice, t.colFactorPenalizacion, t.sesionesPromediadasEtiqueta, t.colDuracion, t.colRepeticiones, t.colRentCarteraMedia, t.colRentCarteraRango, t.colRentIndiceMediaSimple, t.colDistanciaInferior, t.colDistanciaSuperior, t.colTop3Compacto],
+              columnas: [t.colIndice, t.colParametrosCompacto, t.sesionesPromediadasEtiqueta, t.colDuracion, t.colRepeticiones, t.colRentCarteraMedia, t.colRentCarteraRango, t.colRentIndiceMediaSimple, t.colDistanciaInferior, t.colDistanciaSuperior, t.colTop3Compacto],
               filas: rentFlujoBajo.sesionesPromediadas.flatMap((sesiones) =>
                 rentFlujoBajo.duraciones.flatMap((duracion) =>
                   rentFlujoBajo.resultados
                     .filter((r) => !r.error)
                     .flatMap((r) =>
-                      r.porFactor.map((pf) => {
-                        const c = pf.porCombinacion.find((x) => x.sesionesPromediadas === sesiones && x.duracion === duracion);
-                        if (!c) return null;
-                        const top3Texto = c.top3ConRentabilidad
-                          .map((f) => `${tickerVisible(f.ticker)} (${f.rentabilidadPct !== null ? f.rentabilidadPct + "%" : "-"}, ${f.veces}×)`)
-                          .join(", ");
-                        return [
-                          r.nombreIndice,
-                          pf.factor,
-                          sesiones,
-                          duracion,
-                          c.repeticiones,
-                          c.rentCarteraMedia !== null ? `${c.rentCarteraMedia}%` : "-",
-                          c.rentCarteraMin !== null && c.rentCarteraMax !== null ? `[${c.rentCarteraMin}%, ${c.rentCarteraMax}%]` : "-",
-                          c.rentIndiceMedia !== null ? `${c.rentIndiceMedia}%` : "-",
-                          c.distanciaInferior !== null ? c.distanciaInferior : "-",
-                          c.distanciaSuperior !== null ? c.distanciaSuperior : "-",
-                          top3Texto || "-",
-                        ];
-                      })
+                      r.ejecuciones
+                        .filter((e) => e.sesionesPromediadas === sesiones && e.duracion === duracion)
+                        .map((e) => {
+                          const top3Texto = e.top3ConRentabilidad
+                            .map((f) => `${tickerVisible(f.ticker)} (${f.rentabilidadPct !== null ? f.rentabilidadPct + "%" : "-"}, ${f.veces}×)`)
+                            .join(", ");
+                          return [
+                            r.nombreIndice,
+                            formatearParametrosCompacto(e, t, rentFlujoBajo),
+                            sesiones,
+                            duracion,
+                            e.repeticiones,
+                            e.rentCarteraMedia !== null ? `${e.rentCarteraMedia}%` : "-",
+                            e.rentCarteraMin !== null && e.rentCarteraMax !== null ? `[${e.rentCarteraMin}%, ${e.rentCarteraMax}%]` : "-",
+                            e.rentIndiceMedia !== null ? `${e.rentIndiceMedia}%` : "-",
+                            e.distanciaInferior !== null ? e.distanciaInferior : "-",
+                            e.distanciaSuperior !== null ? e.distanciaSuperior : "-",
+                            top3Texto || "-",
+                          ];
+                        })
                     )
-                    .filter(Boolean)
                 )
               ),
               nombreArchivo: `rentabilidad-flujo-bajo.pdf`,
@@ -577,4 +683,24 @@ export default function AnomaliasFlujoBajo() {
       )}
     </MenuLayout>
   );
+}
+
+function formatearFrecuencia(f) {
+  if (f === "diario") return "diaria";
+  if (f === "nunca") return "nunca";
+  return `cada ${f} superviviente${f === 1 ? "" : "s"}`;
+}
+
+// Solo incluye en el texto compacto los parámetros que de verdad
+// varían en esta ejecución (más de un valor marcado) — si un
+// parámetro tiene un único valor para toda la ejecución, ya se dice
+// una vez en la cabecera de resultados y repetirlo en cada fila sería
+// puro ruido.
+function formatearParametrosCompacto(e, t, resultado) {
+  const partes = [];
+  if (resultado.factoresProbados.length > 1) partes.push(`F=${e.factor}`);
+  if (resultado.nsProbados.length > 1) partes.push(`n=${e.n}`);
+  if (resultado.maxsProbados.length > 1) partes.push(`tope=${e.max}%`);
+  if (resultado.frecuenciasProbadas.length > 1) partes.push(`reb=${formatearFrecuencia(e.frecuencia)}`);
+  return partes.length > 0 ? partes.join(", ") : t.parametrosConstantesEtiqueta;
 }
