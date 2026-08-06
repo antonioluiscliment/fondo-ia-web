@@ -51,6 +51,20 @@ const estiloPanelDocx = {
   background: "#fafafa",
 };
 
+// "Presentación": a diferencia de especificaciones/observaciones/
+// historia (documentos .docx que hay que convertir a HTML con
+// mammoth, vía un endpoint propio), el PowerPoint y el audio se
+// muestran directamente desde la URL pública del repositorio — no
+// hace falta ningún endpoint ni conversión, un iframe con el visor de
+// Office de Microsoft (que acepta cualquier URL pública de un .pptx)
+// y una etiqueta <audio> normal bastan. Un fichero distinto según el
+// idioma de la interfaz (es/en).
+const REPO_RAW_BASE = "https://raw.githubusercontent.com/antonioluiscliment/fondo-ia-web/main/PLAN";
+const PRESENTACION_ARCHIVOS = {
+  es: { pptx: "Gestion_Carteras_IA.pptx", mp3: "speech_ESPAÑOL.mp3" },
+  en: { pptx: "AI_Guided_Portfolio_Management.pptx", mp3: "speech_ENGLISH.mp3" },
+};
+
 export default function MenuLayout({ children }) {
   const { idioma, setIdioma, t, indiceId, setIndiceId, sesionesPuntuacion, setSesionesPuntuacion } = useAppConfig();
   const indiceActual = obtenerIndice(indiceId);
@@ -76,6 +90,8 @@ export default function MenuLayout({ children }) {
   const [cargandoHistoria, setCargandoHistoria] = useState(false);
   const [errorHistoria, setErrorHistoria] = useState(null);
   const [mostrarHistoria, setMostrarHistoria] = useState(false);
+
+  const [mostrarPresentacion, setMostrarPresentacion] = useState(false);
 
   async function verEspecificaciones() {
     if (especificaciones) {
@@ -260,6 +276,9 @@ export default function MenuLayout({ children }) {
                 : mostrarHistoria
                 ? t.historiaOcultar
                 : t.historiaMostrar}
+            </button>{" "}
+            <button onClick={() => setMostrarPresentacion((v) => !v)}>
+              {mostrarPresentacion ? t.presentacionOcultar : t.presentacionMostrar}
             </button>
           </div>
 
@@ -303,6 +322,32 @@ export default function MenuLayout({ children }) {
           {mostrarHistoria && historia && (
             <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: historia }} />
           )}
+
+          {mostrarPresentacion && (() => {
+            const archivos = PRESENTACION_ARCHIVOS[idioma] || PRESENTACION_ARCHIVOS.es;
+            const urlPptx = `${REPO_RAW_BASE}/${encodeURIComponent(archivos.pptx)}`;
+            const urlMp3 = `${REPO_RAW_BASE}/${encodeURIComponent(archivos.mp3)}`;
+            const urlVisor = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(urlPptx)}`;
+            return (
+              <div style={{ ...estiloPanelDocx, maxHeight: "none" }}>
+                <audio controls src={urlMp3} style={{ width: "100%", marginBottom: 12 }}>
+                  {t.presentacionAudioNoSoportado}
+                </audio>
+                <iframe
+                  key={idioma}
+                  src={urlVisor}
+                  title={t.presentacionMostrar}
+                  style={{ width: "100%", height: 480, border: "1px solid #ccc" }}
+                  allowFullScreen
+                />
+                <p style={{ marginTop: 8 }}>
+                  <a href={urlPptx} target="_blank" rel="noopener noreferrer">
+                    {t.presentacionDescargarPptx}
+                  </a>
+                </p>
+              </div>
+            );
+          })()}
         </div>
       )}
 
