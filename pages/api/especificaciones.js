@@ -4,20 +4,29 @@
 // repositorio de GitHub y lo convierte a HTML con "mammoth", para
 // poder mostrar su contenido dentro de la propia web, sin enviar al
 // usuario al repositorio.
+//
+// Un fichero MONOLINGÜE distinto según el idioma de la interfaz
+// (?idioma=es/en), no un único documento bilingüe con las dos
+// columnas — así cada visita descarga y convierte solo el idioma que
+// necesita, igual que ya hace "Presentación" con el PowerPoint y el
+// audio (más eficiente que descargar y convertir siempre las dos
+// columnas para mostrar solo una).
 
 import mammoth from "mammoth";
 
-// Ruta "raw" del fichero en GitHub. Actualiza esto si cambias la
-// ubicación o el nombre del documento.
-const URL_DOCX_RAW =
-  "https://raw.githubusercontent.com/antonioluiscliment/fondo-ia-web/main/PLAN/especificaciones.docx";
+// Ruta "raw" de cada versión en GitHub. Actualiza esto si cambias la
+// ubicación o el nombre de los documentos.
+const URL_BASE = "https://raw.githubusercontent.com/antonioluiscliment/fondo-ia-web/main/PLAN";
 
 export default async function handler(req, res) {
   try {
-    const respuesta = await fetch(URL_DOCX_RAW);
+    const idioma = req.query.idioma === "en" ? "en" : "es";
+    const urlDocx = `${URL_BASE}/especificaciones_${idioma}.docx`;
+
+    const respuesta = await fetch(urlDocx);
     if (!respuesta.ok) {
       throw new Error(
-        `No se ha podido descargar el documento de especificaciones (HTTP ${respuesta.status}). Comprueba la ruta en pages/api/especificaciones.js.`
+        `No se ha podido descargar el documento de especificaciones en ${idioma} (HTTP ${respuesta.status}). Comprueba la ruta en pages/api/especificaciones.js.`
       );
     }
     const buffer = Buffer.from(await respuesta.arrayBuffer());

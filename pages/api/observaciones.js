@@ -3,18 +3,23 @@
 // Igual que pages/api/especificaciones.js, pero para el documento de
 // observaciones, comentarios e hipótesis de trabajo (un cuaderno de
 // bitácora que se va ampliando conforme se prueba la aplicación).
+//
+// Un fichero monolingüe distinto según el idioma de la interfaz
+// (?idioma=es/en) — ver la nota de especificaciones.js.
 
 import mammoth from "mammoth";
 
-const URL_DOCX_RAW =
-  "https://raw.githubusercontent.com/antonioluiscliment/fondo-ia-web/main/PLAN/observaciones.docx";
+const URL_BASE = "https://raw.githubusercontent.com/antonioluiscliment/fondo-ia-web/main/PLAN";
 
 export default async function handler(req, res) {
   try {
-    const respuesta = await fetch(URL_DOCX_RAW);
+    const idioma = req.query.idioma === "en" ? "en" : "es";
+    const urlDocx = `${URL_BASE}/observaciones_${idioma}.docx`;
+
+    const respuesta = await fetch(urlDocx);
     if (!respuesta.ok) {
       throw new Error(
-        `No se ha podido descargar el documento de observaciones (HTTP ${respuesta.status}). Comprueba la ruta en pages/api/observaciones.js.`
+        `No se ha podido descargar el documento de observaciones en ${idioma} (HTTP ${respuesta.status}). Comprueba la ruta en pages/api/observaciones.js.`
       );
     }
     const buffer = Buffer.from(await respuesta.arrayBuffer());
