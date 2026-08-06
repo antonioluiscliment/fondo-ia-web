@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAppConfig } from "../lib/appConfig";
@@ -77,16 +77,19 @@ export default function MenuLayout({ children }) {
   // queremos accesible desde cualquier pantalla, viven aquí, en el
   // marco exterior persistente, detrás del icono de info.
   const [especificaciones, setEspecificaciones] = useState(null);
+  const [especificacionesIdioma, setEspecificacionesIdioma] = useState(null);
   const [cargandoEspecificaciones, setCargandoEspecificaciones] = useState(false);
   const [errorEspecificaciones, setErrorEspecificaciones] = useState(null);
   const [mostrarEspecificaciones, setMostrarEspecificaciones] = useState(false);
 
   const [observaciones, setObservaciones] = useState(null);
+  const [observacionesIdioma, setObservacionesIdioma] = useState(null);
   const [cargandoObservaciones, setCargandoObservaciones] = useState(false);
   const [errorObservaciones, setErrorObservaciones] = useState(null);
   const [mostrarObservaciones, setMostrarObservaciones] = useState(false);
 
   const [historia, setHistoria] = useState(null);
+  const [historiaIdioma, setHistoriaIdioma] = useState(null);
   const [cargandoHistoria, setCargandoHistoria] = useState(false);
   const [errorHistoria, setErrorHistoria] = useState(null);
   const [mostrarHistoria, setMostrarHistoria] = useState(false);
@@ -94,17 +97,18 @@ export default function MenuLayout({ children }) {
   const [mostrarPresentacion, setMostrarPresentacion] = useState(false);
 
   async function verEspecificaciones() {
-    if (especificaciones) {
+    if (especificaciones && especificacionesIdioma === idioma) {
       setMostrarEspecificaciones((v) => !v);
       return;
     }
     setCargandoEspecificaciones(true);
     setErrorEspecificaciones(null);
     try {
-      const resp = await fetch(`/api/especificaciones`);
+      const resp = await fetch(`/api/especificaciones?idioma=${idioma}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setEspecificaciones(json.html);
+      setEspecificacionesIdioma(idioma);
       setMostrarEspecificaciones(true);
     } catch (e) {
       setErrorEspecificaciones(e.message);
@@ -114,17 +118,18 @@ export default function MenuLayout({ children }) {
   }
 
   async function verObservaciones() {
-    if (observaciones) {
+    if (observaciones && observacionesIdioma === idioma) {
       setMostrarObservaciones((v) => !v);
       return;
     }
     setCargandoObservaciones(true);
     setErrorObservaciones(null);
     try {
-      const resp = await fetch(`/api/observaciones`);
+      const resp = await fetch(`/api/observaciones?idioma=${idioma}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setObservaciones(json.html);
+      setObservacionesIdioma(idioma);
       setMostrarObservaciones(true);
     } catch (e) {
       setErrorObservaciones(e.message);
@@ -134,17 +139,18 @@ export default function MenuLayout({ children }) {
   }
 
   async function verHistoria() {
-    if (historia) {
+    if (historia && historiaIdioma === idioma) {
       setMostrarHistoria((v) => !v);
       return;
     }
     setCargandoHistoria(true);
     setErrorHistoria(null);
     try {
-      const resp = await fetch(`/api/historia`);
+      const resp = await fetch(`/api/historia?idioma=${idioma}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setHistoria(json.html);
+      setHistoriaIdioma(idioma);
       setMostrarHistoria(true);
     } catch (e) {
       setErrorHistoria(e.message);
@@ -152,6 +158,20 @@ export default function MenuLayout({ children }) {
       setCargandoHistoria(false);
     }
   }
+
+  // Si el usuario cambia el idioma con el panel ya abierto, se
+  // recarga solo, sin que haga falta volver a pulsar el botón —
+  // mismo espíritu que el iframe de "Presentación" (más abajo), que
+  // se recarga con la clave `idioma`.
+  useEffect(() => {
+    if (mostrarEspecificaciones && especificacionesIdioma !== idioma) verEspecificaciones();
+  }, [idioma]);
+  useEffect(() => {
+    if (mostrarObservaciones && observacionesIdioma !== idioma) verObservaciones();
+  }, [idioma]);
+  useEffect(() => {
+    if (mostrarHistoria && historiaIdioma !== idioma) verHistoria();
+  }, [idioma]);
 
   return (
     <main style={{ maxWidth: 720, margin: "40px auto", fontFamily: "sans-serif", padding: "16px", background: "#ffe4d6", minHeight: "100vh" }}>
