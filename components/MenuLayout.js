@@ -94,6 +94,12 @@ export default function MenuLayout({ children }) {
   const [errorHistoria, setErrorHistoria] = useState(null);
   const [mostrarHistoria, setMostrarHistoria] = useState(false);
 
+  const [experiencia, setExperiencia] = useState(null);
+  const [experienciaIdioma, setExperienciaIdioma] = useState(null);
+  const [cargandoExperiencia, setCargandoExperiencia] = useState(false);
+  const [errorExperiencia, setErrorExperiencia] = useState(null);
+  const [mostrarExperiencia, setMostrarExperiencia] = useState(false);
+
   const [mostrarPresentacion, setMostrarPresentacion] = useState(false);
 
   async function verEspecificaciones() {
@@ -159,6 +165,27 @@ export default function MenuLayout({ children }) {
     }
   }
 
+  async function verExperiencia() {
+    if (experiencia && experienciaIdioma === idioma) {
+      setMostrarExperiencia((v) => !v);
+      return;
+    }
+    setCargandoExperiencia(true);
+    setErrorExperiencia(null);
+    try {
+      const resp = await fetch(`/api/experiencia?idioma=${idioma}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setExperiencia(json.html);
+      setExperienciaIdioma(idioma);
+      setMostrarExperiencia(true);
+    } catch (e) {
+      setErrorExperiencia(e.message);
+    } finally {
+      setCargandoExperiencia(false);
+    }
+  }
+
   // Si el usuario cambia el idioma con el panel ya abierto, se
   // recarga solo, sin que haga falta volver a pulsar el botón —
   // mismo espíritu que el iframe de "Presentación" (más abajo), que
@@ -171,6 +198,9 @@ export default function MenuLayout({ children }) {
   }, [idioma]);
   useEffect(() => {
     if (mostrarHistoria && historiaIdioma !== idioma) verHistoria();
+  }, [idioma]);
+  useEffect(() => {
+    if (mostrarExperiencia && experienciaIdioma !== idioma) verExperiencia();
   }, [idioma]);
 
   return (
@@ -297,6 +327,13 @@ export default function MenuLayout({ children }) {
                 ? t.historiaOcultar
                 : t.historiaMostrar}
             </button>{" "}
+            <button onClick={verExperiencia} disabled={cargandoExperiencia}>
+              {cargandoExperiencia
+                ? t.especificacionesCargando
+                : mostrarExperiencia
+                ? t.experienciaOcultar
+                : t.experienciaMostrar}
+            </button>{" "}
             <button onClick={() => setMostrarPresentacion((v) => !v)}>
               {mostrarPresentacion ? t.presentacionOcultar : t.presentacionMostrar}
             </button>
@@ -341,6 +378,11 @@ export default function MenuLayout({ children }) {
           {errorHistoria && <p style={{ color: "crimson" }}>{t.error}: {errorHistoria}</p>}
           {mostrarHistoria && historia && (
             <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: historia }} />
+          )}
+
+          {errorExperiencia && <p style={{ color: "crimson" }}>{t.error}: {errorExperiencia}</p>}
+          {mostrarExperiencia && experiencia && (
+            <div style={estiloPanelDocx} dangerouslySetInnerHTML={{ __html: experiencia }} />
           )}
 
           {mostrarPresentacion && (() => {
