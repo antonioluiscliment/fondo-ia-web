@@ -217,8 +217,16 @@ async function procesarIndice(indice, combinacionesParametros) {
 // Parsea una lista separada por comas de números y/o "nunca" (para
 // frecuencia de rebalanceo, que admite ese valor especial además de
 // enteros).
+// "nunca" y "diario" son los dos valores especiales de frecuencia de
+// rebalanceo que no son un número (ver FRECUENCIA_REBALANCEO_DEFECTO
+// en lib/motor.js) — el resto son enteros ("cada N supervivientes").
+// Antes solo se contemplaba "nunca": al elegir "óptimo" con la
+// frecuencia por defecto configurada en diario, Number("diario") daba
+// NaN y se descartaba en silencio, dejando la lista de frecuencias
+// vacía aunque en pantalla se viera marcada una opción.
 function parsearListaFrecuencia(param) {
-  return [...new Set(param.split(",").map((v) => (v === "nunca" ? "nunca" : Number(v))).filter((v) => v === "nunca" || !Number.isNaN(v)))];
+  const esEspecial = (v) => v === "nunca" || v === "diario";
+  return [...new Set(param.split(",").map((v) => (esEspecial(v) ? v : Number(v))).filter((v) => esEspecial(v) || !Number.isNaN(v)))];
 }
 
 function parsearListaNumeros(param) {
