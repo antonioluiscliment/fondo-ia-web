@@ -54,7 +54,7 @@ export default function AnomaliasFlujoBajo() {
     { etiqueta: "2", valor: 2 },
     { etiqueta: `${t.factorOptimoEtiqueta} (${factorPenalizacion})`, valor: factorPenalizacion },
   ];
-  const [factorRentFlujoBajo, setFactorRentFlujoBajo] = useState(FACTORES_DISPONIBLES[3].etiqueta);
+  const [factorRentFlujoBajo, setFactorRentFlujoBajo] = useState(null);
 
   const NS_DISPONIBLES = [
     { etiqueta: "3", valor: 3 },
@@ -62,7 +62,7 @@ export default function AnomaliasFlujoBajo() {
     { etiqueta: "6", valor: 6 },
     { etiqueta: `${t.factorOptimoEtiqueta} (${nComponentes})`, valor: nComponentes },
   ];
-  const [nRentFlujoBajo, setNRentFlujoBajo] = useState(NS_DISPONIBLES[3].etiqueta);
+  const [nRentFlujoBajo, setNRentFlujoBajo] = useState(null);
 
   const MAXS_DISPONIBLES = [
     { etiqueta: "40%", valor: 40 },
@@ -70,7 +70,7 @@ export default function AnomaliasFlujoBajo() {
     { etiqueta: "60%", valor: 60 },
     { etiqueta: `${t.factorOptimoEtiqueta} (${pesoMaximo}%)`, valor: pesoMaximo },
   ];
-  const [maxRentFlujoBajo, setMaxRentFlujoBajo] = useState(MAXS_DISPONIBLES[3].etiqueta);
+  const [maxRentFlujoBajo, setMaxRentFlujoBajo] = useState(null);
 
   const FRECUENCIAS_DISPONIBLES = [
     { etiqueta: t.frecuenciaNuncaEtiqueta, valor: "nunca" },
@@ -78,7 +78,7 @@ export default function AnomaliasFlujoBajo() {
     { etiqueta: t.frecuenciaSupervivientesEtiqueta(2), valor: 2 },
     { etiqueta: `${t.factorOptimoEtiqueta} (${frecuenciaRebalanceo === "diario" ? t.frecuenciaDiariaEtiqueta : t.frecuenciaSupervivientesEtiqueta(frecuenciaRebalanceo)})`, valor: frecuenciaRebalanceo },
   ];
-  const [frecuenciaRentFlujoBajo, setFrecuenciaRentFlujoBajo] = useState(FRECUENCIAS_DISPONIBLES[3].etiqueta);
+  const [frecuenciaRentFlujoBajo, setFrecuenciaRentFlujoBajo] = useState(null);
 
   const [rentFlujoBajo, setRentFlujoBajo] = useState(null);
   const [cargandoRentFlujoBajo, setCargandoRentFlujoBajo] = useState(false);
@@ -154,6 +154,10 @@ export default function AnomaliasFlujoBajo() {
         .filter(([, marcado]) => marcado)
         .map(([id]) => id);
       if (idsElegidos.length === 0) throw new Error("Marca al menos un índice.");
+      if (!factorRentFlujoBajo) throw new Error("Marca un factor de penalización.");
+      if (!nRentFlujoBajo) throw new Error("Marca un nº de componentes.");
+      if (!maxRentFlujoBajo) throw new Error("Marca un tope de diversificación.");
+      if (!frecuenciaRentFlujoBajo) throw new Error("Marca una frecuencia de rebalanceo.");
 
       const factorElegido = FACTORES_DISPONIBLES.find((f) => f.etiqueta === factorRentFlujoBajo).valor;
       const nElegido = NS_DISPONIBLES.find((f) => f.etiqueta === nRentFlujoBajo).valor;
