@@ -12,6 +12,7 @@ solitario por Antonio, gestionado a menudo desde el móvil.
 - **Lógica de negocio central:** `lib/motor.js`
 - **Internacionalización:** `lib/i18n.js`
 - **Índices soportados:** estructura modular en `lib/indices/`
+- **Repositorio GitHub:** 'https://github.com/antonioluiscliment/fondo-ia-web/tree/main'
 
 ## Arquitectura actual
 
