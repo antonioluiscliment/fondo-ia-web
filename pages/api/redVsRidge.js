@@ -12,7 +12,7 @@
 // analistas por tandas) pero con el horizonte de sesiones que pide el
 // walk-forward, y delega todo el cálculo en lib/walkForwardComun.js.
 
-import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerDatosAlineados } from "../../lib/motor";
+import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerDatosAlineados, obtenerIncrementosIndice } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
 import { MIN_ANALISTAS } from "../../lib/multifactorComun";
 import {
@@ -27,6 +27,7 @@ import {
   UMBRAL_TICKERS_REDUCCION,
   TOTAL_SESIONES_WF_NORMAL,
   TOTAL_SESIONES_WF_REDUCIDO,
+  calcularIncrementoVentana,
 } from "../../lib/walkForwardComun";
 
 let yahooFinance;
@@ -136,7 +137,23 @@ export default async function handler(req, res) {
     const resultadoRed = ejecutarWalkForwardRed(tickersValidos, candidatosPorTicker, totalSesiones);
     const correlacion = calcularCorrelacionModelos(resultadoRidge.historicoPasos, resultadoRed.historicoPasos);
 
-    const conNombre = (tickers) => (tickers || []).map((tk) => ({ ticker: tk, nombre: indice.nombresEmpresas[tk] }));
+    // 6) Incremento del propio índice, y de cada valor recomendado,
+    // en la misma ventana de cálculo que ha usado el modelo (VENTANA_WF
+    // sesiones hasta "hoy") — para poder mostrar junto a cada
+    // recomendación cómo le fue de verdad en el tramo que el modelo
+    // acaba de mirar.
+    const tHoy = resultadoRidge.tHoy;
+    const { cierres: cierresIndice } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
+    const mapaCierresIndice = Object.fromEntries(cierresIndice.map((c) => [c.fecha, c.cierre]));
+    const serieIndicePorFecha = fechas.map((f) => (mapaCierresIndice[f] !== undefined ? mapaCierresIndice[f] : null));
+    const incrementoIndice = calcularIncrementoVentana(serieIndicePorFecha, tHoy);
+
+    const conNombreEIncremento = (tickers) =>
+      (tickers || []).map((tk) => ({
+        ticker: tk,
+        nombre: indice.nombresEmpresas[tk],
+        incremento: calcularIncrementoVentana(candidatosPorTicker[tk].serieCierre, tHoy),
+      }));
 
     res.status(200).json({
       indice: indice.id,
@@ -152,13 +169,14 @@ export default async function handler(req, res) {
       },
       candidatosValidos: tickersValidos.length,
       excluidos: excluidos.length,
+      incrementoIndice,
       ridge: {
-        recomendacionFinal: conNombre(resultadoRidge.recomendacionFinal),
+        recomendacionFinal: conNombreEIncremento(resultadoRidge.recomendacionFinal),
         pasosConRecomendacion: resultadoRidge.historicoPasos.length,
         filasEntrenamiento: resultadoRidge.totalFilasEntrenamiento,
       },
       red: {
-        recomendacionFinal: conNombre(resultadoRed.recomendacionFinal),
+        recomendacionFinal: conNombreEIncremento(resultadoRed.recomendacionFinal),
         pasosConRecomendacion: resultadoRed.historicoPasos.length,
         filasEntrenamiento: resultadoRed.totalFilasEntrenamiento,
       },
