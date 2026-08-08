@@ -5,6 +5,10 @@ import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
 import { descargarTablaPdf } from "../lib/pdfComun";
 
+const SESIONES_TEST_DEFECTO = 4;
+const SESIONES_TEST_MINIMO = 1;
+const SESIONES_TEST_MAXIMO = 10;
+
 // "Comparación con red neuronal": nace de la propuesta de calibrar
 // dos modelos de selección — una regresión ridge y una red neuronal
 // pequeña, las dos construidas y entrenadas desde cero, sin ninguna
@@ -19,13 +23,14 @@ export default function ComparacionRedNeuronal() {
   const [resultado, setResultado] = useState(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
+  const [sesionesTest, setSesionesTest] = useState(SESIONES_TEST_DEFECTO);
 
   async function realizar() {
     setCargando(true);
     setError(null);
     setResultado(null);
     try {
-      const resp = await fetch(`/api/redVsRidge?indice=${indiceId}`);
+      const resp = await fetch(`/api/redVsRidge?indice=${indiceId}&sesionesTest=${sesionesTest}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setResultado(json);
@@ -66,6 +71,7 @@ export default function ComparacionRedNeuronal() {
           {t.redVsRidgeHistorialDiferencia(diferencia)}
         </p>
         <p style={{ margin: "2px 0" }}>{t.redVsRidgeHistorialTasa(hist.tasaSuperaBase, hist.numPasos)}</p>
+        <p style={{ margin: "6px 0 0", fontSize: "0.85em", fontStyle: "italic", color: "#555" }}>{t.redVsRidgeHistorialAvisoMuestra}</p>
       </div>
     );
   }
@@ -80,6 +86,19 @@ export default function ComparacionRedNeuronal() {
       <h2>{t.redVsRidgeTitulo}</h2>
       <p>{t.redVsRidgeDesc}</p>
 
+      <p style={{ margin: "12px 0 4px" }}>
+        <label>
+          {t.redVsRidgeEtiquetaSesionesTest}{" "}
+          <select value={sesionesTest} onChange={(e) => setSesionesTest(Number(e.target.value))}>
+            {Array.from({ length: SESIONES_TEST_MAXIMO - SESIONES_TEST_MINIMO + 1 }, (_, i) => SESIONES_TEST_MINIMO + i).map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+      </p>
+
       <button onClick={realizar} disabled={cargando}>
         {cargando ? t.redVsRidgeBotonCargando : t.redVsRidgeBoton}
       </button>
@@ -89,7 +108,8 @@ export default function ComparacionRedNeuronal() {
       {resultado && (
         <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
           <p style={{ margin: "4px 0" }}>
-            {t.redVsRidgeParametros(resultado.parametros.ventana, resultado.parametros.totalSesiones, resultado.parametros.pasoRidge, resultado.parametros.pasoRed)}
+            {t.redVsRidgeParametros(resultado.parametros.ventana, resultado.parametros.totalSesiones, resultado.parametros.pasoRidge, resultado.parametros.pasoRed)}{" "}
+            {t.redVsRidgeParametrosTest(resultado.parametros.sesionesTest)}
           </p>
           {resultado.parametros.sesionesReducidas && (
             <p style={{ background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 10, color: "#7a5c00" }}>
