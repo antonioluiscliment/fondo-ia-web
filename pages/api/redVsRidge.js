@@ -28,6 +28,9 @@ import {
   TOTAL_SESIONES_WF_NORMAL,
   TOTAL_SESIONES_WF_REDUCIDO,
   calcularIncrementoVentana,
+  SESIONES_TEST_DEFECTO,
+  SESIONES_TEST_MAXIMO,
+  SESIONES_TEST_MINIMO,
 } from "../../lib/walkForwardComun";
 
 let yahooFinance;
@@ -63,6 +66,12 @@ export default async function handler(req, res) {
 
     const indice = obtenerIndice(req.query.indice);
     const totalSesiones = elegirTotalSesiones(indice.tickers.length);
+
+    const sesionesTestParam = req.query.sesionesTest;
+    const sesionesTest = sesionesTestParam !== undefined ? Number(sesionesTestParam) : SESIONES_TEST_DEFECTO;
+    if (!Number.isInteger(sesionesTest) || sesionesTest < SESIONES_TEST_MINIMO || sesionesTest > SESIONES_TEST_MAXIMO) {
+      throw new Error(`El parámetro 'sesionesTest' debe ser un entero entre ${SESIONES_TEST_MINIMO} y ${SESIONES_TEST_MAXIMO}.`);
+    }
     const sesionesReducidas = totalSesiones < TOTAL_SESIONES_WF_NORMAL;
 
     const totalSesionesDescarga = calcularDiasTotalWF(totalSesiones);
@@ -133,8 +142,8 @@ export default async function handler(req, res) {
     }
 
     // 5) Walk-forward de los dos modelos, y su correlación.
-    const resultadoRidge = ejecutarWalkForwardRidge(tickersValidos, candidatosPorTicker, totalSesiones);
-    const resultadoRed = ejecutarWalkForwardRed(tickersValidos, candidatosPorTicker, totalSesiones);
+    const resultadoRidge = ejecutarWalkForwardRidge(tickersValidos, candidatosPorTicker, totalSesiones, sesionesTest);
+    const resultadoRed = ejecutarWalkForwardRed(tickersValidos, candidatosPorTicker, totalSesiones, sesionesTest);
     const correlacion = calcularCorrelacionModelos(resultadoRidge.historicoPasos, resultadoRed.historicoPasos);
 
     // 6) Incremento del propio índice, y de cada valor recomendado,
@@ -166,6 +175,9 @@ export default async function handler(req, res) {
         pasoRed: PASO_RED,
         sesionesReducidas,
         umbralTickers: UMBRAL_TICKERS_REDUCCION,
+        sesionesTest,
+        sesionesTestMinimo: SESIONES_TEST_MINIMO,
+        sesionesTestMaximo: SESIONES_TEST_MAXIMO,
       },
       candidatosValidos: tickersValidos.length,
       excluidos: excluidos.length,
