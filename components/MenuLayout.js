@@ -8,8 +8,11 @@ import { descargarHtmlPdf, compartirHtmlPdf } from "../lib/pdfComun";
 
 // "General" ya no es una opción del menú hamburguesa: el selector de
 // índice e idioma viven siempre visibles en el marco exterior (más
-// abajo en este mismo componente), y las especificaciones/historia/
-// observaciones se han movido al panel del icono de info (ⓘ).
+// abajo en este mismo componente). El panel del icono de info (ⓘ)
+// reúne, en este orden: Especificaciones, Documentación (esta misma
+// documentación técnica, generada a partir de los comentarios del
+// código — ver /PLAN/documentacion.html y pages/api/documentacion.js),
+// Observaciones, Historia, Experiencia, y Presentación.
 const ENLACES = [
   { href: "/comprobaciones", labelKey: "menuComprobaciones" },
   { href: "/parametrosTecnicos", labelKey: "menuParametrosTecnicos" },
@@ -82,6 +85,13 @@ export default function MenuLayout({ children }) {
   const [cargandoEspecificaciones, setCargandoEspecificaciones] = useState(false);
   const [errorEspecificaciones, setErrorEspecificaciones] = useState(null);
   const [mostrarEspecificaciones, setMostrarEspecificaciones] = useState(false);
+
+  // "Documentación" no tiene versión por idioma (los comentarios del
+  // código de los que sale están en español) — un simple mostrar/
+  // ocultar, como Presentación, con un iframe apuntando a un
+  // endpoint propio en vez de a mammoth (el fichero ya es HTML, no
+  // hace falta convertir nada).
+  const [mostrarDocumentacion, setMostrarDocumentacion] = useState(false);
 
   const [observaciones, setObservaciones] = useState(null);
   const [observacionesIdioma, setObservacionesIdioma] = useState(null);
@@ -314,6 +324,9 @@ export default function MenuLayout({ children }) {
                 ? t.especificacionesOcultar
                 : t.especificacionesMostrar}
             </button>{" "}
+            <button onClick={() => setMostrarDocumentacion((v) => !v)}>
+              {mostrarDocumentacion ? t.documentacionOcultar : t.documentacionMostrar}
+            </button>{" "}
             <button onClick={verObservaciones} disabled={cargandoObservaciones}>
               {cargandoObservaciones
                 ? t.especificacionesCargando
@@ -356,6 +369,14 @@ export default function MenuLayout({ children }) {
                 compartirFn={compartirHtmlPdf}
               />
             </>
+          )}
+
+          {mostrarDocumentacion && (
+            <iframe
+              src="/api/documentacion"
+              title={t.documentacionMostrar}
+              style={{ width: "100%", height: 600, border: "1px solid #ccc", borderRadius: 6, margin: "16px 0" }}
+            />
           )}
 
           {errorObservaciones && <p style={{ color: "crimson" }}>{t.error}: {errorObservaciones}</p>}
