@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Documentación técnica — Fondo IA</title>
+<style>
+  :root {
+    --azul: #1F3864;
+    --azul-claro: #eef2f7;
+    --borde: #c9d2de;
+    --fondo: #fdfcfb;
+    --mono-fondo: #f5f5f2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    background: var(--fondo);
+    color: #222;
+    line-height: 1.55;
+  }
+  header {
+    background: var(--azul);
+    color: white;
+    padding: 28px 24px;
+  }
+  header h1 { margin: 0 0 6px; font-size: 1.6em; }
+  header p { margin: 0; opacity: 0.9; font-size: 0.95em; }
+  .contenedor { max-width: 980px; margin: 0 auto; padding: 24px; }
+  nav.indice {
+    background: var(--azul-claro);
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+  }
+  nav.indice h2 { margin-top: 0; font-size: 1.05em; color: var(--azul); }
+  nav.indice ul { columns: 2; margin: 0; padding-left: 20px; }
+  nav.indice a { color: var(--azul); text-decoration: none; font-size: 0.92em; }
+  nav.indice a:hover { text-decoration: underline; }
+  section.carpeta { margin-bottom: 40px; }
+  section.carpeta > h2 {
+    color: var(--azul);
+    border-bottom: 3px solid var(--azul);
+    padding-bottom: 6px;
+  }
+  .carpeta-desc { color: #555; font-size: 0.95em; margin-top: -6px; margin-bottom: 20px; }
+  article.fichero {
+    background: white;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 18px;
+  }
+  article.fichero h3 {
+    margin: 0 0 4px;
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+    font-size: 1.02em;
+    color: var(--azul);
+  }
+  .meta { color: #888; font-size: 0.82em; margin-bottom: 12px; }
+  .cabecera-comentario {
+    white-space: pre-line;
+    background: var(--mono-fondo);
+    border-left: 3px solid var(--azul);
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 0.93em;
+    margin-bottom: 14px;
+  }
+  table.exports { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+  table.exports th {
+    text-align: left;
+    background: var(--azul-claro);
+    padding: 6px 10px;
+    border-bottom: 2px solid var(--borde);
+  }
+  table.exports td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+  table.exports code {
+    font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+    font-size: 0.95em;
+    color: #a02020;
+  }
+  .sin-comentario { color: #aaa; font-style: italic; }
+  .badge {
+    display: inline-block;
+    font-size: 0.72em;
+    padding: 1px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+  }
+  .badge.fn { background: #dbeee0; color: #1e6b3a; }
+  .badge.const { background: #e6e0f5; color: #4a2f8a; }
+  a.volver { font-size: 0.85em; }
+  footer { text-align: center; color: #999; font-size: 0.85em; padding: 30px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Documentación técnica — Fondo IA</h1>
+  <p>Generada automáticamente a partir de los comentarios y las funciones exportadas del código fuente. Repositorio: github.com/antonioluiscliment/fondo-ia-web</p>
+  <p>Este mismo documento puede consultarse también dentro de la propia aplicación, sin salir de ella: icono ⓘ (información) → <strong>Documentación</strong>, justo detrás de Especificaciones.</p>
+</header>
+<div class="contenedor" id="top">
+
+<nav class="indice">
+  <h2>Estructura del proyecto</h2>
+  <ul>
+    <li><a href="#f-components-BotonCompartirPdf-js">components/BotonCompartirPdf.js</a></li>
+    <li><a href="#f-components-IconoInfo-js">components/IconoInfo.js</a></li>
+    <li><a href="#f-components-MenuLayout-js">components/MenuLayout.js</a></li>
+    <li><a href="#f-lib-algebraComun-js">lib/algebraComun.js</a></li>
+    <li><a href="#f-lib-appConfig-js">lib/appConfig.js</a></li>
+    <li><a href="#f-lib-caidasPreviasComun-js">lib/caidasPreviasComun.js</a></li>
+    <li><a href="#f-lib-correlacionAnalistasComun-js">lib/correlacionAnalistasComun.js</a></li>
+    <li><a href="#f-lib-i18n-js">lib/i18n.js</a></li>
+    <li><a href="#f-lib-indices-js">lib/indices.js</a></li>
+    <li><a href="#f-lib-motor-js">lib/motor.js</a></li>
+    <li><a href="#f-lib-multifactorComun-js">lib/multifactorComun.js</a></li>
+    <li><a href="#f-lib-pdfComun-js">lib/pdfComun.js</a></li>
+    <li><a href="#f-lib-perfilVolumenComun-js">lib/perfilVolumenComun.js</a></li>
+    <li><a href="#f-lib-redNeuronalComun-js">lib/redNeuronalComun.js</a></li>
+    <li><a href="#f-lib-rentabilidadEtfsComun-js">lib/rentabilidadEtfsComun.js</a></li>
+    <li><a href="#f-lib-replicaComun-js">lib/replicaComun.js</a></li>
+    <li><a href="#f-lib-ventanasBacktestComun-js">lib/ventanasBacktestComun.js</a></li>
+    <li><a href="#f-lib-walkForwardComun-js">lib/walkForwardComun.js</a></li>
+    <li><a href="#f-pages--app-js">pages/_app.js</a></li>
+    <li><a href="#f-pages-analisis-js">pages/analisis.js</a></li>
+    <li><a href="#f-pages-anomaliasFlujoBajo-js">pages/anomaliasFlujoBajo.js</a></li>
+    <li><a href="#f-pages-comparacionRedNeuronal-js">pages/comparacionRedNeuronal.js</a></li>
+    <li><a href="#f-pages-comprobaciones-js">pages/comprobaciones.js</a></li>
+    <li><a href="#f-pages-index-js">pages/index.js</a></li>
+    <li><a href="#f-pages-parametrosTecnicos-js">pages/parametrosTecnicos.js</a></li>
+    <li><a href="#f-pages-seleccionAlternativa-js">pages/seleccionAlternativa.js</a></li>
+    <li><a href="#f-pages-seleccionVeces-js">pages/seleccionVeces.js</a></li>
+    <li><a href="#f-pages-api-analisisCorrelacion-js">pages/api/analisisCorrelacion.js</a></li>
+    <li><a href="#f-pages-api-caidasPrevias-js">pages/api/caidasPrevias.js</a></li>
+    <li><a href="#f-pages-api-concentracionSeleccion-js">pages/api/concentracionSeleccion.js</a></li>
+    <li><a href="#f-pages-api-correlacionAnalistas-js">pages/api/correlacionAnalistas.js</a></li>
+    <li><a href="#f-pages-api-correlacionAnalistasIndices-js">pages/api/correlacionAnalistasIndices.js</a></li>
+    <li><a href="#f-pages-api-documentacion-js">pages/api/documentacion.js</a></li>
+    <li><a href="#f-pages-api-especificaciones-js">pages/api/especificaciones.js</a></li>
+    <li><a href="#f-pages-api-experiencia-js">pages/api/experiencia.js</a></li>
+    <li><a href="#f-pages-api-fundamentales-js">pages/api/fundamentales.js</a></li>
+    <li><a href="#f-pages-api-historia-js">pages/api/historia.js</a></li>
+    <li><a href="#f-pages-api-holdingsETF-js">pages/api/holdingsETF.js</a></li>
+    <li><a href="#f-pages-api-mejorAnalistas-js">pages/api/mejorAnalistas.js</a></li>
+    <li><a href="#f-pages-api-mejorFundamentalActual-js">pages/api/mejorFundamentalActual.js</a></li>
+    <li><a href="#f-pages-api-multifactor-js">pages/api/multifactor.js</a></li>
+    <li><a href="#f-pages-api-observaciones-js">pages/api/observaciones.js</a></li>
+    <li><a href="#f-pages-api-optimizar-js">pages/api/optimizar.js</a></li>
+    <li><a href="#f-pages-api-optimizarFrecuencia-js">pages/api/optimizarFrecuencia.js</a></li>
+    <li><a href="#f-pages-api-optimizarMax-js">pages/api/optimizarMax.js</a></li>
+    <li><a href="#f-pages-api-optimizarN-js">pages/api/optimizarN.js</a></li>
+    <li><a href="#f-pages-api-perfilVolumenPrevio-js">pages/api/perfilVolumenPrevio.js</a></li>
+    <li><a href="#f-pages-api-puntuaciones-js">pages/api/puntuaciones.js</a></li>
+    <li><a href="#f-pages-api-ratios-js">pages/api/ratios.js</a></li>
+    <li><a href="#f-pages-api-recomendacionesAnalistas-js">pages/api/recomendacionesAnalistas.js</a></li>
+    <li><a href="#f-pages-api-redVsRidge-js">pages/api/redVsRidge.js</a></li>
+    <li><a href="#f-pages-api-rentabilidadETFs-js">pages/api/rentabilidadETFs.js</a></li>
+    <li><a href="#f-pages-api-rentabilidadEtfsTodos-js">pages/api/rentabilidadEtfsTodos.js</a></li>
+    <li><a href="#f-pages-api-rentabilidadFlujoBajo-js">pages/api/rentabilidadFlujoBajo.js</a></li>
+    <li><a href="#f-pages-api-replicaIndice-js">pages/api/replicaIndice.js</a></li>
+    <li><a href="#f-pages-api-seleccion-js">pages/api/seleccion.js</a></li>
+    <li><a href="#f-pages-api-seleccionVeces-js">pages/api/seleccionVeces.js</a></li>
+    <li><a href="#f-pages-api-variacionIndices-js">pages/api/variacionIndices.js</a></li>
+    <li><a href="#plan-recursos">PLAN/ (documentos y recursos)</a></li>
+  </ul>
+</nav>
+<section class="carpeta">
+  <h2>components/</h2>
+  <p class="carpeta-desc">Componentes de React reutilizables (menú, botones, iconos de información) usados en varias páginas.</p>
+  <article class="fichero" id="f-components-BotonCompartirPdf-js">
+    <h3>components/BotonCompartirPdf.js</h3>
+    <p class="meta">62 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Botón "Compartir PDF" reutilizable: genera el mismo PDF que
+"Descargar PDF" (mismas opciones, ver lib/pdfComun.js) pero, en vez
+de guardarlo, abre el panel nativo de compartir del dispositivo con
+el fichero ya adjunto — desde ahí el usuario elige Gmail, WhatsApp,
+o lo que tenga instalado.
+
+No se muestra nada si el navegador no soporta compartir ficheros
+(navigator.share con adjuntos — bastantes navegadores de
+escritorio no lo soportan, la mayoría de móviles sí): mejor no
+enseñar un botón que sabemos que va a fallar siempre.
+
+Uso, junto al botón de descarga ya existente:
+  &lt;button onClick={() =&gt; descargarTablaPdf(opciones)}&gt;{t.descargarPdfBoton}&lt;/button&gt;
+  &lt;BotonCompartirPdf opciones={opciones} /&gt;
+donde "opciones" es el mismo objeto que ya se le pasa a
+descargarTablaPdf (título, columnas, filas, nombreArchivo...).
+
+Para el caso de un PDF con varias tablas (una por índice, ver
+"Rentabilidad de todos los ETFs"), se le pasa la función de
+compartir correspondiente en compartirFn:
+  &lt;BotonCompartirPdf opciones={opciones} compartirFn={compartirMultiplesTablasPdf} /&gt;</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>BotonCompartirPdf</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-components-IconoInfo-js">
+    <h3>components/IconoInfo.js</h3>
+    <p class="meta">58 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Icono "i" pequeño, reutilizable, para documentar junto a una
+sección concreta decisiones de diseño o contexto que surgieron
+durante el desarrollo — cosas que no tienen sitio natural en el
+texto descriptivo de la propia herramienta, pero que conviene que
+no se pierdan (para quien use la app, y para retomar el hilo en
+futuras sesiones).
+
+Mismo estilo que el icono (i) general del marco exterior
+(components/MenuLayout.js), pero a esta escala, junto al título de
+una sección concreta en vez de junto al título de toda la app.
+
+Uso, justo después de un &lt;h2&gt;:
+  &lt;h2&gt;{t.miSeccionTitulo} &lt;IconoInfo&gt;{t.miSeccionInfo}&lt;/IconoInfo&gt;&lt;/h2&gt;</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>IconoInfo</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-components-MenuLayout-js">
+    <h3>components/MenuLayout.js</h3>
+    <p class="meta">442 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>MenuLayout</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+</section>
+<section class="carpeta">
+  <h2>lib/</h2>
+  <p class="carpeta-desc">Toda la lógica de cálculo y las utilidades compartidas: el motor de selección de carteras, los modelos estadísticos y de aprendizaje, los textos bilingües, el catálogo de índices, la generación de PDF.</p>
+  <article class="fichero" id="f-lib-algebraComun-js">
+    <h3>lib/algebraComun.js</h3>
+    <p class="meta">88 líneas · 4 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Operaciones matriciales mínimas, sin ninguna librería de álgebra
+lineal externa (no hay ninguna en el proyecto). Compartidas entre
+"Selección por modelo multifactor" (regresión ridge) y "Modelo de
+réplica de un índice" (mínimos cuadrados con restricción de que los
+pesos sumen 100%) — ambas necesitan lo mismo por debajo: resolver
+un sistema de ecuaciones lineales.
+
+Todas trabajan con matrices representadas como array de arrays
+(filas), y vectores como arrays planos.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>transponer</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>multiplicar</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>multiplicarVector</code><span class="badge fn">función</span></td><td>Multiplica una matriz por un vector columna (vector como array plano).</td></tr>
+        <tr><td><code>invertir</code><span class="badge fn">función</span></td><td>Inversión de matriz cuadrada por eliminación de Gauss-Jordan, con<br>pivoteo parcial (elige en cada paso la fila con mayor valor<br>absoluto en la columna del pivote, para estabilidad numérica).<br>Lanza un error si la matriz es singular (no invertible).</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-appConfig-js">
+    <h3>lib/appConfig.js</h3>
+    <p class="meta">74 líneas · 2 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>AppConfigProvider</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>useAppConfig</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-caidasPreviasComun-js">
+    <h3>lib/caidasPreviasComun.js</h3>
+    <p class="meta">71 líneas · 4 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">"Medición de caídas previas" (Anomalías en el flujo de dinero
+bajo): para cada valor seleccionado, ¿venía de una caída de precio
+reciente? Para cada umbral de caída (5%, 10%, 15%, 20%), se busca
+cuántas sesiones atrás (x) hace falta retroceder para encontrar un
+precio que sea al menos ese % más alto que el del día de la
+selección — es decir, el punto más reciente desde el que el precio
+de hoy ya representa esa caída.
+
+Por qué importa: tanto la hipótesis "técnica" (fase de acumulación
+tras una caída, antes de volver a tendencia) como la hipótesis
+"aburrida" (el criterio evita mecánicamente los desplomes recientes
+porque vienen con volumen alto, pero puede pescar el valor justo
+después) predicen que SÍ hubo una caída antes de la selección —
+esta comprobación por sí sola no las separa (para eso está "Perfil
+de volumen previo", el complemento de esta herramienta), pero
+confirma o descarta que el patrón de precio exista de verdad.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>UMBRALES_CAIDA</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MAX_RETROCESO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>medirCaidaPrevia</code><span class="badge fn">función</span></td><td>serieCompleta: datos[ticker] completo (sin recortar a la ventana<br>del backtest), array de {fecha, cierre, volumen}.<br>t: posición (índice) del día de selección dentro de serieCompleta.<br><br>Devuelve, para cada umbral, el x mínimo que lo alcanza, o null si<br>no se alcanza dentro de MAX_RETROCESO sesiones. Devuelve null (el<br>objeto entero) si el propio precio de selección no es válido.</td></tr>
+        <tr><td><code>agregarCaidasPrevias</code><span class="badge fn">función</span></td><td>Agrega los resultados de medirCaidaPrevia de muchas selecciones: %<br>de selecciones que alcanzaron cada umbral dentro del rango<br>explorado, y la x media entre las que sí lo alcanzaron (cuántas<br>sesiones atrás, de media, se encontró esa caída).</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-correlacionAnalistasComun-js">
+    <h3>lib/correlacionAnalistasComun.js</h3>
+    <p class="meta">238 líneas · 7 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Lógica compartida entre "Correlación de un índice con
+recomendaciones de los analistas" (pages/api/correlacionAnalistas.js)
+y "Correlación de los índices con las recomendaciones de los
+analistas" (pages/api/correlacionAnalistasIndices.js) — para no
+duplicar el mismo cálculo en los dos endpoints.
+
+Cómo se calcula la puntuación de Yahoo (recommendationMean): por
+debajo de ese número hay un recuento de cuántos analistas han
+emitido cada tipo de recomendación (esto es lo que Yahoo llama
+recommendationTrend: nº de "compra fuerte", "compra", "mantener",
+"venta" y "venta fuerte" del mes en curso). El recommendationMean es
+la media ponderada de ese recuento, usando esos mismos números 1-5
+como peso:
+
+  media = (1×compra_fuerte + 2×compra + 3×mantener + 4×venta + 5×venta_fuerte) / total_analistas
+
+Por ejemplo, si 6 analistas dicen "compra fuerte" (1), 3 dicen
+"compra" (2) y 1 dice "mantener" (3): media = (6×1 + 3×2 + 1×3) / 10
+= 15/10 = 1,5.
+
+En esa escala, 1 = consenso más optimista y 5 = más pesimista — es
+decir, va al revés de lo que uno esperaría correlacionar con una
+subida de cotización (cuanto MEJOR el consenso, MENOR el número).
+Para que la correlación salga en el sentido intuitivo (positiva
+cuando buen consenso → sube más) y no invertida, aquí se usa como
+puntuación la diferencia con 5: puntuacion = 5 − recommendationMean.
+Con eso, cuanto más optimista el consenso, MAYOR la puntuación.
+
+La correlación de Pearson se calcula por separado para cada plazo
+(1, 2, 3 y 6 meses) entre esa puntuación (fija, la de hoy — no hay
+histórico diario de recomendaciones) y el incremento real de
+cotización de cada valor en ese plazo. No tiene sentido mirar más
+atrás de 6 meses: las recomendaciones de los analistas cambian con
+relativa frecuencia, así que una recomendación de hace más de medio
+año ya no dice mucho del consenso actual.
+
+El consenso de analistas solo se puede consultar valor por valor
+(módulo "financialData" de Yahoo, sin versión ligera por lotes), en
+tandas pequeñas, no todo el índice de golpe. Solo se cuentan valores
+con al menos MIN_ANALISTAS analistas cubriéndolos.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>TAMANO_TANDA</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MIN_ANALISTAS</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>SESIONES_DESCARGA</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>PERIODOS</code><span class="badge const">constante</span></td><td>Plazos a analizar, en meses y su equivalente aproximado en días<br>naturales (para buscar el cierre de referencia por fecha).</td></tr>
+        <tr><td><code>errorInsuficiente</code><span class="badge fn">función</span></td><td>Marca un error como "datos insuficientes" (índice demasiado<br>pequeño, no hay suficientes candidatos válidos) en vez de un fallo<br>real (red, Yahoo caído...). El llamante lo distingue con<br>error.insuficiente, para mostrarlo como aviso informativo en vez de<br>como error.</td></tr>
+        <tr><td><code>calcularCorrelacionAnalistasParaIndice</code><span class="badge fn">función</span></td><td>Calcula el resultado completo (filas por valor, correlaciones por<br>plazo, excluidos) para UN índice. Puede lanzar (el llamante decide<br>cómo tratarlo).</td></tr>
+        <tr><td><code>generarConclusionAnalistas</code><span class="badge fn">función</span></td><td>Genera una conclusión en prosa, calculada de verdad a partir de los<br>coeficientes obtenidos (no un texto fijo): describe cada plazo con<br>dato válido, y añade una lectura general (efecto de seguimiento de<br>los inversores a las recomendaciones, efecto contrario, o ningún<br>patrón claro) según predominen las correlaciones positivas o<br>negativas entre los 4 plazos.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-i18n-js">
+    <h3>lib/i18n.js</h3>
+    <p class="meta">887 líneas · 2 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Los tickers y nombres de empresa ahora dependen del índice elegido
+(Dow Jones, IBEX 35, ...) y viven en lib/indices.js, no aquí. Este
+fichero solo contiene las cadenas de la interfaz.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>FACTOR_PENALIZACION_DEFECTO_DISPLAY</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>T</code><span class="badge const">constante</span></td><td>--- Diccionario de traducciones -----------------------------------<br>Todas las cadenas de la interfaz, en español e inglés. Los<br>documentos de especificaciones y observaciones (.docx) NO se<br>traducen aquí: siguen mostrándose siempre en español, tal como<br>están redactados en el repositorio.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-indices-js">
+    <h3>lib/indices.js</h3>
+    <p class="meta">1068 líneas · 21 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Catálogo de índices que la aplicación puede analizar. Cada entrada
+define:
+ - id: identificador usado en la URL (?indice=...) y en el estado.
+ - nombre: nombre a mostrar, en es/en.
+ - abreviatura: forma corta para las tablas de resultados (p.ej. "DJ").
+ - simboloIndice: símbolo de Yahoo Finance del índice de referencia,
+   usado para comparar la rentabilidad del modelo con la de "comprar
+   y mantener el índice".
+ - tickers: símbolos de Yahoo Finance de los componentes (algunos
+   mercados los necesitan con sufijo, p.ej. ".MC" para la Bolsa de
+   Madrid; los tickers de EE. UU. no llevan sufijo).
+ - nombresEmpresas: nombre completo de cada componente, por ticker.
+   No se traduce (son nombres propios), igual que antes.
+
+Añadir un índice nuevo consiste en añadir aquí una entrada más a
+INDICES: el resto de la aplicación (backend y frontend) ya es
+genérico y no necesita más cambios.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>DOW_JONES</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>IBEX35</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>CAC40</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>PSI20</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>DAX</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>AEX</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>FTSE_MIB</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>NASDAQ100</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>ARGENTINA_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>AUSTRALIA_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>INDIA_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>ASIA_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>CHINA_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>BRASIL_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>COREA_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>LATAM_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>GRECIA_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MEXICO_ADR</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>INDICES</code><span class="badge const">constante</span></td><td>Orden del desplegable de índices: primero los americanos (EE. UU.),<br>después los europeos (incluida Grecia, por geografía, y Turquía si<br>llegara a incorporarse), luego Latinoamérica y el resto del<br>continente americano fuera de EE. UU., después Asia y países<br>asiáticos, y por último el resto (Oceanía).</td></tr>
+        <tr><td><code>obtenerIndice</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>tickerVisible</code><span class="badge fn">función</span></td><td>Quita el sufijo de mercado del ticker (p.ej. "ANA.MC" -&gt; "ANA"), solo<br>para mostrarlo en pantalla; el ticker completo (con sufijo si lo<br>lleva) es siempre el que se usa para pedir datos a Yahoo Finance.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-motor-js">
+    <h3>lib/motor.js</h3>
+    <p class="meta">1043 líneas · 28 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Motor de cálculo del modelo: obtención de datos, cálculo de
+incrementos, selección de los 5 componentes y rebalanceo. Se separa
+en este módulo compartido para poder reutilizarlo tanto desde
+pages/api/seleccion.js (una ejecución con un factor de penalización
+dado) como desde pages/api/optimizar.js (muchas ejecuciones, una
+por cada factor candidato).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>mensajeErrorAmigable</code><span class="badge fn">función</span></td><td>Cuando los servidores de Yahoo Finance tienen una caída temporal,<br>en vez de devolver JSON con las cotizaciones responden con su<br>propia página HTML de mantenimiento ("Could Not Connect", status<br>502, "Will be right back..."). yahoo-finance2 no filtra eso, así<br>que el error que llega hasta aquí incluye el HTML completo. Esta<br>función lo detecta y lo sustituye por un mensaje claro para el<br>usuario, en vez de volcar cientos de líneas de HTML en pantalla.</td></tr>
+        <tr><td><code>getYahooFinanceInstance</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>DIAS</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>N_COMPONENTES</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>PESO_MAXIMO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>PESO_MAXIMO_TOPE_BUSQUEDA</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>PESO_INICIAL</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>SESIONES_PUNTUACION_DEFECTO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>PESO_MINIMO_PROTEGIDO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>FACTOR_PENALIZACION_DEFECTO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>FRECUENCIA_REBALANCEO_DEFECTO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>SESIONES_VECES_DEFECTO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>SEMILLA_ALEATORIA_DEFECTO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>obtenerCierres</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>obtenerCierresConActual</code><span class="badge fn">función</span></td><td>Combina el histórico de cierres diarios con la cotización ACTUAL<br>(la que devuelva Yahoo Finance en el momento de la consulta, sea la<br>sesión de hoy en curso o el último cierre ya disponible, sin<br>aplicar ninguna lógica de horario de mercado por nuestra parte).<br>Ese valor sustituye (no duplica) al de "hoy" en el histórico, para<br>formar el punto más reciente de la ventana.</td></tr>
+        <tr><td><code>obtenerDatosAlineados</code><span class="badge fn">función</span></td><td>Descarga los cierres de los tickers dados (incluyendo la cotización<br>actual como el punto más reciente) y se queda con las fechas<br>comunes a todos ellos, tomando las últimas "diasVentana" fechas<br>comunes (20 por defecto, configurable).<br><br>Resiliente por ticker: si uno falla al descargar (símbolo puntual<br>caído, "delisted", etc.), no rompe la llamada entera — se excluye<br>del cálculo de fechas comunes (si no, un solo ticker sin ningún<br>dato dejaría la intersección vacía para TODOS) y se le devuelve una<br>serie de "sin dato" en cada fecha, exactamente igual que si tuviera<br>huecos en todas las sesiones — el resto del código ya sabe manejar<br>eso (los `.filter(v =&gt; v !== null &amp;&amp; v !== undefined)` que hay por<br>toda la aplicación). Antes, un solo ticker fallido (p. ej. un<br>símbolo que cambió o dejó de cotizar) tiraba abajo la petición<br>completa con un error genérico de Yahoo Finance — y como esta<br>función la usan casi todas las herramientas de selección y<br>análisis, un solo ticker problemático podía romper cualquiera de<br>ellas para el índice entero.</td></tr>
+        <tr><td><code>elegirTopPorVeces</code><span class="badge fn">función</span></td><td>Elige los nComponentes tickers con mayor contador acumulado de<br>veces en cartera (ver contadorApariciones), de entre los del índice<br>analizado. Un ticker que nunca apareció en el periodo cuenta como<br>0. Desempate: orden alfabético del ticker, igual que en seleccionarTop.</td></tr>
+        <tr><td><code>calcularRentabilidadTotalCarteraAnterior</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>obtenerRentabilidadIndice</code><span class="badge fn">función</span></td><td>Rentabilidad del propio índice de referencia entre dos fechas, para<br>poder comparar el modelo con "comprar y mantener el índice".</td></tr>
+        <tr><td><code>obtenerIncrementosIndice</code><span class="badge fn">función</span></td><td>Incremento porcentual diario del propio índice de referencia<br>(dado por simboloIndice, p.ej. "^DJI" o "^IBEX") para cada fecha del<br>array `fechas` (cierre de hoy / cierre de ayer − 1, en puntos<br>porcentuales), para poder mostrarlo junto al beneficio de la<br>cartera seleccionada cada día. Se descarga con margen de sobra por<br>delante y por detrás para poder alinear por fecha exacta y disponer<br>siempre de la sesión anterior a la primera fecha pedida. Devuelve<br>también los cierres ya descargados (`cierres`) para que quien llame<br>pueda calcular además la rentabilidad total del índice en el<br>periodo sin tener que hacer una segunda descarga por separado<br>(menos llamadas a Yahoo Finance, más margen frente a límites de<br>tasa de la API).</td></tr>
+        <tr><td><code>calcularCorrelacion</code><span class="badge fn">función</span></td><td>Coeficiente de correlación de Pearson entre dos series numéricas ya<br>emparejadas (un array de pares [x, y], sin null/undefined). Devuelve<br>un valor entre -1 y 1, o null si hay menos de 2 pares válidos o si<br>alguna de las dos series no tiene variación (varianza 0, división<br>por cero).</td></tr>
+        <tr><td><code>buscarMejorFactor</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>buscarMejorN</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>buscarMejorMax</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>buscarMejorFrecuencia</code><span class="badge fn">función</span></td><td>Candidatos probados: "diario" (siempre rebalancea) y cada entero<br>entre 0 y nComponentes-1 (el umbral de supervivientes que dispara<br>el rebalanceo). Con nComponentes=5 por defecto, son los mismos 6<br>candidatos que describiste: diario, ≤4, ≤3, ≤2, ≤1, ≤0.</td></tr>
+        <tr><td><code>calcularPuntuacionesSesion</code><span class="badge fn">función</span></td><td>Ejecuta una configuración completa (factor, n, max)<br>y devuelve el porcentaje de rentabilidad total acumulada (la<br>función beneficio compuesta de las carteras anteriores), lista<br>para mostrar.<br>--- Herramienta de auditoría: puntuaciones de una sesión concreta ---<br>Dado un número de sesión dentro de la ventana descargada (1 = la<br>más antigua de las diasVentana fechas, diasVentana = la más<br>reciente), calcula la puntuación de los 30 componentes en esa<br>fecha exactamente igual que calcularSeleccionCompleta, pero sin<br>recorrer toda la ventana ni aplicar reglas de cartera/rebalanceo:<br>solo la tabla de puntuaciones, para poder comprobarla a mano.<br><br>Como la puntuación necesita 3 incrementos previos, y cada<br>incremento necesita 2 cierres consecutivos, la primera sesión con<br>puntuación calculable es la nº 4 (1-based) dentro de la ventana; la<br>última es la propia diasVentana. numeroSesion fuera de ese rango<br>lanza un error con el rango válido para que el endpoint lo<br>devuelva tal cual.</td></tr>
+        <tr><td><code>calcularBeneficioAcumulado</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>calcularSeleccionCompleta</code><span class="badge fn">función</span></td><td>Ejecuta el recorrido completo de la ventana de 20 días con un<br>factor de penalización dado, devolviendo el histórico día a día<br>más la suma total del "beneficio sin cambio" (el único indicador<br>realmente alcanzable, ya que se decide con la información<br>disponible el día anterior).</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-multifactorComun-js">
+    <h3>lib/multifactorComun.js</h3>
+    <p class="meta">179 líneas · 18 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Base matemática de "Selección por modelo multifactor": la regresión
+ridge que ajusta los pesos de las variables (las operaciones
+matriciales que usa viven en lib/algebraComun.js, compartidas con
+"Modelo de réplica de un índice").
+
+Por qué ridge y no una regresión normal (mínimos cuadrados sin más):
+varias de las variables están muy correlacionadas entre sí por
+construcción (el flujo de dinero es literalmente precio × volumen),
+y con relativamente pocos datos de entrenamiento eso hace que una
+regresión normal reparta el peso entre variables redundantes de
+forma inestable, cambiando mucho de una ejecución a otra. La
+regularización ridge (penalizar pesos muy grandes) corrige eso sin
+perder apenas capacidad explicativa, y sigue teniendo una solución
+matemática directa (no hace falta ningún proceso iterativo).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>ajustarRidge</code><span class="badge fn">función</span></td><td>---------- Regresión ridge ----------<br><br>X: matriz de características ya normalizadas, con una columna de<br>   "1" añadida al principio para el término independiente<br>   (intercept) — filas = observaciones, columnas = variables + 1.<br>y: vector objetivo (una rentabilidad futura por observación).<br>lambda: fuerza de la regularización (mayor = pesos más<br>   conservadores, más resistente a datos correlacionados).<br><br>Fórmula cerrada: w = (XᵀX + λI)⁻¹ Xᵀy — con el intercept SIN<br>penalizar (fila/columna 0 de la matriz de penalización a cero), que<br>es la práctica estándar: no tiene sentido "encoger" el término<br>independiente hacia cero como si fuera una variable más.</td></tr>
+        <tr><td><code>predecir</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>calcularR2</code><span class="badge fn">función</span></td><td>R² (coeficiente de determinación): 1 − (suma de residuos al<br>cuadrado / suma de desviaciones a la media al cuadrado). Puede salir<br>negativo si el modelo predice peor que la media — y hay que<br>mostrarlo así, no ocultarlo.</td></tr>
+        <tr><td><code>calcularNormalizacion</code><span class="badge fn">función</span></td><td>---------- Normalización (z-score) ----------<br><br>Imprescindible antes de ajustar: sin esto, los pesos resultantes no<br>se pueden comparar entre sí (el PER se mueve en la escala 5-40, el<br>consenso de analistas en la escala 1-5, los incrementos de precio<br>en tanto por uno).</td></tr>
+        <tr><td><code>normalizar</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MARGEN</code><span class="badge const">constante</span></td><td>---------- Constantes del modelo ----------<br><br>MARGEN: sesiones de sobra al principio de la ventana, para poder<br>calcular momentum y dispersión ya desde el primer día de<br>entrenamiento (si no, la primera fila de entrenamiento no tendría<br>datos previos suficientes). Es VENTANA_DISPERSION + 1, no<br>VENTANA_DISPERSION a secas: el primer incremento de cualquier serie<br>es siempre null (no hay día anterior con el que compararlo), así<br>que la desviación típica de las últimas VENTANA_DISPERSION sesiones<br>necesita esa sesión extra para no toparse con ese null.<br>ENTRENAMIENTO / VALIDACION: con el índice más pequeño de la<br>aplicación (3 componentes), 50 sesiones de entrenamiento dan 150<br>filas — unas 17 por variable, en el límite bajo pero aceptable con<br>ridge; con cualquier otro índice, sobra de largo. No conviene<br>alargar mucho más: cuanto más larga la ventana de entrenamiento,<br>peor la aproximación de tratar el PER/EPS/consenso de HOY como si<br>fueran los de hace semanas (no cambian a lo largo de la ventana,<br>porque Yahoo no da histórico diario de esos datos).<br>VENTANA_DISPERSION: fija en 20 sesiones, más larga que la ventana<br>de momentum (sesionesPuntuacion, 3-13) porque una desviación típica<br>necesita más puntos para ser mínimamente fiable.</td></tr>
+        <tr><td><code>SESIONES_ENTRENAMIENTO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>SESIONES_VALIDACION</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>VENTANA_DISPERSION</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MIN_FILAS_POR_VARIABLE_AVISO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MIN_ANALISTAS</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>N_MIN</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>N_MAX</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>LAMBDA_RIDGE</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>calcularIncrementosSerie</code><span class="badge fn">función</span></td><td>Incrementos porcentuales día a día de una serie de valores<br>(cierre, volumen o flujo). serie[i] puede ser null/undefined<br>(hueco de datos); en ese caso el incremento correspondiente sale<br>como null, y se propaga como null en las sumas que lo usen.</td></tr>
+        <tr><td><code>sumaMomentum</code><span class="badge fn">función</span></td><td>Suma de los incrementos de las últimas `ventana` sesiones anteriores<br>al índice t (sin incluir el propio t): incrementos[t-1] + ... +<br>incrementos[t-ventana]. Devuelve null si falta algún dato en esa<br>ventana (no se puede calcular un momentum parcial sin más).</td></tr>
+        <tr><td><code>desviacionMomentum</code><span class="badge fn">función</span></td><td>Desviación típica de los incrementos de precio de las últimas<br>`ventana` sesiones anteriores al índice t. Mide la dispersión<br>(volatilidad) del valor, no su nivel — a diferencia del momentum,<br>que suma con signo, aquí importa cuánto varían los incrementos<br>entre sí.</td></tr>
+        <tr><td><code>rentabilidadFutura</code><span class="badge fn">función</span></td><td>Rentabilidad acumulada desde el cierre en t hasta el cierre en<br>t + ventana (el "objetivo" que el modelo intenta predecir). Null si<br>falta algún dato.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-pdfComun-js">
+    <h3>lib/pdfComun.js</h3>
+    <p class="meta">260 líneas · 7 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Generación de PDF reutilizable para todas las visualizaciones de la
+aplicación (tablas de comprobaciones, selección, análisis...). Se
+genera en el propio navegador con jsPDF + jspdf-autotable, a partir
+de los datos que ya están cargados en pantalla — no vuelve a llamar
+a ningún endpoint.
+
+Dos formas de usar el mismo PDF ya construido:
+  - descargarTablaPdf(...): lo guarda directamente (comportamiento
+    original).
+  - compartirTablaPdf(...): abre el panel nativo de "compartir" del
+    dispositivo (navigator.share), con el PDF ya adjunto — desde
+    ahí el usuario elige Gmail, WhatsApp, o lo que tenga instalado.
+    No hay ningún servidor de por medio: el navegador no puede
+    enviar un correo por sí mismo, así que esta es la vía sin
+    necesidad de dar de alta ningún servicio externo. Comprobar
+    antes con compartirDisponible() si el navegador lo soporta (no
+    todos lo hacen, sobre todo en escritorio) —
+    components/BotonCompartirPdf.js ya se encarga de eso.
+
+Uso típico, tras una tabla ya mostrada en pantalla:
+  &lt;button onClick={() =&gt; descargarTablaPdf({
+    titulo: "...",
+    columnas: ["Ticker", "Precio", ...],
+    filas: datos.map((d) =&gt; [d.ticker, d.precio, ...]),
+    nombreArchivo: "seleccion-precio.pdf",
+  })}&gt;Descargar PDF&lt;/button&gt;</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>descargarTablaPdf</code><span class="badge fn">función</span></td><td>nombreArchivo: nombre del fichero .pdf a descargar (o a adjuntar,<br>en el caso de compartirTablaPdf).</td></tr>
+        <tr><td><code>compartirDisponible</code><span class="badge fn">función</span></td><td>Comprueba si el navegador puede compartir ficheros (no solo texto)<br>con navigator.share — bastantes navegadores de escritorio no lo<br>soportan, la mayoría de móviles sí. No garantiza que vaya a<br>funcionar (eso solo se sabe al intentarlo), pero evita mostrar un<br>botón que seguro que va a fallar.</td></tr>
+        <tr><td><code>compartirTablaPdf</code><span class="badge fn">función</span></td><td>Genera el mismo PDF y abre el panel nativo de compartir del<br>dispositivo con el fichero ya adjunto. Si el usuario cierra el<br>panel sin elegir nada, el navegador lanza un AbortError — no es un<br>fallo real, así que se ignora en silencio; cualquier otro error se<br>relanza para que quien llama pueda avisar de que no se pudo<br>compartir.</td></tr>
+        <tr><td><code>descargarMultiplesTablasPdf</code><span class="badge fn">función</span></td><td>nombreArchivo: nombre del fichero .pdf a descargar (o a adjuntar,<br>en el caso de compartirMultiplesTablasPdf).</td></tr>
+        <tr><td><code>compartirMultiplesTablasPdf</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>descargarHtmlPdf</code><span class="badge fn">función</span></td><td>opciones: { titulo, html, nombreArchivo }</td></tr>
+        <tr><td><code>compartirHtmlPdf</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-perfilVolumenComun-js">
+    <h3>lib/perfilVolumenComun.js</h3>
+    <p class="meta">64 líneas · 4 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">"Perfil de volumen previo" (Anomalías en el flujo de dinero bajo):
+complemento de "Medición de caídas previas". Si un valor viene de
+una caída de precio, ¿esa caída vino con un pico puntual de
+volumen (todo el mundo vendiendo a la vez, la firma típica de un
+desplome real) o con volumen bajo y sostenido (sin ningún pico,
+más compatible con una fase de acumulación o desinterés gradual)?
+
+Esta es la comprobación que de verdad separa las dos hipótesis que
+quedaban en pie tras "Medición de caídas previas": la "aburrida"
+(el criterio evita mecánicamente los desplomes recientes, que
+vienen con volumen alto) predice un pico claro; la "técnica"
+(acumulación silenciosa) predice volumen bajo sin ningún pico.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>VENTANA_VOLUMEN</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>UMBRAL_PICO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>medirPerfilVolumen</code><span class="badge fn">función</span></td><td>serieCompleta: datos[ticker] completo (sin recortar a la ventana<br>del backtest), array de {fecha, cierre, volumen}.<br>t: posición (índice) del día de selección dentro de serieCompleta.<br><br>Devuelve { promedio, pico, picoRatio, conPico } o null si no hay<br>suficientes datos de volumen válidos en la ventana previa.</td></tr>
+        <tr><td><code>agregarPerfilVolumen</code><span class="badge fn">función</span></td><td>Agrega los resultados de medirPerfilVolumen de muchas selecciones:<br>ratio pico/promedio medio, y % de selecciones clasificadas "con<br>pico" frente a "sin pico" (volumen sostenido, sin ningún día<br>destacado).</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-redNeuronalComun-js">
+    <h3>lib/redNeuronalComun.js</h3>
+    <p class="meta">146 líneas · 3 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Red neuronal pequeña y deliberadamente sencilla (una sola capa
+oculta, pocas neuronas), implementada desde cero sin ninguna
+librería de aprendizaje automático — no hay ninguna en el
+proyecto, todo el álgebra de esta aplicación (ridge, réplica de
+índice) está igualmente construida a mano.
+
+Por qué tan pequeña: se entrena muchas veces dentro de un
+walk-forward (ver walkForwardComun.js), así que cada entrenamiento
+tiene que ser barato — ni la arquitectura ni el nº de iteraciones
+pueden ser grandes sin arriesgar el tiempo de espera del servidor.
+
+Arquitectura: entrada (variable, según nº de variables de
+walkForwardComun.js) -&gt; capa oculta (H, activación tanh) -&gt; salida
+(1, lineal) — un perceptrón multicapa clásico, del tipo más simple
+que todavía merece llamarse "red neuronal" en vez de una regresión
+lineal disfrazada.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>crearRed</code><span class="badge fn">función</span></td><td>numEntradas: nº de variables de entrada.<br>numOcultas: nº de neuronas de la capa oculta (10 por defecto).<br>semilla: para que la inicialización de pesos sea reproducible.</td></tr>
+        <tr><td><code>predecir</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>entrenar</code><span class="badge fn">función</span></td><td>Entrena la red un nº fijo de épocas (pasadas completas por todos<br>los datos) — nº fijo, no "hasta que converja", para que el coste<br>de cada paso del walk-forward esté acotado de antemano.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-rentabilidadEtfsComun-js">
+    <h3>lib/rentabilidadEtfsComun.js</h3>
+    <p class="meta">132 líneas · 3 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Cálculo de "Rentabilidad de los ETFs" para UN índice — extraído de
+pages/api/rentabilidadETFs.js para poder reutilizarlo también en
+pages/api/rentabilidadEtfsTodos.js ("Rentabilidad de todos los
+ETFs"), sin duplicar la lógica.
+
+Dos grupos de ETFs:
+  - etfsRentabilidad: los COMPARABLES con el índice — de
+    distribución para todos los índices salvo el DAX (donde son de
+    acumulación, por ser el DAX un índice de rentabilidad total; ver
+    el comentario junto a DAX.etfsRentabilidad en lib/indices.js).
+  - etfsOpuestos: el resto de ETFs UCITS del mismo índice, del tipo
+    contrario — no son directamente comparables con el índice, pero
+    se muestran igualmente, marcados como tales.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>SESIONES_DESCARGA</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>calcularAnioVolumen</code><span class="badge fn">función</span></td><td>Año a usar para la columna de volumen: el año en curso (YTD), salvo<br>en los primeros días de enero, cuando apenas hay sesiones del año<br>nuevo y el volumen acumulado sería poco representativo — en ese<br>caso se usa el año natural anterior completo.</td></tr>
+        <tr><td><code>calcularRentabilidadEtfsParaIndice</code><span class="badge fn">función</span></td><td>Calcula las filas (índice + ETFs comparables + ETFs opuestos) para<br>UN índice. anioVolumen/esYTD se calculan una sola vez fuera (son<br>iguales para todos los índices) y se pasan aquí.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-replicaComun-js">
+    <h3>lib/replicaComun.js</h3>
+    <p class="meta">300 líneas · 5 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Base matemática de "Modelo de réplica de un índice": para el
+puñado de valores al que un inversor tiene acceso real (los índices
+ADR de la aplicación, que no tienen ningún ETF de referencia), busca
+la combinación de 3 a 6 valores y los pesos que hacen que la
+cartera se parezca lo más posible al índice — no que lo bata, que
+lo REPLIQUE, minimizando la diferencia (el "tracking error") entre
+el incremento diario de la cartera y el del índice.
+
+Por qué esto y no intentar batir al índice: toda la evidencia que
+hemos ido recogiendo en la propia aplicación (ningún método de
+selección probado bate de forma consistente ni al índice ni a una
+selección aleatoria) apunta a que intentar ganarle al índice con un
+puñado de valores es una apuesta perdedora. Si la referencia es
+difícil de mejorar, tiene más sentido intentar parecerse a ella lo
+más posible con los pocos valores disponibles, en vez de arriesgar
+buscando una diferencia que probablemente no exista.
+
+Cómo se ajustan los pesos: para una combinación concreta de valores,
+se buscan los pesos que minimizan la suma de las diferencias al
+cuadrado entre el incremento diario de la cartera y el del índice,
+sesión a sesión, con la restricción de que los pesos sumen 100%
+(mínimos cuadrados con una restricción de igualdad, resuelto con las
+mismas herramientas de álgebra lineal que la regresión ridge del
+modelo multifactor — ver lib/algebraComun.js).
+
+Cómo se elige la combinación de valores: por fuerza bruta para
+índices de hasta UMBRAL_FUERZA_BRUTA componentes (prueba TODAS las
+combinaciones posibles de 3 a 6 valores — con estos tamaños, es
+factible en un instante, sin necesidad de ningún atajo). Por
+encima de ese umbral, por búsqueda por pasos (forward selection):
+se empieza con el valor que mejor encaja solo, y se va añadiendo de
+uno en uno el que más reduce el error de seguimiento, hasta 6 —
+mucho más rápida (crece con el número de valores, no con el número
+de combinaciones), aunque no garantiza matemáticamente encontrar la
+combinación óptima absoluta, solo una muy buena. Por encima de
+MAX_TICKERS_TOTAL (pensado para dejar fuera solo al Nasdaq 100, con
+diferencia el índice más grande de la aplicación) la herramienta no
+se ofrece: para un índice así de grande, además, casi seguro que ya
+existe un ETF de verdad — la opción sensata ahí es comprarlo
+directamente, no intentar replicarlo con 5 valores.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>N_MIN</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>N_MAX</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>UMBRAL_FUERZA_BRUTA</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MAX_TICKERS_TOTAL</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>buscarMejorReplica</code><span class="badge fn">función</span></td><td>Elige automáticamente fuerza bruta (exacta) o búsqueda por pasos<br>(aproximada, mucho más rápida) según el número de candidatos, y<br>ejecuta la búsqueda.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-ventanasBacktestComun-js">
+    <h3>lib/ventanasBacktestComun.js</h3>
+    <p class="meta">95 líneas · 7 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Generación de ventanas históricas sin solape para repetir un
+backtest varias veces con datos independientes — extraído de
+pages/api/analisisCorrelacion.js para poder reutilizarlo también en
+las herramientas de "Anomalías en el flujo de dinero bajo"
+(pages/api/concentracionSeleccion.js y las que vengan después), sin
+duplicar la lógica. Usar la MISMA batería en ambos sitios es
+importante: así los resultados de una y otra herramienta son
+directamente comparables entre sí.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>DURACIONES</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MAX_REPETICIONES</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>cortarDatos</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>calcularVentanas</code><span class="badge fn">función</span></td><td>Devuelve las ventanas [inicio, fin) no solapadas de tamaño<br>(duracion + sesionesPuntuacion), tantas como quepan hacia atrás<br>desde el final del histórico descargado, hasta MAX_REPETICIONES.</td></tr>
+        <tr><td><code>descomponerMetodo</code><span class="badge fn">función</span></td><td>Los métodos "Bajo" (precioBajo, volumenBajo, flujoBajo) son la<br>antítesis de precio/volumen/flujo: mismo cálculo de puntuación,<br>pero seleccionando los últimos de la clasificación en vez de los<br>primeros.</td></tr>
+        <tr><td><code>calcularDiasTotal</code><span class="badge fn">función</span></td><td>Cuánto histórico hay que descargar para poder construir<br>MAX_REPETICIONES ventanas de la mayor duración probada.</td></tr>
+        <tr><td><code>recorrerSelecciones</code><span class="badge fn">función</span></td><td>Recorre todas las ventanas dadas, ejecuta el backtest de "metodo" en<br>cada una, y llama a "callback" por cada aparición de un ticker en<br>cualquier cartera de cualquier rebalanceo — igual que hace<br>concentracionSeleccion.js, pero dando además acceso al HISTÓRICO<br>COMPLETO de precio/volumen de ese ticker (no solo al recorte de la<br>ventana), y a la posición global de la fecha de selección dentro de<br>ese histórico completo. Necesario para las comprobaciones que<br>necesitan mirar hacia atrás más allá del principio de la ventana<br>del backtest (p. ej. "¿hubo una caída de precio 60 sesiones antes<br>de la selección?", cuando la selección puede caer cerca del<br>principio de una ventana de solo 20 sesiones).<br><br>callback recibe { ticker, fechaSeleccion, tGlobal, serieCompleta },<br>donde tGlobal es el índice de fechaSeleccion dentro de "fechas" (el<br>array completo, sin recortar) y serieCompleta es datos[ticker]<br>(también completo, sin recortar).</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-lib-walkForwardComun-js">
+    <h3>lib/walkForwardComun.js</h3>
+    <p class="meta">459 líneas · 23 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">"Selección red VS ridge" (menú "Comparación con red neuronal"):
+calibra dos modelos —una regresión ridge y una red neuronal
+pequeña— mediante walk-forward (calibración progresiva: se
+entrena con lo que ya se sabe, se aplica al siguiente tramo, se
+compara con lo que de verdad pasó, se reajusta, y se desliza la
+ventana una sesión hacia delante), y aplica los parámetros ya
+calibrados a las últimas VENTANA_WF sesiones para dar una
+recomendación final de 4 valores por cada modelo.
+
+VARIABLES: a diferencia del modelo multifactor (que resume cada
+ventana en un solo número por variable — la suma de los
+incrementos), aquí cada sesión de la ventana es su PROPIA variable
+independiente: el incremento de precio de hoy, el de ayer, el de
+hace 2 días... hasta VENTANA_WF sesiones atrás, y lo mismo para
+volumen y para flujo de dinero (precio × volumen). Con
+VENTANA_WF=13, son 13×3 = 39 variables que cambian día a día, más
+las 4 fundamentales de siempre (PER, EPS/precio, precio/valor
+contable, consenso de analistas), que se mantienen constantes por
+la misma razón ya documentada en multifactorComun.js: no hay
+histórico diario de estos datos, así que se usan las de hoy en
+todos los pasos. Total: 3×VENTANA_WF+4 variables de entrada.
+
+Se usan INCREMENTOS (variación porcentual día a día), no niveles de
+precio o volumen en bruto — un nivel de precio no es comparable
+entre valores distintos (100€ no significa lo mismo para dos
+acciones diferentes) ni estable en el tiempo para el mismo valor si
+su cotización sube o baja de forma sostenida a lo largo de las 120
+sesiones recorridas; el incremento porcentual sí lo es, y es la
+misma convención que ya usa el resto de la aplicación (momentum,
+dispersión) en vez de niveles en bruto.
+
+Por qué tiene sentido tener MUCHAS variables individuales
+correlacionadas entre sí (el incremento de ayer y el de anteayer
+se parecen) en vez de un resumen: es precisamente el caso para el
+que la regularización de ridge está pensada — protege contra la
+inestabilidad que esa colinealidad causaría en una regresión sin
+penalizar. Para la red neuronal no hay esa misma garantía
+matemática, pero con una capa oculta pequeña (10 neuronas) su
+capacidad efectiva sigue siendo limitada, lo que actúa como una
+forma más suave de la misma protección.
+
+COSTE Y TAMAÑO DEL ÍNDICE: en vez de excluir los índices grandes
+(como si hace el modelo de réplica), se recorren menos sesiones
+totales para índices con muchos componentes — mismo mecanismo de
+ventana y de paso para cualquier índice, solo cambia cuántas veces
+se repite. Es una peor calibración (menos ejemplos acumulados,
+menos pasos de calibración), no una limitación oculta: se avisa
+explícitamente en el resultado cuando se aplica.
+
+MISMO PASO PARA LOS DOS MODELOS: ridge y la red se reajustan los
+dos cada sesión — así TODOS los pasos son comparables entre ambos
+modelos, no solo una muestra parcial. Se probó primero con la red
+reajustándose cada 3 sesiones (más barato, al necesitar iterar en
+vez de tener solución matemática directa como ridge), pero eso
+dejaba solo 1 de cada 3 pasos de ridge con un punto de comparación
+real, debilitando la fiabilidad de la correlación entre los dos
+modelos — que es precisamente la razón de ser de esta herramienta.
+Se optó por pagar el coste computacional más alto (la red tarda
+bastante más al reajustarse tantas veces) a cambio de esa
+fiabilidad, recortando en su lugar el nº de sesiones totales
+recorridas para mantener el tiempo total en un rango razonable.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>VENTANA_WF</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>TOTAL_SESIONES_WF_NORMAL</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>TOTAL_SESIONES_WF_REDUCIDO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>UMBRAL_TICKERS_REDUCCION</code><span class="badge const">constante</span></td><td>Por encima de este nº de componentes del índice, se recorren menos<br>sesiones totales (ver cabecera del fichero) para mantener el coste<br>de calibrar la red neuronal en un tiempo razonable.</td></tr>
+        <tr><td><code>PASO_RIDGE</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>PASO_RED</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>NUM_RECOMENDADOS</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>NN_OCULTAS</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>NN_EPOCAS</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>NN_TASA_APRENDIZAJE</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>SEMILLA_RED</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MINIMO_FILAS_PARA_AJUSTAR</code><span class="badge const">constante</span></td><td>Mínimo de ejemplos acumulados antes del primer ajuste — con menos<br>que esto, ajustar cualquiera de los dos modelos sería ruido puro<br>(más aún ahora, con 3×VENTANA_WF+4 variables que ajustar), así que<br>los primeros pasos del walk-forward no dan ninguna recomendación<br>todavía (solo acumulan datos).</td></tr>
+        <tr><td><code>MAX_FILAS_ENTRENAMIENTO</code><span class="badge const">constante</span></td><td>Tope de ejemplos de entrenamiento acumulados: por encima de esto,<br>se descartan los más antiguos (ventana móvil, no acumulación sin<br>límite). Dos motivos, no solo de coste: reajustar con un conjunto<br>que no para de crecer hace que cada paso sea más lento que el<br>anterior (con varias decenas de pasos de ridge, el coste total crecería de forma<br>creciente en vez de mantenerse acotado); y, metodológicamente, en<br>un walk-forward real no está claro que un dato de hace 100 sesiones<br>deba pesar igual que uno de ayer — una ventana móvil de<br>entrenamiento es la práctica habitual en calibración progresiva<br>real, no solo un atajo de rendimiento.</td></tr>
+        <tr><td><code>SESIONES_TEST_DEFECTO</code><span class="badge const">constante</span></td><td>Cuántas de las últimas sesiones se reservan, por defecto, para<br>medir el acierto real del modelo ya calibrado y congelado (no<br>tocado mientras se mide) — ver la cabecera de ejecutarWalkForward.<br>El usuario puede elegir un valor distinto, hasta el máximo de<br>abajo: por encima de eso, quedaría muy poco histórico para la<br>propia calibración (sobre todo en índices grandes, con solo 30<br>sesiones totales).</td></tr>
+        <tr><td><code>SESIONES_TEST_MAXIMO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>SESIONES_TEST_MINIMO</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>calcularNumVariables</code><span class="badge fn">función</span></td><td>Nº de variables de entrada con la ventana configurada.</td></tr>
+        <tr><td><code>calcularIncrementoVentana</code><span class="badge fn">función</span></td><td>Incremento porcentual entre "hace VENTANA_WF sesiones" y "hoy" (el<br>índice t indicado) — la misma ventana de cálculo que usan las<br>variables del modelo, para poder enseñar junto a cada recomendación<br>cómo le fue de verdad a ese valor (o al índice) en el tramo que el<br>modelo acaba de mirar para recomendarlo. Null si falta algún dato o<br>si el precio de referencia es cero.</td></tr>
+        <tr><td><code>elegirTotalSesiones</code><span class="badge fn">función</span></td><td>Cuántas sesiones totales recorrer según el tamaño del índice — ver<br>cabecera del fichero.</td></tr>
+        <tr><td><code>calcularDiasTotalWF</code><span class="badge fn">función</span></td><td>Cuánto histórico hay que descargar: el total de sesiones a<br>recorrer, más el margen de VENTANA_WF sesiones al principio para<br>poder calcular las variables del primer paso. No hace falta margen<br>al final — "hoy" es siempre el último día real de los datos<br>descargados (ver ejecutarWalkForward): el bucle de entrenamiento<br>simplemente se detiene "paso" sesiones antes de "hoy" (el tramo más<br>reciente aún no tiene un resultado conocido con el que entrenar),<br>pero la recomendación final sí se calcula sobre "hoy" de verdad, no<br>sobre un día antiguo.</td></tr>
+        <tr><td><code>ejecutarWalkForwardRidge</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>ejecutarWalkForwardRed</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>calcularCorrelacionModelos</code><span class="badge fn">función</span></td><td>Compara las dos series de pasos en los puntos donde ambas tienen<br>recomendación en la MISMA sesión — con el mismo paso para los dos<br>modelos, esto es ahora TODOS los pasos (antes, cuando la red se<br>reajustaba con menos frecuencia que ridge, solo coincidían en una<br>fracción de ellos). Se mantiene la búsqueda por fecha, no por<br>posición, como salvaguarda ante cualquier hueco puntual en el<br>histórico de alguno de los dos modelos.<br><br>Se limita a los pasos de la FASE DE PRUEBA (esTest), no a todo el<br>histórico: comparar los dos modelos también durante la fase de<br>entrenamiento mezclaría el acuerdo real con el "acuerdo" de dos<br>modelos que todavía se están ajustando — la misma razón por la que<br>el historial de rentabilidad tampoco mezcla las dos fases.</td></tr>
+      </tbody>
+    </table>
+  </article>
+</section>
+<section class="carpeta">
+  <h2>pages/</h2>
+  <p class="carpeta-desc">Las páginas de la aplicación (una por cada opción del menú hamburguesa) — cada una renderiza resultados, casi siempre llamando a un endpoint de pages/api con el mismo nombre.</p>
+  <article class="fichero" id="f-pages--app-js">
+    <h3>pages/_app.js</h3>
+    <p class="meta">10 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>App</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-analisis-js">
+    <h3>pages/analisis.js</h3>
+    <p class="meta">661 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>Analisis</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-anomaliasFlujoBajo-js">
+    <h3>pages/anomaliasFlujoBajo.js</h3>
+    <p class="meta">725 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>AnomaliasFlujoBajo</code><span class="badge fn">función</span></td><td>Sección de investigación, nacida de una observación durante el<br>desarrollo: al comparar "flujo de dinero bajo" con el resto de<br>métodos en varias duraciones de backtest, su dispersión de<br>resultados se estrecha (en vez de ensancharse, como el resto) al<br>alargar la ventana, con un sesgo positivo claro. Cada herramienta<br>de esta página es una comprobación distinta para entender si es un<br>efecto real o un artefacto de la muestra — ver el icono de<br>información del título para el contexto completo.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-comparacionRedNeuronal-js">
+    <h3>pages/comparacionRedNeuronal.js</h3>
+    <p class="meta">199 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>ComparacionRedNeuronal</code><span class="badge fn">función</span></td><td>"Comparación con red neuronal": nace de la propuesta de calibrar<br>dos modelos de selección — una regresión ridge y una red neuronal<br>pequeña, las dos construidas y entrenadas desde cero, sin ninguna<br>librería de aprendizaje automático — mediante walk-forward: entrenar<br>con lo ya conocido, aplicar al tramo siguiente, comparar con lo que<br>de verdad pasó, reajustar, deslizar la ventana. Ver<br>lib/walkForwardComun.js para el detalle completo del mecanismo.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-comprobaciones-js">
+    <h3>pages/comprobaciones.js</h3>
+    <p class="meta">647 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>Comprobaciones</code><span class="badge fn">función</span></td><td>Grupo 2: Comprobaciones — herramientas de consulta y auditoría.<br>Este grupo irá creciendo con el desarrollo de la aplicación.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-index-js">
+    <h3>pages/index.js</h3>
+    <p class="meta">1069 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>Home</code><span class="badge fn">función</span></td><td>Página de aterrizaje ("/"): "Selección de cartera por parámetros<br>técnicos" — selección de componentes por precio, por volumen, por<br>flujo de dinero, y sus tres antítesis (precio/volumen/flujo bajo).<br>Los parámetros que se usan aquí (factor, nº de componentes, tope,<br>frecuencia, ventana de backtest) se ajustan en la página "Parámetros<br>técnicos para la selección de valores" — aquí solo se leen.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-parametrosTecnicos-js">
+    <h3>pages/parametrosTecnicos.js</h3>
+    <p class="meta">542 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>ParametrosTecnicos</code><span class="badge fn">función</span></td><td>"Parámetros técnicos para la selección de valores": la cadena<br>automática (optimiza todo y selecciona de una vez, usando el<br>criterio de precio) y los 5 ajustes que usan el resto de páginas de<br>selección: factor de penalización, número de componentes, tope de<br>diversificación, frecuencia de rebalanceo y ventana de backtest.</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-seleccionAlternativa-js">
+    <h3>pages/seleccionAlternativa.js</h3>
+    <p class="meta">701 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>SeleccionAlternativa</code><span class="badge fn">función</span></td><td>"Selección de cartera por criterios alternativos": selección<br>aleatoria (referencia estadística), por mejor fundamental (para<br>todos los índices) y siguiendo el consenso de los analistas (para<br>el índice elegido).</td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-seleccionVeces-js">
+    <h3>pages/seleccionVeces.js</h3>
+    <p class="meta">408 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>SeleccionVeces</code><span class="badge fn">función</span></td><td>Página HUÉRFANA a propósito: no tiene enlace en el menú hamburguesa<br>(ver components/MenuLayout.js) desde la reestructuración del menú<br>de selección en tres submenús. Se conserva el código por si se<br>quiere recuperar más adelante, pero no aparece en la navegación.<br>Sigue siendo accesible tecleando la URL directamente<br>(/seleccionVeces).<br><br>Contiene "Selección por número de veces seleccionado" y "Selección<br>por veces seleccionado por volumen" — los dos métodos más complejos<br>de selección (doble backtest para evitar sesgo de anticipación),<br>cuya aportación frente a la selección directa por precio/volumen se<br>consideró dudosa frente a la complejidad añadida.</td></tr>
+      </tbody>
+    </table>
+  </article>
+</section>
+<section class="carpeta">
+  <h2>pages/api/</h2>
+  <p class="carpeta-desc">Los endpoints del servidor (Next.js API routes): descargan datos de Yahoo Finance, aplican la lógica de lib/, y devuelven JSON a la página correspondiente.</p>
+  <article class="fichero" id="f-pages-api-analisisCorrelacion-js">
+    <h3>pages/api/analisisCorrelacion.js</h3>
+    <p class="meta">329 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Construye una tabla método × duración de backtest, con varias
+repeticiones (ventanas históricas distintas, sin solape entre sí)
+por cada celda, y para el método "aleatorio" además varias semillas
+distintas — para poder valorar si la correlación con el índice y la
+rentabilidad de la selección por precio o por volumen se distinguen
+de verdad de una selección al azar, o si están dentro del rango de
+variación que ya produce el propio azar.
+
+Todo el histórico necesario se descarga UNA SOLA VEZ (una tanda de
+~380 sesiones para los 30 componentes + el índice), y todas las
+ventanas/repeticiones/semillas se recortan y recalculan en memoria
+a partir de esos mismos datos — así se evita repetir descargas a
+Yahoo Finance por cada celda de la tabla, que es justo lo que
+causaba errores de límite de peticiones en la cadena automática.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-caidasPrevias-js">
+    <h3>pages/api/caidasPrevias.js</h3>
+    <p class="meta">69 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Segunda herramienta de "Anomalías en el flujo de dinero bajo":
+"Medición de caídas previas". Para cada valor seleccionado por
+"flujo bajo" (y por "flujo" normal, como referencia), ¿venía de una
+caída de precio reciente? Ver lib/caidasPreviasComun.js para la
+explicación completa de qué se mide y por qué.
+
+Misma batería de ventanas que "Análisis de correlación" y
+"Concentración de la selección" (lib/ventanasBacktestComun.js), y
+mismos parámetros de query.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-concentracionSeleccion-js">
+    <h3>pages/api/concentracionSeleccion.js</h3>
+    <p class="meta">216 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Primera herramienta de "Anomalías en el flujo de dinero bajo":
+¿está "flujo bajo" seleccionando siempre un puñado pequeño y fijo
+de valores, o se reparte de forma amplia entre muchos valores
+distintos según la época? Si concentra mucho, lo que parece un
+patrón de mercado (ver la conversación que dio origen a esta
+sección) podría ser en realidad solo el perfil de rentabilidad de
+esos pocos valores concretos, no un efecto genuino y generalizable.
+
+Reutiliza EXACTAMENTE la misma batería de ventanas sin solape que
+"Análisis de correlación con el índice" (lib/ventanasBacktestComun.js)
+— importante para que los resultados de ambas herramientas sean
+directamente comparables.
+
+Qué se cuenta: dentro de cada ventana, el backtest se rebalancea
+varias veces; se cuenta CADA aparición de cada ticker en CUALQUIER
+cartera de CUALQUIER rebalanceo de CUALQUIER ventana — no solo la
+cartera final de cada ventana. Se calcula tanto para "flujo bajo"
+como para "flujo" normal, como referencia: lo interesante no es la
+concentración en términos absolutos (cualquier método con solo 3-6
+huecos y 30-40 candidatos concentra algo, por pura aritmética), sino
+si "flujo bajo" concentra MÁS que su opuesto normal.
+
+Parámetros de la query: los mismos que "Análisis de correlación"
+(indice, sesiones, factor, n, max, frecuencia), para poder comparar
+los resultados de ambas herramientas en igualdad de condiciones.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-correlacionAnalistas-js">
+    <h3>pages/api/correlacionAnalistas.js</h3>
+    <p class="meta">48 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Grupo "Análisis" &gt; "Correlación de un índice con recomendaciones de
+los analistas": para el índice elegido, comprueba si el consenso de
+analistas de HOY guarda relación con la rentabilidad que ha tenido
+después cada valor, en 1, 2, 3 y 6 meses.
+
+La lógica de cálculo (consulta del consenso, cálculo de la
+puntuación invertida 5 − recommendationMean, incrementos de precio
+por plazo y correlación de Pearson) vive en
+lib/correlacionAnalistasComun.js, compartida con
+correlacionAnalistasIndices.js (la versión que recorre varios
+índices a la vez) — ver ese fichero para la explicación completa
+del cálculo.
+
+Parámetros de la query:
+  indice - id del índice a analizar.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-correlacionAnalistasIndices-js">
+    <h3>pages/api/correlacionAnalistasIndices.js</h3>
+    <p class="meta">86 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Grupo "Análisis" &gt; "Correlación de los índices con las
+recomendaciones de los analistas": lo mismo que
+correlacionAnalistas.js, pero para varios índices a la vez —
+una fila resumen por índice (las mismas 4 correlaciones de Pearson
+que la tabla "Correlación de Pearson por plazo" de la herramienta
+de un solo índice), para poder comparar el efecto entre índices.
+
+La lógica de cálculo por índice vive en
+lib/correlacionAnalistasComun.js — ver ese fichero para la
+explicación completa (puntuación invertida, plazos, correlación de
+Pearson).
+
+OJO con el tiempo de ejecución: el consenso de analistas solo se
+puede consultar valor por valor. Sumando los componentes de varios
+índices a la vez, esto puede tardar bastante — por eso el frontend
+deja elegir qué índices incluir (por defecto, todos menos el que
+tenga más componentes) en vez de forzar siempre los 8 a la vez. Los
+índices se procesan uno detrás de otro (no en paralelo), y si uno
+falla no tira abajo los demás: sale con su propio mensaje de error.
+
+Parámetros de la query:
+  indices - lista de ids de índice separados por comas (p.ej.
+            "dowjones,ibex35,cac40"). Si no se indica, se usan
+            todos los del catálogo.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-documentacion-js">
+    <h3>pages/api/documentacion.js</h3>
+    <p class="meta">35 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Sirve /PLAN/documentacion.html — la documentación técnica generada
+a partir de los comentarios del código fuente (estructura del
+proyecto, qué hace cada módulo, funciones principales) — dentro de
+un iframe en el panel del icono de información (ⓘ → Documentación,
+justo después de Especificaciones).
+
+Por qué un endpoint propio y no un iframe apuntando directamente a
+la URL de GitHub: raw.githubusercontent.com sirve los ficheros
+.html con el tipo de contenido "text/plain" a propósito (para
+evitar que cualquiera pueda alojar HTML/JavaScript ejecutable bajo
+el dominio de GitHub) — un iframe apuntando ahí mostraría el código
+fuente en bruto, no la página renderizada. Este endpoint descarga
+ese mismo HTML y lo reenvía con el tipo de contenido correcto
+("text/html"), sin ninguna conversión: a diferencia de
+especificaciones.js/observaciones.js/historia.js/experiencia.js,
+aquí no hace falta mammoth, el fichero de origen ya es HTML.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-especificaciones-js">
+    <h3>pages/api/especificaciones.js</h3>
+    <p class="meta">40 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Descarga el documento de especificaciones (.docx) directamente del
+repositorio de GitHub y lo convierte a HTML con "mammoth", para
+poder mostrar su contenido dentro de la propia web, sin enviar al
+usuario al repositorio.
+
+Un fichero MONOLINGÜE distinto según el idioma de la interfaz
+(?idioma=es/en), no un único documento bilingüe con las dos
+columnas — así cada visita descarga y convierte solo el idioma que
+necesita, igual que ya hace "Presentación" con el PowerPoint y el
+audio (más eficiente que descargar y convertir siempre las dos
+columnas para mostrar solo una).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-experiencia-js">
+    <h3>pages/api/experiencia.js</h3>
+    <p class="meta">35 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Igual que pages/api/historia.js, observaciones.js y
+especificaciones.js, pero para el documento "Experiencia": la
+reflexión personal del autor sobre las herramientas de IA usadas
+durante el desarrollo y el curso, junto con una descripción
+funcional completa de la aplicación redactada una vez terminada.
+
+Un fichero monolingüe distinto según el idioma de la interfaz
+(?idioma=es/en) — ver la nota de especificaciones.js.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-fundamentales-js">
+    <h3>pages/api/fundamentales.js</h3>
+    <p class="meta">92 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Herramienta de comprobación (grupo "Comprobaciones"): consulta en
+Yahoo Finance datos fundamentales de TODOS los componentes del
+índice elegido, en una sola llamada por lotes (yahooFinance.quote
+acepta un array de tickers y hace una única petición HTTP), en vez
+de una llamada por cada valor. Por eso los datos que se muestran
+están limitados a los que Yahoo expone en este endpoint "ligero":
+PER, PER a futuro, EPS, EPS estimado, precio/valor contable,
+rentabilidad por dividendo, precio actual, variación del día y
+máximo/mínimo de 52 semanas. Ingresos, ventas y flujo de caja
+operativo NO están aquí (solo en el endpoint "pesado" de Yahoo,
+consultable únicamente valor por valor) y se han descartado a
+propósito para evitar hacer decenas o cientos de peticiones
+seguidas en índices grandes como el Nasdaq 100.
+
+OJO con dividendYield: se asume que este endpoint concreto lo
+devuelve ya en formato porcentaje (p.ej. 2.34 = 2,34%), a
+diferencia de quoteSummary/summaryDetail, donde sí es una fracción
+(0.0234). Conviene comprobarlo con un valor conocido al desplegar;
+si estuviera al revés, basta con quitar el "* 1" de más abajo.
+
+Parámetros de la query:
+  indice - id del índice a consultar (dowjones, ibex35, ...).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-historia-js">
+    <h3>pages/api/historia.js</h3>
+    <p class="meta">32 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Igual que pages/api/especificaciones.js y observaciones.js, pero
+para el documento "Historia" del proyecto (cómo y por qué surgió).
+
+Un fichero monolingüe distinto según el idioma de la interfaz
+(?idioma=es/en) — ver la nota de especificaciones.js.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-holdingsETF-js">
+    <h3>pages/api/holdingsETF.js</h3>
+    <p class="meta">140 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Herramienta de comprobación (grupo "Comprobaciones"): consulta en
+Yahoo Finance el top 10 de holdings del ETF que replica el índice
+elegido (por ejemplo DIA para el Dow Jones, o LYXIB.MC para el
+IBEX 35) y lo compara con la lista de componentes que tenemos en
+lib/indices.js — para poder detectar a simple vista si algún peso
+pesado se nos ha quedado desactualizado.
+
+OJO: Yahoo Finance solo expone el top 10 de holdings de un ETF a
+través de este módulo, nunca la lista completa. Esto sirve como
+comprobación parcial (los valores con más peso), no como sustituto
+de revisar la composición oficial completa del índice.
+
+Algunos valores cotizan en varias bolsas a la vez (p.ej. Ferrovial
+en Ámsterdam, España y Nasdaq), y el ETF puede reportar el holding
+con el sufijo de una bolsa distinta a la "propia" del índice (nuestra
+lista siempre usa la bolsa del índice: sin sufijo para el Dow Jones,
+".MC" para el IBEX 35). Sin este ajuste, esos casos saldrían siempre
+como "falta", aunque el valor sí esté en la lista con el ticker de
+la bolsa correcta. Antes de dar el mensaje de "falta", se comprueba:
+  1. ¿El ticker que da el ETF tiene un sufijo de bolsa distinto al
+     del índice?
+  2. ¿El propio índice tiene un alias manual para ese mnemónico
+     concreto (indice.aliasesTicker)? Hace falta para casos como
+     Unilever (Londres: "ULVR", Ámsterdam: "UNA") o STMicroelectronics
+     (París: "STMPA", Milán: "STMMI"), donde no solo cambia el
+     sufijo de bolsa sino el propio mnemónico — la regla genérica
+     de "mismo ticker, sufijo distinto" no puede resolverlos sola.
+  3. Si no hay alias, se prueba con la regla genérica: mismo
+     mnemónico, sufijo de la bolsa del índice.
+  4. El candidato que salga de 2 o 3 se comprueba con una consulta
+     real a Yahoo Finance (no solo se supone), y si existe, se
+     busca ESE ticker en nuestro array, en vez del que dio el ETF.
+Solo si tras estos pasos sigue sin aparecer, se marca como falta de
+verdad.
+
+Parámetros de la query:
+  indice - id del índice a comprobar (dowjones, ibex35, ...).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-mejorAnalistas-js">
+    <h3>pages/api/mejorAnalistas.js</h3>
+    <p class="meta">213 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">"Selección de los analistas": elige los componentes del índice
+elegido mejor valorados HOY por el consenso de analistas de Yahoo
+Finance (recommendationMean: 1 = compra fuerte, 5 = venta fuerte),
+y después, sin rebalanceo ninguno, calcula qué combinación de Nº DE
+COMPONENTES (entre 3 y 6) y PESOS habría dado la mayor rentabilidad
+acumulada en la ventana de backtest — mismas limitaciones que
+"Mejor fundamental": Yahoo no da un histórico diario de
+recomendaciones, así que la clasificación no varía a lo largo de la
+ventana (es la de HOY aplicada retroactivamente al precio).
+
+A diferencia de PER/EPS/etc. (que se consultan con una sola llamada
+por lotes para todo el índice), el consenso de analistas
+(recommendationMean, recommendationKey, numberOfAnalystOpinions)
+solo está disponible en el módulo "financialData" de Yahoo, que se
+consulta VALOR POR VALOR — no existe una versión ligera por lotes.
+Por eso aquí, a diferencia de "Mejor fundamental", hay que
+consultar TODOS los componentes del índice elegido uno a uno (en
+tandas de tamaño limitado, no todos a la vez, para no saturar a
+Yahoo Finance de golpe). En índices grandes (Nasdaq 100, 101
+valores) esto tarda notablemente más y hay algo más de riesgo de
+que algún valor puntual falle — si eso pasa, simplemente se excluye
+de la clasificación, no rompe el resto.
+
+Solo se consideran valores con al menos MIN_ANALISTAS analistas
+cubriéndolos, para que el consenso sea mínimamente fiable.
+
+Parámetros de la query:
+  indice - id del índice a analizar.
+  max    - tope de diversificación por valor (por defecto, PESO_MAXIMO).
+  dias   - ventana de backtest (por defecto, DIAS).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-mejorFundamentalActual-js">
+    <h3>pages/api/mejorFundamentalActual.js</h3>
+    <p class="meta">253 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">"Selección por fundamental (todos los índices)": para CADA índice
+del catálogo (no solo el elegido en el marco exterior — así se
+pueden comparar entre sí), elige los componentes mejor clasificados
+HOY según el criterio fundamental elegido (una sola consulta por
+lotes a Yahoo Finance por índice, sin histórico — Yahoo no da un
+histórico diario de PER/EPS/etc. por esta vía), y después, sin
+rebalanceo ninguno, calcula qué combinación de Nº DE COMPONENTES
+(entre 3 y 6) y PESOS habría dado la mayor rentabilidad acumulada
+en la ventana de backtest de ESE índice.
+
+Cómo se calculan los pesos óptimos: como la cartera no se
+rebalancea nunca, su rentabilidad total en el periodo es
+exactamente la media ponderada de la rentabilidad de cada
+componente por separado (no hay efecto de interacción entre ellos
+al no reajustarse). Maximizar esa media ponderada, sujeta al tope
+de diversificación por valor, tiene una solución exacta: darle el
+máximo peso permitido (el tope) al valor que más ha subido en el
+periodo, el máximo peso permitido con lo que quede al segundo que
+más ha subido, y así sucesivamente — sin necesidad de probar
+combinaciones. Esto se repite para cada nº de componentes de 3 a 6
+(con los top 3/4/5/6 según el criterio fundamental) y se elige el
+que dé mayor rentabilidad total.
+
+Reglas de clasificación (quién entra en la cartera, no los pesos):
+  - PER, PER futuro, precio/valor contable: de MENOR a MAYOR, y
+    solo se consideran valores positivos (un PER negativo, por
+    pérdidas, no es "mejor" que uno positivo bajo — se descarta).
+  - EPS, EPS futuro, rentabilidad por dividendo: de MAYOR a MENOR.
+
+EPS y EPS futuro se normalizan dividiendo por el precio actual
+(EPS/Precio × 100, en porcentaje — el inverso del PER, también
+llamado "rentabilidad por beneficio" o "earnings yield"): comparar
+el EPS en bruto entre valores no tiene sentido, porque una acción
+con una cotización alta tiende a tener un EPS más alto solo por
+eso, sin que la empresa sea mejor — dos empresas solo son
+comparables por esta vía atendiendo al cociente con el precio, no
+al importe absoluto del beneficio por acción.
+
+Los índices se procesan uno detrás de otro (no en paralelo): con 8
+índices, cada uno necesitando una consulta por lotes más la
+descarga de precios de hasta 6 valores, hacerlo todo a la vez
+arriesgaría a topar con los límites de peticiones de Yahoo Finance.
+Si un índice concreto falla (p.ej. un fallo puntual de red), no
+tira abajo la respuesta entera: ese índice sale con su propio
+mensaje de error, y los demás se muestran igualmente.
+
+Parámetros de la query:
+  criterio - uno de: per, perFuturo, eps, epsFuturo, pvc, dividendo.
+  max      - tope de diversificación por valor (por defecto, PESO_MAXIMO).
+  dias     - ventana de backtest (por defecto, DIAS).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-multifactor-js">
+    <h3>pages/api/multifactor.js</h3>
+    <p class="meta">325 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">"Selección por modelo multifactor": recorre el backtest del índice
+elegido para ajustar, mediante una regresión ridge, el peso que
+mejor combina varias variables a la hora de predecir la
+rentabilidad futura de cada valor — y aplica esos pesos a los
+datos de HOY para elegir la cartera "ideal" actual.
+
+Variables usadas (ver lib/multifactorComun.js para el detalle
+matemático):
+  - Momentum de precio, de volumen y de flujo de dinero (precio ×
+    volumen), sumados en las últimas "sesionesPuntuacion" sesiones
+    — sí varían día a día, así que se recorren de verdad en el
+    backtest.
+  - Dispersión (desviación típica) de los incrementos de precio en
+    las últimas 20 sesiones — mide volatilidad, no nivel.
+  - PER, EPS/precio (rentabilidad por beneficio, normalizada igual
+    que en "Mejor fundamental"), precio/valor contable y consenso
+    de analistas (invertido, 5 − recommendationMean, igual que en
+    "Selección de los analistas") — estas NO varían a lo largo del
+    backtest, porque Yahoo no da histórico diario de estos datos;
+    se usan como si fueran las de hoy en todas las sesiones. Es una
+    aproximación razonable en una ventana de 50-70 sesiones (~2-3
+    meses), donde no cambian mucho, pero sigue siendo una
+    aproximación, no un dato histórico real.
+
+Entrenamiento y validación: 50 sesiones para ajustar los pesos y 20
+para comprobar, sin solape, cómo se comportan fuera de la muestra
+con la que se entrenaron — mismo principio de evitar el sesgo de
+anticipación que en "veces seleccionado" o el análisis de
+correlación. El R² de validación es la cifra honesta a mirar: si
+sale bajo (o negativo), quiere decir que el modelo no está
+explicando gran cosa, y así se muestra, sin maquillarlo.
+
+Una vez ajustados los pesos, se aplican a los valores de HOY de
+cada componente del índice para obtener una puntuación combinada,
+se eligen los mejor puntuados (entre 3 y 6, según lo que se pida) y
+se reparten a partes iguales — no se optimizan los pesos de la
+cartera con datos futuros, porque a diferencia de "Mejor
+fundamental" aquí no hay ningún periodo ya conocido con el que
+hacerlo sin caer en trampa.
+
+Parámetros de la query:
+  indice   - id del índice a analizar.
+  sesiones - sesiones promediadas para el momentum y el horizonte
+             de predicción (3, 5, 8 o 13; por defecto 3).
+  max      - tope de diversificación por valor.
+  n        - nº de componentes deseado (se ajusta entre 3 y 6).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-observaciones-js">
+    <h3>pages/api/observaciones.js</h3>
+    <p class="meta">33 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Igual que pages/api/especificaciones.js, pero para el documento de
+observaciones, comentarios e hipótesis de trabajo (un cuaderno de
+bitácora que se va ampliando conforme se prueba la aplicación).
+
+Un fichero monolingüe distinto según el idioma de la interfaz
+(?idioma=es/en) — ver la nota de especificaciones.js.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-optimizar-js">
+    <h3>pages/api/optimizar.js</h3>
+    <p class="meta">76 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Descarga los datos UNA sola vez y, sobre ellos, ejecuta el motor de
+cálculo para cada factor de penalización candidato entre 0 y 3 (en
+pasos de 0,1 — 31 valores en total). Es una búsqueda exhaustiva
+(fuerza bruta), no una red neuronal: para un único parámetro
+acotado con tan pocos candidatos, probarlos todos es más simple,
+más rápido y da el óptimo exacto entre los candidatos, sin las
+complicaciones ni el riesgo de un entrenamiento por gradiente.
+
+El objetivo que se maximiza es la SUMA del "beneficio sin cambio"
+de todos los días — es decir, el rendimiento de la cartera del día
+ANTERIOR, que es la única decisión realmente alcanzable (se toma
+con el cierre de ayer, no con el de hoy).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-optimizarFrecuencia-js">
+    <h3>pages/api/optimizarFrecuencia.js</h3>
+    <p class="meta">68 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Busca la mejor frecuencia de rebalanceo ("diario" o el umbral de
+supervivientes 0..nComponentes-1 que lo dispara) para un factor de
+penalización, número de componentes y tope de diversificación
+dados, maximizando la suma del beneficio realmente alcanzable
+("beneficio sin cambio") de las carteras anteriores en la ventana.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-optimizarMax-js">
+    <h3>pages/api/optimizarMax.js</h3>
+    <p class="meta">124 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Igual que pages/api/optimizar.js y optimizarN.js, pero para el tope
+máximo de diversificación por componente (fijo en 40% hasta ahora).
+Se descargan los datos UNA sola vez y se prueba cada tope candidato
+entre el mínimo posible (100% / número de componentes, que es lo
+que ya tiene cada uno de partida) y un máximo de 70% para esta
+primera prueba, en pasos de 5 puntos porcentuales.
+
+Acepta opcionalmente ?factor=X y ?n=Y para usar el factor de
+penalización y el número de componentes ya optimizados (o los
+valores por defecto si no se indican).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-optimizarN-js">
+    <h3>pages/api/optimizarN.js</h3>
+    <p class="meta">82 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Igual que pages/api/optimizar.js, pero para el número de
+componentes de la cartera (entre 3 y 6, en vez de 5 fijo). Se
+descargan los datos UNA sola vez y se ejecuta el motor de cálculo
+para cada número candidato, maximizando la misma función objetivo:
+la suma del "beneficio sin cambio" de las carteras anteriores.
+
+Acepta opcionalmente ?factor=X para usar un factor de penalización
+concreto (por ejemplo, el ya optimizado) en vez del valor por
+defecto.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-perfilVolumenPrevio-js">
+    <h3>pages/api/perfilVolumenPrevio.js</h3>
+    <p class="meta">68 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Tercera herramienta de "Anomalías en el flujo de dinero bajo":
+"Perfil de volumen previo", el complemento de "Medición de caídas
+previas" — la comprobación que de verdad separa las dos hipótesis
+que quedaban en pie. Ver lib/perfilVolumenComun.js para la
+explicación completa.
+
+Misma batería de ventanas que el resto de herramientas de esta
+sección, y mismos parámetros de query.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-puntuaciones-js">
+    <h3>pages/api/puntuaciones.js</h3>
+    <p class="meta">63 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Herramienta de auditoría: dado un número de sesión dentro de la
+ventana descargada, devuelve la tabla de los componentes del índice
+elegido con su puntuación (suma de los incrementos de esa sesión y
+las anteriores, hasta completar "sesiones") en esa fecha exacta,
+para poder comprobar el ranking a mano. No aplica ninguna regla de
+cartera ni rebalanceo — solo puntuaciones.
+
+Se puede auditar por precio (por defecto), por volumen o por flujo
+de dinero (?criterio=precio, volumen o flujo) — el mismo cálculo
+que usa la selección real para esos tres criterios y sus antítesis
+"bajo" (que son las mismas puntuaciones, solo leídas del final de
+la tabla en vez del principio). No aplica a "aleatorio" (no hay
+puntuación real que auditar, es pseudoaleatorio) ni a "Mejor
+fundamental" o "Selección de los analistas" (no tienen ninguna
+puntuación por sesión: son una foto del dato de hoy, sin histórico
+diario disponible por esa vía).
+
+Parámetros de la query:
+  dias     - nº de sesiones de la ventana descargada (por defecto 20)
+  sesion   - número de sesión dentro de esa ventana (1 = la más
+             antigua de las "dias" fechas). Obligatorio.
+  criterio - precio (por defecto), volumen o flujo.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-ratios-js">
+    <h3>pages/api/ratios.js</h3>
+    <p class="meta">76 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Función de servidor (se ejecuta en Vercel, con acceso a internet).
+Obtiene los últimos 20 cierres diarios del ticker solicitado (junto
+con el volumen de negociación de cada sesión, si está disponible) y
+calcula el ratio/incremento entre cada par de cotizaciones
+consecutivas, empezando por el valor 20 (más antiguo de la ventana)
+frente al 19, y así sucesivamente hasta el más reciente.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-recomendacionesAnalistas-js">
+    <h3>pages/api/recomendacionesAnalistas.js</h3>
+    <p class="meta">93 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Herramienta de comprobación (grupo "Comprobaciones"): consulta el
+consenso de analistas (recommendationMean, recommendationKey,
+numberOfAnalystOpinions) de TODOS los componentes del índice
+elegido, para poder auditar a mano la clasificación que usa
+"Selección de los analistas" — cumple la misma función que "Datos
+fundamentales" cumple para "Mejor fundamental".
+
+Igual que en "Selección de los analistas": este dato solo está
+disponible valor por valor (módulo "financialData" de Yahoo, sin
+versión ligera por lotes), así que se consulta en tandas pequeñas
+en paralelo, no todo el índice de golpe. En índices grandes (Nasdaq
+100, 101 valores) tarda notablemente más.
+
+A diferencia de "Selección de los analistas" (que descarta los
+valores sin consenso fiable), aquí se listan TODOS los componentes,
+incluidos los que no tengan datos válidos — para eso es una
+comprobación, no una selección: se marcan como "N/D" en vez de
+desaparecer de la tabla.
+
+Parámetros de la query:
+  indice - id del índice a consultar (dowjones, ibex35, ...).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-redVsRidge-js">
+    <h3>pages/api/redVsRidge.js</h3>
+    <p class="meta">208 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">"Selección red VS ridge" (menú "Comparación con red neuronal"): ver
+lib/walkForwardComun.js para el detalle completo del mecanismo de
+walk-forward, las variables usadas y la justificación de cada
+decisión de diseño (por qué variables individuales y no agregadas,
+por qué la ventana y el nº de sesiones tienen los valores que
+tienen, por qué se recortan las sesiones para índices grandes).
+
+Descarga los mismos datos que "Selección por modelo multifactor"
+(precio/volumen alineados, fundamentales por lotes, consenso de
+analistas por tandas) pero con el horizonte de sesiones que pide el
+walk-forward, y delega todo el cálculo en lib/walkForwardComun.js.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-rentabilidadETFs-js">
+    <h3>pages/api/rentabilidadETFs.js</h3>
+    <p class="meta">43 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Grupo "Análisis" &gt; "Rentabilidad de los ETFs": compara la
+rentabilidad del propio índice con la de sus ETFs UCITS de
+referencia, en 60 y 120 sesiones y en 1, 2 y 3 años.
+
+El cálculo en sí (por qué distinguir ETFs comparables de opuestos,
+cómo se calculan las rentabilidades y el volumen) vive en
+lib/rentabilidadEtfsComun.js, compartido con
+pages/api/rentabilidadEtfsTodos.js ("Rentabilidad de todos los
+ETFs" — la misma tabla, pero recorriendo todos los índices con ETF
+a la vez).
+
+Parámetros de la query:
+  indice - id del índice a comprobar (dowjones, ibex35, ...).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-rentabilidadEtfsTodos-js">
+    <h3>pages/api/rentabilidadEtfsTodos.js</h3>
+    <p class="meta">55 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Grupo "Análisis" &gt; "Rentabilidad de todos los ETFs": lo mismo que
+"Rentabilidad de los ETFs" (pages/api/rentabilidadETFs.js), pero
+recorriendo TODOS los índices que tienen al menos un ETF de
+referencia, uno tras otro — para poder comparar de un vistazo entre
+índices, o descargar/compartir un único PDF con todo junto.
+
+Solo se recorren los índices con etfsRentabilidad no vacío: el PSI
+20 (sin ningún ETF activo) y toda la serie de índices ADR (sin
+ningún ETF de referencia, por diseño — ver el aviso de cada uno)
+se excluyen desde el principio, no tendría sentido descargar nada
+para ellos.
+
+Los índices se procesan uno detrás de otro (no en paralelo, para no
+saturar a Yahoo Finance de golpe — cada índice ya descarga varias
+series de 800 sesiones cada una). Si uno falla, no tira abajo los
+demás: sale marcado con su propio error, y el resto se calcula
+igualmente.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-rentabilidadFlujoBajo-js">
+    <h3>pages/api/rentabilidadFlujoBajo.js</h3>
+    <p class="meta">309 líneas · 4 exportados · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Cuarta herramienta de "Anomalías en el flujo de dinero bajo":
+"Rentabilidad de la selección por flujo de dinero bajo". Directa a
+la variable que de verdad importa (rentabilidad), en vez de seguir
+mirando variables intermedias (precio, volumen) que ya empezaban a
+diluirse al suavizar la señal.
+
+Recorre, para cada índice marcado y cada combinación de factor de
+penalización / nº de componentes / tope de diversificación /
+frecuencia de rebalanceo marcados, todas las combinaciones de
+sesiones promediadas (2, 3) y duración de backtest (30, 40, 50,
+60), siempre con el método "flujo bajo". Para cada combinación:
+rentabilidad media y rango de la cartera en las 6 repeticiones,
+rentabilidad media del propio índice, la distancia de cada extremo
+del rango a esa rentabilidad del índice, y los 3 valores más
+elegidos con su rentabilidad REAL (cotización de hoy frente a hace
+"duracion" sesiones).
+
+Los 4 parámetros de cartera (factor, nº de componentes, tope,
+frecuencia) son configurables aquí, cada uno con varios valores a
+la vez marcables por el usuario — a diferencia de la mayoría de
+herramientas de la app, que usan un único valor fijo del marco
+exterior. Esto multiplica MUCHO el número de combinaciones (índices
+× factores × n × tope × frecuencia × sesiones × duraciones puede
+llegar a varios miles), así que:
+  - Se calcula y se devuelve el nº total de ejecuciones antes de
+    empezar (el frontend ya lo enseña de antemano, antes incluso de
+    llamar aquí).
+  - Hay un límite duro (MAX_EJECUCIONES): por encima de eso, la
+    petición se rechaza con un mensaje claro en vez de arriesgarse
+    a colgar el servidor.
+  - Los datos de cada índice se descargan UNA sola vez y se
+    reutilizan para todas las combinaciones de parámetros de ese
+    índice — el coste que crece con las combinaciones es solo de
+    cálculo, no de descargas nuevas.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>SESIONES_PROMEDIADAS</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>DURACIONES_REDUCIDAS</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>MAX_EJECUCIONES</code><span class="badge const">constante</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-replicaIndice-js">
+    <h3>pages/api/replicaIndice.js</h3>
+    <p class="meta">211 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">"Modelo de réplica de un índice": busca, entre 3 y 6 componentes
+del índice elegido, la combinación y los pesos que hacen que la
+cartera se parezca lo más posible al propio índice — no que lo
+bata, que lo REPLIQUE, minimizando el error de seguimiento
+("tracking error": la diferencia, sesión a sesión, entre el
+incremento de la cartera y el del índice). Toda la explicación del
+motor matemático y del porqué de este enfoque está en
+lib/replicaComun.js.
+
+Pensada sobre todo para los índices "parciales" de la aplicación
+(la serie de ADR: Argentina, Australia, India, Asia, China, Brasil,
+Corea, Latinoamérica, Grecia, México), que no tienen ningún ETF de
+referencia — para los índices que sí lo tienen, comprar el ETF
+sigue siendo la opción más sencilla y fiable de replicarlos.
+
+Cada valor se descarga POR SEPARADO, con su propio calendario, y se
+alinea al calendario del índice buscando el cierre en cada fecha o
+el más próximo anterior — no se exige que TODOS los valores
+(típicamente 15-18 en estos índices) coincidan exactamente en las
+mismas fechas de cotización a la vez, porque eso resultó ser
+demasiado frágil (ver el mismo cambio ya hecho en
+pages/api/variacionIndices.js): basta un hueco de datos en un solo
+valor para que la intersección se quede corta o vacía. Si un valor
+concreto falla al descargar (símbolo puntual caído, etc.), se
+excluye de la búsqueda sin romper el resto — con que queden al
+menos 3 valores válidos, la herramienta sigue funcionando.
+
+La búsqueda de la mejor combinación es por fuerza bruta (prueba
+todas las combinaciones posibles de 3 a 6 valores), factible solo
+porque estos índices son pequeños. Por eso esta herramienta rechaza
+índices con más de MAX_TICKERS_FUERZA_BRUTA componentes.
+
+Parámetros de la query:
+  indice - id del índice a analizar.
+  dias   - ventana de sesiones a usar para ajustar los pesos (por
+           defecto, la ventana de backtest compartida de la app).
+  max    - tope de diversificación por valor.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-seleccion-js">
+    <h3>pages/api/seleccion.js</h3>
+    <p class="meta">185 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Recorre la ventana de sesiones (20 por defecto, configurable con
+?dias=X) y, para cada día a partir del tercero, calcula el ranking
+de los componentes del índice elegido, selecciona los mejores (5
+por defecto, o el número indicado en ?n=X, entre 3 y 6) y actualiza
+composición y pesos. Acepta también ?factor=X (el multiplicador de
+la penalización de protección), ?max=X (el tope de diversificación
+por componente, 40% por defecto), ?frecuencia=diario o ?frecuencia=K
+(K entero 0..n-1: el umbral de supervivientes que dispara el
+rebalanceo — "diario" por defecto) y ?criterio=precio (por
+defecto), ?criterio=volumen, ?criterio=flujo o ?criterio=aleatorio
+(con qué se ordenan los componentes cada día: suma de incrementos
+de precio, de volumen, de flujo de dinero —precio × volumen—, o una
+puntuación pseudoaleatoria determinista con semilla fija — ver
+SEMILLA_ALEATORIA_DEFECTO en motor.js). También ?criterio=precioBajo,
+volumenBajo o flujoBajo: las "antítesis" de los tres primeros — usan
+el mismo cálculo de puntuación, pero seleccionan los ÚLTIMOS de la
+clasificación en vez de los primeros. Si no se indican, se usan los
+valores por defecto.
+
+Además, calcula la rentabilidad total compuesta de las carteras
+"anteriores" (la parte del modelo realmente alcanzable) y la
+compara con la rentabilidad del propio índice de referencia en ese
+periodo (Dow Jones, IBEX 35, ... según el índice elegido),
+además del coeficiente de correlación de Pearson entre el
+beneficio diario de la cartera seleccionada y el incremento diario
+del propio índice.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-seleccionVeces-js">
+    <h3>pages/api/seleccionVeces.js</h3>
+    <p class="meta">255 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Selección alternativa por "veces seleccionado". Admite dos modos,
+vía ?modo=analisis (por defecto) o ?modo=real:
+
+MODO "analisis": dos backtests sucesivos y SIN SOLAPE.
+  1) Backtest previo, sobre las ?sesionesVeces (10 por defecto)
+     sesiones inmediatamente ANTERIORES a la ventana principal, con
+     los ajustes que el usuario tenga elegidos (factor, n, tope,
+     frecuencia): de él se obtiene el contador acumulado de veces
+     que cada uno de los 30 componentes ha estado en cartera.
+  2) Se eligen los N componentes con mayor contador (empate: orden
+     alfabético) y se arranca con ellos, a partes iguales, la
+     ventana principal (?dias=X) — SIN rebalancear nunca: los pesos
+     solo derivan con la cotización.
+  Que las sesiones del backtest previo sean estrictamente
+  anteriores a la ventana principal (sin solape) es intencional:
+  evita elegir la cartera sabiendo ya cómo le fue en el propio
+  periodo que luego se usa para medir el resultado.
+
+MODO "real": un único cálculo, pensado para componer una cartera
+  para invertir de verdad hoy, no para validar una estrategia. Usa
+  las ?sesionesVeces sesiones MÁS RECIENTES disponibles (terminando
+  hoy) para contar las veces de cada componente, y devuelve
+  directamente esa cartera (pesos iguales) como resultado. Al no
+  quedar ningún periodo posterior conocido, no hay backtest 2 ni
+  rentabilidad que mostrar: el sesgo de anticipación se asume a
+  propósito, porque aquí el objetivo es la cartera de hoy, no medir
+  una estrategia contra el pasado.
+
+?criterio=precio (por defecto) o ?criterio=volumen: determina si el
+backtest que cuenta las "veces" (el que decide quién entra y quién
+sale cada día) rankea los 30 componentes por la puntuación de
+precio de siempre, o por la puntuación de volumen (suma de los
+incrementos de volumen de las últimas "sesionesPuntuacion"
+sesiones). El peso y el beneficio de la cartera resultante siguen
+siendo siempre en función del precio.</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+  <article class="fichero" id="f-pages-api-variacionIndices-js">
+    <h3>pages/api/variacionIndices.js</h3>
+    <p class="meta">80 líneas · 1 exportado · <a class="volver" href="#top">↑ volver al índice</a></p>
+    <div class="cabecera-comentario">Herramienta de comprobación (grupo "Comprobaciones"): descarga el
+histórico de cierres de TODOS los índices del catálogo (lib/indices.js,
+no solo el elegido en el marco exterior) y devuelve, para cada uno,
+sus propias últimas sesiones con su valor de cierre y su incremento
+porcentual diario — para poder comprobar a mano que los datos y los
+cálculos son correctos.
+
+Cada índice muestra SUS PROPIAS fechas, no una fecha común a todos:
+con 18 índices repartidos por mercados de todo el mundo (América,
+Europa, Asia, Latinoamérica, Oceanía...), exigir que coincida
+exactamente el mismo día de cierre en los 18 a la vez es
+demasiado frágil — basta con que uno solo tenga un festivo propio,
+un desfase horario de publicación distinto, o un hueco puntual de
+datos, para que la intersección se quede corta o incluso vacía (fue
+justo lo que pasó al llegar a 18 índices). Mostrando cada índice de
+forma independiente, ese problema desaparece por diseño: siempre se
+ven las últimas sesiones de cada uno, aunque no coincidan entre sí.
+
+Al añadir un índice nuevo al catálogo, esta tabla lo incluye
+automáticamente como una columna más; no hace falta tocar este
+fichero. Si un índice concreto falla al descargar (símbolo puntual
+caído, etc.), no tira abajo los demás: esa columna sale marcada con
+su propio error.
+
+Parámetros de la query:
+  dias - nº de sesiones a mostrar por índice (por defecto 20, igual
+         que el resto de la aplicación).</div>
+    <table class="exports">
+      <thead><tr><th>Nombre</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td><code>handler</code><span class="badge fn">función</span></td><td><span class="sin-comentario">(sin comentario)</span></td></tr>
+      </tbody>
+    </table>
+  </article>
+</section>
+<section class="carpeta">
+  <h2 id="plan-recursos">PLAN/ — documentos y recursos (no JavaScript)</h2>
+  <p class="carpeta-desc">Ficheros que alimentan el panel del icono (i) de la aplicación (Especificaciones, Observaciones, Historia, Experiencia, Presentación) — cada endpoint descarga el fichero de este directorio en tu repositorio de GitHub y, si es un .docx, lo convierte a HTML al vuelo con la librería mammoth.</p>
+  <article class="fichero">
+    <table class="exports">
+      <thead><tr><th>Fichero</th><th>Tipo</th><th>Tamaño</th><th>Usado por</th></tr></thead>
+      <tbody>
+        <tr><td><code>PLAN/AI_Guided_Portfolio_Management.pptx</code></td><td>Presentación PowerPoint</td><td>361 KB</td><td><code>components/MenuLayout.js — "Presentación" (idioma en)</code></td></tr>
+        <tr><td><code>PLAN/Gestion_Carteras_IA.pptx</code></td><td>Presentación PowerPoint</td><td>362 KB</td><td><code>components/MenuLayout.js — "Presentación" (idioma es)</code></td></tr>
+        <tr style="opacity:0.6"><td><code>PLAN/especificaciones.docx</code></td><td>Documento Word</td><td>32 KB</td><td><span class="sin-comentario">Versión bilingüe original (columnas ES/EN en la misma tabla), sustituida por los ficheros monolingües de arriba — se conserva en el repositorio sin borrar, pero ningún endpoint la usa ya.</span></td></tr>
+        <tr><td><code>PLAN/especificaciones_en.docx</code></td><td>Documento Word</td><td>19 KB</td><td><code>pages/api/especificaciones.js (?idioma=en)</code></td></tr>
+        <tr><td><code>PLAN/especificaciones_es.docx</code></td><td>Documento Word</td><td>19 KB</td><td><code>pages/api/especificaciones.js (?idioma=es)</code></td></tr>
+        <tr><td><code>PLAN/experiencia_en.docx</code></td><td>Documento Word</td><td>15 KB</td><td><code>pages/api/experiencia.js (?idioma=en)</code></td></tr>
+        <tr><td><code>PLAN/experiencia_es.docx</code></td><td>Documento Word</td><td>16 KB</td><td><code>pages/api/experiencia.js (?idioma=es)</code></td></tr>
+        <tr style="opacity:0.6"><td><code>PLAN/historia.docx</code></td><td>Documento Word</td><td>12 KB</td><td><span class="sin-comentario">Versión bilingüe original (columnas ES/EN en la misma tabla), sustituida por los ficheros monolingües de arriba — se conserva en el repositorio sin borrar, pero ningún endpoint la usa ya.</span></td></tr>
+        <tr><td><code>PLAN/historia_en.docx</code></td><td>Documento Word</td><td>10 KB</td><td><code>pages/api/historia.js (?idioma=en)</code></td></tr>
+        <tr><td><code>PLAN/historia_es.docx</code></td><td>Documento Word</td><td>10 KB</td><td><code>pages/api/historia.js (?idioma=es)</code></td></tr>
+        <tr style="opacity:0.6"><td><code>PLAN/observaciones.docx</code></td><td>Documento Word</td><td>17 KB</td><td><span class="sin-comentario">Versión bilingüe original (columnas ES/EN en la misma tabla), sustituida por los ficheros monolingües de arriba — se conserva en el repositorio sin borrar, pero ningún endpoint la usa ya.</span></td></tr>
+        <tr><td><code>PLAN/observaciones_en.docx</code></td><td>Documento Word</td><td>12 KB</td><td><code>pages/api/observaciones.js (?idioma=en)</code></td></tr>
+        <tr><td><code>PLAN/observaciones_es.docx</code></td><td>Documento Word</td><td>12 KB</td><td><code>pages/api/observaciones.js (?idioma=es)</code></td></tr>
+        <tr><td><code>PLAN/speech_ENGLISH.mp3</code></td><td>Audio</td><td>1.2 MB</td><td><code>components/MenuLayout.js — "Presentación" (idioma en)</code></td></tr>
+        <tr><td><code>PLAN/speech_ESPAÑOL.mp3</code></td><td>Audio</td><td>1.1 MB</td><td><code>components/MenuLayout.js — "Presentación" (idioma es)</code></td></tr>
+      </tbody>
+    </table>
+  </article>
+</section>
+
+<section id="exportar" style="margin-top:40px; padding-top:20px; border-top:2px solid var(--borde);">
+  <h2 style="color:var(--azul);">Descargar o compartir este documento</h2>
+  <p style="color:#555; font-size:0.9em;">Genera un PDF de esta misma documentación, tal como se ve aquí — puede tardar unos segundos por su longitud.</p>
+  <button id="btn-descargar-pdf" style="padding:8px 16px; font-size:0.95em; cursor:pointer;">Descargar PDF</button>
+  <button id="btn-compartir-pdf" style="padding:8px 16px; font-size:0.95em; cursor:pointer; margin-left:8px; display:none;">Compartir PDF</button>
+  <p id="estado-pdf" style="color:#555; font-size:0.85em; margin-top:8px;"></p>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  var btnDescargar = document.getElementById("btn-descargar-pdf");
+  var btnCompartir = document.getElementById("btn-compartir-pdf");
+  var estado = document.getElementById("estado-pdf");
+
+  // El botón de compartir solo se ofrece en dispositivos que admiten
+  // compartir ficheros de verdad (la mayoría de móviles; muchos
+  // navegadores de escritorio no) — mismo criterio que el resto de
+  // la aplicación (ver lib/pdfComun.js, compartirDisponible).
+  var compartirDisponible = !!(navigator.canShare && navigator.canShare({ files: [new File([""], "prueba.pdf", { type: "application/pdf" })] }));
+  if (compartirDisponible) btnCompartir.style.display = "inline-block";
+
+  async function generarPdf() {
+    estado.textContent = "Generando PDF, un momento...";
+    var contenedor = document.querySelector(".contenedor");
+    var canvas = await html2canvas(contenedor, { scale: 1.5, useCORS: true, windowWidth: contenedor.scrollWidth });
+    var jsPDF = window.jspdf.jsPDF;
+    var pdf = new jsPDF("p", "pt", "a4");
+    var anchoPagina = pdf.internal.pageSize.getWidth();
+    var altoPagina = pdf.internal.pageSize.getHeight();
+    var anchoImagen = anchoPagina;
+    var altoImagen = (canvas.height * anchoImagen) / canvas.width;
+    var alturaRestante = altoImagen;
+    var posicionY = 0;
+
+    const imgData = canvas.toDataURL("image/jpeg", 0.85);
+    pdf.addImage(imgData, "JPEG", 0, posicionY, anchoImagen, altoImagen);
+    alturaRestante -= altoPagina;
+    while (alturaRestante > 0) {
+      posicionY = alturaRestante - altoImagen;
+      pdf.addPage();
+      pdf.addImage(imgData, "JPEG", 0, posicionY, anchoImagen, altoImagen);
+      alturaRestante -= altoPagina;
+    }
+    estado.textContent = "";
+    return pdf;
+  }
+
+  btnDescargar.addEventListener("click", async function () {
+    btnDescargar.disabled = true;
+    try {
+      var pdf = await generarPdf();
+      pdf.save("documentacion-fondo-ia.pdf");
+    } catch (e) {
+      estado.textContent = "Error al generar el PDF: " + e.message;
+    } finally {
+      btnDescargar.disabled = false;
+    }
+  });
+
+  btnCompartir.addEventListener("click", async function () {
+    btnCompartir.disabled = true;
+    try {
+      var pdf = await generarPdf();
+      var blob = pdf.output("blob");
+      var fichero = new File([blob], "documentacion-fondo-ia.pdf", { type: "application/pdf" });
+      await navigator.share({ files: [fichero], title: "Documentación técnica — Fondo IA" });
+    } catch (e) {
+      if (e.name !== "AbortError") estado.textContent = "Error al compartir: " + e.message;
+    } finally {
+      btnCompartir.disabled = false;
+    }
+  });
+})();
+</script>
+</div>
+<footer>Fondo IA — documentación generada automáticamente a partir del código fuente.</footer>
+</body>
+</html>
