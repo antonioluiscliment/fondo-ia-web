@@ -4,7 +4,7 @@
 
 Aplicación web financiera de análisis y selección de carteras bursátiles, con
 capacidades de backtesting. Consume datos de Yahoo Finance. Desarrollo en
-solitario por Antonio, gestionado a menudo desde el móvil.
+solitario por Antonio Luis Climent Albaladejo, gestionado a menudo desde el móvil o tablet.
 
 - **Framework:** Next.js (Pages Router), React 18
 - **Despliegue:** Vercel, desde GitHub
