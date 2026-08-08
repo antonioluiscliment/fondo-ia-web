@@ -41,7 +41,14 @@ export default function ComparacionRedNeuronal() {
     return (
       <ol style={{ marginTop: 4 }}>
         {lista.map((c) => (
-          <li key={c.ticker}>{tickerVisible(c.ticker)} — {c.nombre}</li>
+          <li key={c.ticker}>
+            {tickerVisible(c.ticker)} — {c.nombre}
+            {c.incremento !== null && c.incremento !== undefined && (
+              <span style={{ color: c.incremento >= 0 ? "green" : "crimson", fontWeight: "bold" }}>
+                {" "}({c.incremento >= 0 ? "+" : ""}{c.incremento}%)
+              </span>
+            )}
+          </li>
         ))}
       </ol>
     );
@@ -74,6 +81,16 @@ export default function ComparacionRedNeuronal() {
             </p>
           )}
           <p style={{ margin: "4px 0" }}>{t.redVsRidgeCandidatos(resultado.candidatosValidos, resultado.excluidos)}</p>
+          <p style={{ margin: "8px 0", fontWeight: "bold" }}>
+            {t.redVsRidgeIncrementoIndice}{" "}
+            {resultado.incrementoIndice !== null && resultado.incrementoIndice !== undefined ? (
+              <span style={{ color: resultado.incrementoIndice >= 0 ? "green" : "crimson" }}>
+                {resultado.incrementoIndice >= 0 ? "+" : ""}{resultado.incrementoIndice}%
+              </span>
+            ) : (
+              "-"
+            )}
+          </p>
 
           <div style={{ display: "flex", gap: 24, flexWrap: "wrap", marginTop: 16 }}>
             <div style={{ flex: 1, minWidth: 220 }}>
@@ -104,10 +121,13 @@ export default function ComparacionRedNeuronal() {
             const opciones = {
               titulo: t.redVsRidgeTitulo,
               subtitulo: resultado.nombreIndice,
+              parrafos: [
+                `${t.redVsRidgeIncrementoIndice} ${resultado.incrementoIndice !== null && resultado.incrementoIndice !== undefined ? `${resultado.incrementoIndice >= 0 ? "+" : ""}${resultado.incrementoIndice}%` : "-"}`,
+              ],
               columnas: [t.colMetodo, t.colRecomendacion],
               filas: [
-                [t.redVsRidgeRecomendacionRidge, resultado.ridge.recomendacionFinal.map((c) => `${tickerVisible(c.ticker)} — ${c.nombre}`).join(", ") || "-"],
-                [t.redVsRidgeRecomendacionRed, resultado.red.recomendacionFinal.map((c) => `${tickerVisible(c.ticker)} — ${c.nombre}`).join(", ") || "-"],
+                [t.redVsRidgeRecomendacionRidge, resultado.ridge.recomendacionFinal.map((c) => `${tickerVisible(c.ticker)} — ${c.nombre} (${c.incremento !== null && c.incremento !== undefined ? `${c.incremento >= 0 ? "+" : ""}${c.incremento}%` : "-"})`).join(", ") || "-"],
+                [t.redVsRidgeRecomendacionRed, resultado.red.recomendacionFinal.map((c) => `${tickerVisible(c.ticker)} — ${c.nombre} (${c.incremento !== null && c.incremento !== undefined ? `${c.incremento >= 0 ? "+" : ""}${c.incremento}%` : "-"})`).join(", ") || "-"],
                 [t.redVsRidgeCorrelacionTitulo, `${t.redVsRidgeNumPares(resultado.correlacion.numPares)} — ${t.redVsRidgeSolape(resultado.correlacion.solapeMedio, resultado.correlacion.solapeMaximo)} — ${t.redVsRidgeSpearman(resultado.correlacion.spearmanMedio)}`],
               ],
               nombreArchivo: `red-vs-ridge-${indice.id}.pdf`,
