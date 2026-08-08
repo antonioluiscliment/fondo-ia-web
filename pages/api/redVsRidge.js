@@ -174,11 +174,13 @@ export default async function handler(req, res) {
         recomendacionFinal: conNombreEIncremento(resultadoRidge.recomendacionFinal),
         pasosConRecomendacion: resultadoRidge.historicoPasos.length,
         filasEntrenamiento: resultadoRidge.totalFilasEntrenamiento,
+        historialRentabilidad: resultadoRidge.historialRentabilidad,
       },
       red: {
         recomendacionFinal: conNombreEIncremento(resultadoRed.recomendacionFinal),
         pasosConRecomendacion: resultadoRed.historicoPasos.length,
         filasEntrenamiento: resultadoRed.totalFilasEntrenamiento,
+        historialRentabilidad: resultadoRed.historialRentabilidad,
       },
       correlacion: {
         numPares: correlacion.numPares,
