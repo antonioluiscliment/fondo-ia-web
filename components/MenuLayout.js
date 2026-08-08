@@ -17,6 +17,7 @@ const ENLACES = [
   { href: "/seleccionAlternativa", labelKey: "menuSeleccionAlternativa" },
   { href: "/analisis", labelKey: "menuAnalisis" },
   { href: "/anomaliasFlujoBajo", labelKey: "menuAnomaliasFlujoBajo" },
+  { href: "/comparacionRedNeuronal", labelKey: "menuComparacionRedNeuronal" },
 ];
 
 // Icono de tres rayas (hamburguesa), dibujado a mano con <span> para no
