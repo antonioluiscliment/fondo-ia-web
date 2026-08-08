@@ -54,6 +54,22 @@ export default function ComparacionRedNeuronal() {
     );
   }
 
+  function historialRentabilidad(hist) {
+    if (!hist || hist.numPasos === 0) return <p style={{ color: "#555", fontSize: "0.9em" }}>{t.redVsRidgeSinHistorial}</p>;
+    const diferencia = hist.retornoTopHistoricoMedio - hist.retornoBaseHistoricoMedio;
+    return (
+      <div style={{ background: "#eef2f7", border: "1px solid #9aa9bb", borderRadius: 6, padding: 10, marginTop: 8 }}>
+        <p style={{ margin: "2px 0", fontWeight: "bold" }}>{t.redVsRidgeHistorialTitulo}</p>
+        <p style={{ margin: "2px 0" }}>{t.redVsRidgeHistorialTop(hist.retornoTopHistoricoMedio)}</p>
+        <p style={{ margin: "2px 0" }}>{t.redVsRidgeHistorialBase(hist.retornoBaseHistoricoMedio)}</p>
+        <p style={{ margin: "2px 0", color: diferencia >= 0 ? "green" : "crimson", fontWeight: "bold" }}>
+          {t.redVsRidgeHistorialDiferencia(diferencia)}
+        </p>
+        <p style={{ margin: "2px 0" }}>{t.redVsRidgeHistorialTasa(hist.tasaSuperaBase, hist.numPasos)}</p>
+      </div>
+    );
+  }
+
   return (
     <MenuLayout>
       <h2>{t.menuComparacionRedNeuronal}</h2>
@@ -99,6 +115,7 @@ export default function ComparacionRedNeuronal() {
               <p style={{ color: "#555", fontSize: "0.9em" }}>
                 {t.redVsRidgePasosInfo(resultado.ridge.pasosConRecomendacion, resultado.ridge.filasEntrenamiento)}
               </p>
+              {historialRentabilidad(resultado.ridge.historialRentabilidad)}
             </div>
             <div style={{ flex: 1, minWidth: 220 }}>
               <h3>{t.redVsRidgeRecomendacionRed}</h3>
@@ -106,6 +123,7 @@ export default function ComparacionRedNeuronal() {
               <p style={{ color: "#555", fontSize: "0.9em" }}>
                 {t.redVsRidgePasosInfo(resultado.red.pasosConRecomendacion, resultado.red.filasEntrenamiento)}
               </p>
+              {historialRentabilidad(resultado.red.historialRentabilidad)}
             </div>
           </div>
 
@@ -128,6 +146,18 @@ export default function ComparacionRedNeuronal() {
               filas: [
                 [t.redVsRidgeRecomendacionRidge, resultado.ridge.recomendacionFinal.map((c) => `${tickerVisible(c.ticker)} — ${c.nombre} (${c.incremento !== null && c.incremento !== undefined ? `${c.incremento >= 0 ? "+" : ""}${c.incremento}%` : "-"})`).join(", ") || "-"],
                 [t.redVsRidgeRecomendacionRed, resultado.red.recomendacionFinal.map((c) => `${tickerVisible(c.ticker)} — ${c.nombre} (${c.incremento !== null && c.incremento !== undefined ? `${c.incremento >= 0 ? "+" : ""}${c.incremento}%` : "-"})`).join(", ") || "-"],
+                [
+                  `${t.redVsRidgeRecomendacionRidge} — ${t.redVsRidgeHistorialTitulo}`,
+                  resultado.ridge.historialRentabilidad.numPasos > 0
+                    ? `${t.redVsRidgeHistorialTop(resultado.ridge.historialRentabilidad.retornoTopHistoricoMedio)} ${t.redVsRidgeHistorialBase(resultado.ridge.historialRentabilidad.retornoBaseHistoricoMedio)} ${t.redVsRidgeHistorialTasa(resultado.ridge.historialRentabilidad.tasaSuperaBase, resultado.ridge.historialRentabilidad.numPasos)}`
+                    : t.redVsRidgeSinHistorial,
+                ],
+                [
+                  `${t.redVsRidgeRecomendacionRed} — ${t.redVsRidgeHistorialTitulo}`,
+                  resultado.red.historialRentabilidad.numPasos > 0
+                    ? `${t.redVsRidgeHistorialTop(resultado.red.historialRentabilidad.retornoTopHistoricoMedio)} ${t.redVsRidgeHistorialBase(resultado.red.historialRentabilidad.retornoBaseHistoricoMedio)} ${t.redVsRidgeHistorialTasa(resultado.red.historialRentabilidad.tasaSuperaBase, resultado.red.historialRentabilidad.numPasos)}`
+                    : t.redVsRidgeSinHistorial,
+                ],
                 [t.redVsRidgeCorrelacionTitulo, `${t.redVsRidgeNumPares(resultado.correlacion.numPares)} — ${t.redVsRidgeSolape(resultado.correlacion.solapeMedio, resultado.correlacion.solapeMaximo)} — ${t.redVsRidgeSpearman(resultado.correlacion.spearmanMedio)}`],
               ],
               nombreArchivo: `red-vs-ridge-${indice.id}.pdf`,
