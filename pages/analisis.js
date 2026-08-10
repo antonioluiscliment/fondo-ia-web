@@ -713,6 +713,10 @@ export default function Analisis() {
                   <th>{t.correlacionPesoColCorrExcl}</th>
                   <th>{t.correlacionPesoColBetaBruta}</th>
                   <th>{t.correlacionPesoColBetaExcl}</th>
+                  <th>{t.correlacionPesoColCorrExclE2}</th>
+                  <th>{t.correlacionPesoColBetaExclE2}</th>
+                  <th>{t.correlacionPesoColCorrExclE3}</th>
+                  <th>{t.correlacionPesoColBetaExclE3}</th>
                 </tr>
               </thead>
               <tbody>
@@ -724,6 +728,10 @@ export default function Analisis() {
                     <td>{f.correlacionExcluyendo ?? "-"}</td>
                     <td>{f.betaBruta ?? "-"}</td>
                     <td>{f.betaExcluyendo ?? "-"}</td>
+                    <td>{f.correlacionExcluyendoE2 ?? "-"}</td>
+                    <td>{f.betaExcluyendoE2 ?? "-"}</td>
+                    <td>{f.correlacionExcluyendoE3 ?? "-"}</td>
+                    <td>{f.betaExcluyendoE3 ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -775,6 +783,10 @@ export default function Analisis() {
                       <th>{t.correlacionPesoColCorrExcl}</th>
                       <th>{t.correlacionPesoColBetaBruta}</th>
                       <th>{t.correlacionPesoColBetaExcl}</th>
+                      <th>{t.correlacionPesoColCorrExclE2}</th>
+                      <th>{t.correlacionPesoColBetaExclE2}</th>
+                      <th>{t.correlacionPesoColCorrExclE3}</th>
+                      <th>{t.correlacionPesoColBetaExclE3}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -786,6 +798,10 @@ export default function Analisis() {
                         <td>{f.correlacionExcluyendo ?? "-"}</td>
                         <td>{f.betaBruta ?? "-"}</td>
                         <td>{f.betaExcluyendo ?? "-"}</td>
+                        <td>{f.correlacionExcluyendoE2 ?? "-"}</td>
+                        <td>{f.betaExcluyendoE2 ?? "-"}</td>
+                        <td>{f.correlacionExcluyendoE3 ?? "-"}</td>
+                        <td>{f.betaExcluyendoE3 ?? "-"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -798,7 +814,18 @@ export default function Analisis() {
             const opciones = {
               titulo: t.correlacionPesoTitulo,
               subtitulo: correlacionPeso.nombreIndice,
-              columnas: [t.colTicker, t.correlacionPesoColPeso, t.correlacionPesoColCorrBruta, t.correlacionPesoColCorrExcl, t.correlacionPesoColBetaBruta, t.correlacionPesoColBetaExcl],
+              columnas: [
+                t.colTicker,
+                t.correlacionPesoColPeso,
+                t.correlacionPesoColCorrBruta,
+                t.correlacionPesoColCorrExcl,
+                t.correlacionPesoColBetaBruta,
+                t.correlacionPesoColBetaExcl,
+                t.correlacionPesoColCorrExclE2,
+                t.correlacionPesoColBetaExclE2,
+                t.correlacionPesoColCorrExclE3,
+                t.correlacionPesoColBetaExclE3,
+              ],
               filas: correlacionPeso.filasPesoReal.map((f) => [
                 `${tickerVisible(f.ticker)} — ${f.nombre}`,
                 `${f.pesoPorcentaje}%`,
@@ -806,6 +833,10 @@ export default function Analisis() {
                 f.correlacionExcluyendo ?? "-",
                 f.betaBruta ?? "-",
                 f.betaExcluyendo ?? "-",
+                f.correlacionExcluyendoE2 ?? "-",
+                f.betaExcluyendoE2 ?? "-",
+                f.correlacionExcluyendoE3 ?? "-",
+                f.betaExcluyendoE3 ?? "-",
               ]),
               nombreArchivo: `correlacion-peso-${indice.id}.pdf`,
             };
