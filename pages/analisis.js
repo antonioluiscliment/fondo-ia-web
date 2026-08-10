@@ -751,7 +751,7 @@ export default function Analisis() {
                           <td>{p.fecha}</td>
                           <td>{p.incrementoComponente !== null ? `${p.incrementoComponente}%` : "-"}</td>
                           <td>{p.incrementoIndice !== null ? `${p.incrementoIndice}%` : "-"}</td>
-                          <td>{p.incrementoIndiceExcluyendo !== null ? `${p.incrementoIndiceExcluyendo.toFixed(4)}%` : "-"}</td>
+                          <td>{p.incrementoIndiceExcluyendo !== null ? `${p.incrementoIndiceExcluyendo}%` : "-"}</td>
                         </tr>
                       ))}
                     </tbody>
