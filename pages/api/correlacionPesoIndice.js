@@ -5,9 +5,11 @@
 // movimiento del índice? Ver lib/pesosIndiceComun.js para el detalle
 // completo de cada cálculo y sus limitaciones.
 //
-// Ventana de análisis: 60 sesiones — la misma cifra "ya familiar" que
-// se usa en otras herramientas de la aplicación, sin introducir un
-// parámetro nuevo solo para esto.
+// Ventana de análisis: elegible por el usuario (60, 120 o 180
+// sesiones — 120 por defecto). Alargarla no encarece el cálculo del
+// mismo modo que en el walk-forward: aquí no hay ningún ajuste
+// iterativo que repetir, solo una descarga algo más larga y un
+// cálculo aritmético directo sobre el array completo.
 //
 // Solo se dispone del peso REAL de los 10 componentes con más peso
 // del índice (el top 10 de holdings del ETF de referencia — ver
@@ -33,7 +35,15 @@ try {
   errorInicializacion = e;
 }
 
-export const VENTANA_SESIONES = 60;
+// Ventanas de análisis permitidas, elegibles por el usuario — 120 por
+// defecto. Ver la conversación que dio origen a esta opción: a
+// diferencia del walk-forward (donde más sesiones significa repetir
+// un ajuste de modelo muchas veces más), aquí no hay ningún ajuste
+// iterativo — correlación y beta son cálculos directos sobre el
+// array completo —, así que alargar la ventana no multiplica el
+// trabajo, solo pide más días dentro de la misma descarga de siempre.
+export const VENTANAS_PERMITIDAS = [60, 120, 180];
+export const VENTANA_SESIONES_DEFECTO = 120;
 
 function numeroValido(v) {
   return typeof v === "number" && !Number.isNaN(v);
@@ -101,9 +111,15 @@ export default async function handler(req, res) {
     const indice = obtenerIndice(req.query.indice);
     const ponderadoPorPrecio = PONDERADOS_POR_PRECIO.includes(indice.id);
 
+    const ventanaParam = req.query.ventana !== undefined ? Number(req.query.ventana) : VENTANA_SESIONES_DEFECTO;
+    if (!VENTANAS_PERMITIDAS.includes(ventanaParam)) {
+      throw new Error(`El parámetro 'ventana' debe ser uno de: ${VENTANAS_PERMITIDAS.join(", ")}.`);
+    }
+    const ventanaSesiones = ventanaParam;
+
     // 1) Precio de todos los componentes, alineado por fecha, y el
     // propio índice, en la misma ventana.
-    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, VENTANA_SESIONES, indice.tickers);
+    const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, ventanaSesiones, indice.tickers);
     const { cierres: cierresIndice } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
 
     const precioPorTicker = {};
@@ -181,7 +197,7 @@ export default async function handler(req, res) {
     res.status(200).json({
       indice: indice.id,
       nombreIndice: indice.nombre.es,
-      ventanaSesiones: VENTANA_SESIONES,
+      ventanaSesiones,
       ponderadoPorPrecio,
       filasPesoReal,
       resumenCruce,
