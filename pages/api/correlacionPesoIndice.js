@@ -21,10 +21,9 @@
 // los 10 de peso real.
 
 import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerDatosAlineados, obtenerIncrementosIndice } from "../../lib/motor";
-import { calcularIncrementosSerie } from "../../lib/multifactorComun";
 import { obtenerIndice } from "../../lib/indices";
 import { obtenerHoldingsEtf } from "../../lib/holdingsEtfComun";
-import { calcularCorrelacionPearson, calcularBeta, calcularIndiceExcluyendo, estimarPesosRestantes, PONDERADOS_POR_PRECIO } from "../../lib/pesosIndiceComun";
+import { calcularCorrelacionPearson, calcularBeta, calcularIndiceExcluyendo, calcularIncrementosDesfase, estimarPesosRestantes, PONDERADOS_POR_PRECIO } from "../../lib/pesosIndiceComun";
 
 let yahooFinance;
 let errorInicializacion = null;
@@ -42,16 +41,41 @@ function numeroValido(v) {
 
 // Calcula correlación, beta, y las mismas dos medidas "sin este valor",
 // para un componente concreto con su peso (en fracción) ya conocido o
-// estimado.
-function analizarComponente(incrementosComponente, incrementosIndice, pesoFraccion) {
-  const correlacionBruta = calcularCorrelacionPearson(incrementosComponente, incrementosIndice);
-  const betaBruta = calcularBeta(incrementosComponente, incrementosIndice);
+// estimado — en las tres "vistas" de la serie: día a día (E1, la de
+// siempre), respecto a hace 2 sesiones (E2) y respecto a hace 3 (E3).
+// E2/E3 se solapan entre sí (no son observaciones independientes),
+// pero permiten distinguir dos explicaciones distintas de un mismo
+// resultado extraño en E1: si es solo ruido de un día suelto que se
+// diluye al promediar en E2/E3, o si el patrón se mantiene igual de
+// fuerte también ahí (más compatible con una historia real de fondo
+// del valor, no con ruido).
+function analizarComponente(precioComponente, precioIndice, pesoFraccion) {
+  const resultado = {};
+  for (const [sufijo, desfase] of [["", 1], ["E2", 2], ["E3", 3]]) {
+    const incrementosComponente = calcularIncrementosDesfase(precioComponente, desfase);
+    const incrementosIndice = calcularIncrementosDesfase(precioIndice, desfase);
 
-  const indiceSinEste = calcularIndiceExcluyendo(incrementosIndice, incrementosComponente, pesoFraccion);
-  const correlacionExcluyendo = calcularCorrelacionPearson(incrementosComponente, indiceSinEste);
-  const betaExcluyendo = calcularBeta(incrementosComponente, indiceSinEste);
+    const correlacionBruta = calcularCorrelacionPearson(incrementosComponente, incrementosIndice);
+    const betaBruta = calcularBeta(incrementosComponente, incrementosIndice);
 
-  return { correlacionBruta, betaBruta, correlacionExcluyendo, betaExcluyendo, indiceSinEste };
+    const indiceSinEste = calcularIndiceExcluyendo(incrementosIndice, incrementosComponente, pesoFraccion);
+    const correlacionExcluyendo = calcularCorrelacionPearson(incrementosComponente, indiceSinEste);
+    const betaExcluyendo = calcularBeta(incrementosComponente, indiceSinEste);
+
+    resultado[`correlacionBruta${sufijo}`] = correlacionBruta;
+    resultado[`betaBruta${sufijo}`] = betaBruta;
+    resultado[`correlacionExcluyendo${sufijo}`] = correlacionExcluyendo;
+    resultado[`betaExcluyendo${sufijo}`] = betaExcluyendo;
+    if (desfase === 1) {
+      // Solo se guarda la serie de "índice sin este valor" del
+      // desfase 1 (E1), la que usa la tabla de detalle día a día —
+      // guardar las tres inflaría la respuesta sin necesidad.
+      resultado.indiceSinEsteE1 = indiceSinEste;
+      resultado.incrementosComponenteE1 = incrementosComponente;
+      resultado.incrementosIndiceE1 = incrementosIndice;
+    }
+  }
+  return resultado;
 }
 
 // Tabla de pares fecha ↔ incremento, tal cual se usan en el cálculo
@@ -80,52 +104,46 @@ export default async function handler(req, res) {
     // 1) Precio de todos los componentes, alineado por fecha, y el
     // propio índice, en la misma ventana.
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, VENTANA_SESIONES, indice.tickers);
-    const { incrementos: incrementosIndicePorFecha } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
+    const { cierres: cierresIndice } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
 
-    const incrementosPorTicker = {};
+    const precioPorTicker = {};
     for (const ticker of indice.tickers) {
       if (!datos[ticker]) continue;
-      incrementosPorTicker[ticker] = calcularIncrementosSerie(datos[ticker].map((d) => d.cierre));
+      precioPorTicker[ticker] = datos[ticker].map((d) => d.cierre);
     }
-    // incrementosIndicePorFecha ya viene alineado a "fechas" (una
-    // entrada por cada fecha, calculada contra la fecha de mercado
-    // anterior real del propio índice) — se convierte a array en el
-    // mismo orden que fechas, para poder emparejar posición a
-    // posición con incrementosPorTicker[ticker], que sigue ese mismo
-    // orden. OJO: no usar el "cierres" que devuelve la misma función,
-    // que no está alineado a "fechas" (se descarga con 10 días de
-    // margen antes/después para poder calcular su propio primer
-    // incremento) — mezclarlo con los incrementos de los componentes
-    // desalinea las fechas y invalida cualquier correlación o beta
-    // calculada así.
-    // obtenerIncrementosIndice devuelve el incremento en PORCENTAJE
-    // (1.5 para un +1,5%), mientras que calcularIncrementosSerie (la
-    // que usan los componentes, más abajo) devuelve la FRACCIÓN
-    // (0.015) — sin esta división entre 100, la correlación no se ve
-    // afectada (es invariante a la escala), pero la beta sale
-    // sistemáticamente 100 veces más pequeña de lo que debería.
-    const incrementosIndice = fechas.map((f) => {
-      const v = incrementosIndicePorFecha[f];
-      return v === null || v === undefined ? null : v / 100;
-    });
+    // El precio del índice se alinea a "fechas" buscando cada fecha
+    // por su valor exacto (no por posición) en el array que devuelve
+    // obtenerIncrementosIndice — ese array trae más días de los que
+    // hay en "fechas" (10 de margen antes y después, para poder
+    // calcular su propio primer incremento) y no coincide con
+    // "fechas" posición a posición; hay que buscarlo por fecha, igual
+    // que ya hacen el resto de herramientas de la aplicación que usan
+    // esta misma función (ver la nota de la conversación que dio
+    // origen a este endpoint: usar el array sin alinear por posición
+    // fue precisamente el primer fallo que se corrigió aquí).
+    const mapaCierresIndice = Object.fromEntries(cierresIndice.map((c) => [c.fecha, c.cierre]));
+    const precioIndice = fechas.map((f) => (mapaCierresIndice[f] !== undefined ? mapaCierresIndice[f] : null));
 
     // 2) Top 10 de holdings del ETF, con peso real.
     const holdings = await obtenerHoldingsEtf(yahooFinance, indice);
-    const holdingsValidos = holdings.filter((h) => h.enNuestraLista && incrementosPorTicker[h.ticker]);
+    const holdingsValidos = holdings.filter((h) => h.enNuestraLista && precioPorTicker[h.ticker]);
 
     // 3) Análisis de los 10 de peso REAL conocido — el cruce
     // principal que responde a la pregunta de esta herramienta.
     const filasPesoReal = holdingsValidos.map((h) => {
       const pesoFraccion = h.porcentaje / 100;
-      const analisis = analizarComponente(incrementosPorTicker[h.ticker], incrementosIndice, pesoFraccion);
-      const detallePares = construirDetallePares(fechas, incrementosPorTicker[h.ticker], incrementosIndice, analisis.indiceSinEste);
-      const { indiceSinEste, ...analisisSinSerie } = analisis;
-      return { ticker: h.ticker, nombre: indice.nombresEmpresas[h.ticker] || h.nombre, pesoPorcentaje: h.porcentaje, ...analisisSinSerie, detallePares };
+      const analisis = analizarComponente(precioPorTicker[h.ticker], precioIndice, pesoFraccion);
+      const detallePares = construirDetallePares(fechas, analisis.incrementosComponenteE1, analisis.incrementosIndiceE1, analisis.indiceSinEsteE1);
+      const { indiceSinEsteE1, incrementosComponenteE1, incrementosIndiceE1, ...analisisPublico } = analisis;
+      return { ticker: h.ticker, nombre: indice.nombresEmpresas[h.ticker] || h.nombre, pesoPorcentaje: h.porcentaje, ...analisisPublico, detallePares };
     });
 
     // 4) Correlación entre "peso" y cada medida, con y sin exclusión
     // — el resumen de un solo número que responde directamente a la
-    // pregunta de partida.
+    // pregunta de partida. Se queda en la vista día a día (E1): es la
+    // que decide si de verdad hay relación entre peso y correlación,
+    // no las vistas E2/E3, que están para diagnosticar casos
+    // concretos, no para este resumen agregado.
     const pesos = filasPesoReal.map((f) => f.pesoPorcentaje);
     const resumenCruce = {
       pesoVsCorrelacionBruta: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.correlacionBruta)),
@@ -140,7 +158,7 @@ export default async function handler(req, res) {
     let filasPesoEstimado = [];
     if (!ponderadoPorPrecio) {
       const tickersConPesoReal = new Set(holdingsValidos.map((h) => h.ticker));
-      const tickersRestantes = indice.tickers.filter((tk) => !tickersConPesoReal.has(tk) && incrementosPorTicker[tk]);
+      const tickersRestantes = indice.tickers.filter((tk) => !tickersConPesoReal.has(tk) && precioPorTicker[tk]);
 
       if (tickersRestantes.length > 0) {
         const cotizaciones = await yahooFinance.quote([...tickersConPesoReal, ...tickersRestantes], { fields: ["symbol", "marketCap"] });
@@ -153,8 +171,9 @@ export default async function handler(req, res) {
         const pesosEstimados = estimarPesosRestantes(tickersRestantes, capitalizacionPorTicker, pesoRestanteFraccion);
 
         filasPesoEstimado = Object.entries(pesosEstimados).map(([ticker, pesoFraccion]) => {
-          const analisis = analizarComponente(incrementosPorTicker[ticker], incrementosIndice, pesoFraccion);
-          return { ticker, nombre: indice.nombresEmpresas[ticker], pesoPorcentaje: Number((pesoFraccion * 100).toFixed(3)), ...analisis };
+          const analisis = analizarComponente(precioPorTicker[ticker], precioIndice, pesoFraccion);
+          const { indiceSinEsteE1, incrementosComponenteE1, incrementosIndiceE1, ...analisisPublico } = analisis;
+          return { ticker, nombre: indice.nombresEmpresas[ticker], pesoPorcentaje: Number((pesoFraccion * 100).toFixed(3)), ...analisisPublico };
         });
       }
     }
