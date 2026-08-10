@@ -51,7 +51,20 @@ function analizarComponente(incrementosComponente, incrementosIndice, pesoFracci
   const correlacionExcluyendo = calcularCorrelacionPearson(incrementosComponente, indiceSinEste);
   const betaExcluyendo = calcularBeta(incrementosComponente, indiceSinEste);
 
-  return { correlacionBruta, betaBruta, correlacionExcluyendo, betaExcluyendo };
+  return { correlacionBruta, betaBruta, correlacionExcluyendo, betaExcluyendo, indiceSinEste };
+}
+
+// Tabla de pares fecha ↔ incremento, tal cual se usan en el cálculo
+// — para poder comprobar a mano, contra el histórico real de Yahoo
+// Finance, que cada fecha se está emparejando con el día que
+// corresponde y no con uno desplazado.
+function construirDetallePares(fechas, incrementosComponente, incrementosIndice, indiceSinEste) {
+  return fechas.map((fecha, i) => ({
+    fecha,
+    incrementoComponente: incrementosComponente[i] ?? null,
+    incrementoIndice: incrementosIndice[i] ?? null,
+    incrementoIndiceExcluyendo: indiceSinEste[i] ?? null,
+  }));
 }
 
 export default async function handler(req, res) {
@@ -64,14 +77,25 @@ export default async function handler(req, res) {
     // 1) Precio de todos los componentes, alineado por fecha, y el
     // propio índice, en la misma ventana.
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, VENTANA_SESIONES, indice.tickers);
-    const { cierres: cierresIndice } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
+    const { incrementos: incrementosIndicePorFecha } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
 
     const incrementosPorTicker = {};
     for (const ticker of indice.tickers) {
       if (!datos[ticker]) continue;
       incrementosPorTicker[ticker] = calcularIncrementosSerie(datos[ticker].map((d) => d.cierre));
     }
-    const incrementosIndice = calcularIncrementosSerie(cierresIndice.map((c) => c.cierre));
+    // incrementosIndicePorFecha ya viene alineado a "fechas" (una
+    // entrada por cada fecha, calculada contra la fecha de mercado
+    // anterior real del propio índice) — se convierte a array en el
+    // mismo orden que fechas, para poder emparejar posición a
+    // posición con incrementosPorTicker[ticker], que sigue ese mismo
+    // orden. OJO: no usar el "cierres" que devuelve la misma función,
+    // que no está alineado a "fechas" (se descarga con 10 días de
+    // margen antes/después para poder calcular su propio primer
+    // incremento) — mezclarlo con los incrementos de los componentes
+    // desalinea las fechas y invalida cualquier correlación o beta
+    // calculada así.
+    const incrementosIndice = fechas.map((f) => incrementosIndicePorFecha[f]);
 
     // 2) Top 10 de holdings del ETF, con peso real.
     const holdings = await obtenerHoldingsEtf(yahooFinance, indice);
@@ -82,7 +106,9 @@ export default async function handler(req, res) {
     const filasPesoReal = holdingsValidos.map((h) => {
       const pesoFraccion = h.porcentaje / 100;
       const analisis = analizarComponente(incrementosPorTicker[h.ticker], incrementosIndice, pesoFraccion);
-      return { ticker: h.ticker, nombre: indice.nombresEmpresas[h.ticker] || h.nombre, pesoPorcentaje: h.porcentaje, ...analisis };
+      const detallePares = construirDetallePares(fechas, incrementosPorTicker[h.ticker], incrementosIndice, analisis.indiceSinEste);
+      const { indiceSinEste, ...analisisSinSerie } = analisis;
+      return { ticker: h.ticker, nombre: indice.nombresEmpresas[h.ticker] || h.nombre, pesoPorcentaje: h.porcentaje, ...analisisSinSerie, detallePares };
     });
 
     // 4) Correlación entre "peso" y cada medida, con y sin exclusión
@@ -90,10 +116,10 @@ export default async function handler(req, res) {
     // pregunta de partida.
     const pesos = filasPesoReal.map((f) => f.pesoPorcentaje);
     const resumenCruce = {
-      pesoVsCorrelacionBruta: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.correlacionBruta ?? 0)),
-      pesoVsCorrelacionExcluyendo: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.correlacionExcluyendo ?? 0)),
-      pesoVsBetaBruta: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.betaBruta ?? 0)),
-      pesoVsBetaExcluyendo: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.betaExcluyendo ?? 0)),
+      pesoVsCorrelacionBruta: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.correlacionBruta)),
+      pesoVsCorrelacionExcluyendo: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.correlacionExcluyendo)),
+      pesoVsBetaBruta: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.betaBruta)),
+      pesoVsBetaExcluyendo: calcularCorrelacionPearson(pesos, filasPesoReal.map((f) => f.betaExcluyendo)),
     };
 
     // 5) Vista complementaria: peso ESTIMADO por capitalización para
