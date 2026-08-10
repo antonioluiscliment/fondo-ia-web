@@ -57,13 +57,16 @@ function analizarComponente(incrementosComponente, incrementosIndice, pesoFracci
 // Tabla de pares fecha ↔ incremento, tal cual se usan en el cálculo
 // — para poder comprobar a mano, contra el histórico real de Yahoo
 // Finance, que cada fecha se está emparejando con el día que
-// corresponde y no con uno desplazado.
+// corresponde y no con uno desplazado. Se multiplica por 100 solo
+// para esta tabla de VISUALIZACIÓN (el cálculo interno usa fracción,
+// no porcentaje, en los cuatro valores).
 function construirDetallePares(fechas, incrementosComponente, incrementosIndice, indiceSinEste) {
+  const aPorcentaje = (v) => (v === null || v === undefined ? null : Number((v * 100).toFixed(4)));
   return fechas.map((fecha, i) => ({
     fecha,
-    incrementoComponente: incrementosComponente[i] ?? null,
-    incrementoIndice: incrementosIndice[i] ?? null,
-    incrementoIndiceExcluyendo: indiceSinEste[i] ?? null,
+    incrementoComponente: aPorcentaje(incrementosComponente[i]),
+    incrementoIndice: aPorcentaje(incrementosIndice[i]),
+    incrementoIndiceExcluyendo: aPorcentaje(indiceSinEste[i]),
   }));
 }
 
@@ -95,7 +98,16 @@ export default async function handler(req, res) {
     // incremento) — mezclarlo con los incrementos de los componentes
     // desalinea las fechas y invalida cualquier correlación o beta
     // calculada así.
-    const incrementosIndice = fechas.map((f) => incrementosIndicePorFecha[f]);
+    // obtenerIncrementosIndice devuelve el incremento en PORCENTAJE
+    // (1.5 para un +1,5%), mientras que calcularIncrementosSerie (la
+    // que usan los componentes, más abajo) devuelve la FRACCIÓN
+    // (0.015) — sin esta división entre 100, la correlación no se ve
+    // afectada (es invariante a la escala), pero la beta sale
+    // sistemáticamente 100 veces más pequeña de lo que debería.
+    const incrementosIndice = fechas.map((f) => {
+      const v = incrementosIndicePorFecha[f];
+      return v === null || v === undefined ? null : v / 100;
+    });
 
     // 2) Top 10 de holdings del ETF, con peso real.
     const holdings = await obtenerHoldingsEtf(yahooFinance, indice);
