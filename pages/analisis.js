@@ -38,6 +38,26 @@ export default function Analisis() {
   const [cargandoCorrelacionAnalistas, setCargandoCorrelacionAnalistas] = useState(false);
   const [errorCorrelacionAnalistas, setErrorCorrelacionAnalistas] = useState(null);
 
+  const [correlacionPeso, setCorrelacionPeso] = useState(null);
+  const [cargandoCorrelacionPeso, setCargandoCorrelacionPeso] = useState(false);
+  const [errorCorrelacionPeso, setErrorCorrelacionPeso] = useState(null);
+
+  async function realizarCorrelacionPeso() {
+    setCargandoCorrelacionPeso(true);
+    setErrorCorrelacionPeso(null);
+    setCorrelacionPeso(null);
+    try {
+      const resp = await fetch(`/api/correlacionPesoIndice?indice=${indiceId}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setCorrelacionPeso(json);
+    } catch (e) {
+      setErrorCorrelacionPeso(e.message);
+    } finally {
+      setCargandoCorrelacionPeso(false);
+    }
+  }
+
   // Por defecto, marcados solo los índices "normales" (los que ya
   // existían antes de la serie de ADR: Dow Jones, IBEX 35, CAC 40,
   // PSI 20, DAX, AEX, FTSE MIB) — salvo el que más componentes tenga
@@ -654,6 +674,120 @@ export default function Analisis() {
             );
           })()}
         </>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.correlacionPesoTitulo}</h2>
+      <p>{t.correlacionPesoDesc}</p>
+
+      <button onClick={realizarCorrelacionPeso} disabled={cargandoCorrelacionPeso}>
+        {cargandoCorrelacionPeso ? t.correlacionPesoBotonCargando : t.correlacionPesoBoton}
+      </button>
+
+      {errorCorrelacionPeso && <p style={{ color: "crimson" }}>{t.error}: {errorCorrelacionPeso}</p>}
+
+      {correlacionPeso && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <p style={{ margin: "4px 0" }}>{t.correlacionPesoVentana(correlacionPeso.ventanaSesiones)}</p>
+          {correlacionPeso.ponderadoPorPrecio && <p style={{ color: "#555", fontStyle: "italic" }}>{t.correlacionPesoAvisoPrecio}</p>}
+
+          <h3>{t.correlacionPesoResumenTitulo}</h3>
+          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse" }}>
+            <tbody>
+              <tr><th style={{ textAlign: "left" }}>{t.correlacionPesoVsCorrBruta}</th><td>{correlacionPeso.resumenCruce.pesoVsCorrelacionBruta ?? "-"}</td></tr>
+              <tr><th style={{ textAlign: "left" }}>{t.correlacionPesoVsCorrExcl}</th><td>{correlacionPeso.resumenCruce.pesoVsCorrelacionExcluyendo ?? "-"}</td></tr>
+              <tr><th style={{ textAlign: "left" }}>{t.correlacionPesoVsBetaBruta}</th><td>{correlacionPeso.resumenCruce.pesoVsBetaBruta ?? "-"}</td></tr>
+              <tr><th style={{ textAlign: "left" }}>{t.correlacionPesoVsBetaExcl}</th><td>{correlacionPeso.resumenCruce.pesoVsBetaExcluyendo ?? "-"}</td></tr>
+            </tbody>
+          </table>
+
+          <h3>{t.correlacionPesoTablaRealTitulo}</h3>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.colTicker}</th>
+                  <th>{t.correlacionPesoColPeso}</th>
+                  <th>{t.correlacionPesoColCorrBruta}</th>
+                  <th>{t.correlacionPesoColCorrExcl}</th>
+                  <th>{t.correlacionPesoColBetaBruta}</th>
+                  <th>{t.correlacionPesoColBetaExcl}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {correlacionPeso.filasPesoReal.map((f) => (
+                  <tr key={f.ticker}>
+                    <td>{tickerVisible(f.ticker)} — {f.nombre}</td>
+                    <td>{f.pesoPorcentaje}%</td>
+                    <td>{f.correlacionBruta ?? "-"}</td>
+                    <td>{f.correlacionExcluyendo ?? "-"}</td>
+                    <td>{f.betaBruta ?? "-"}</td>
+                    <td>{f.betaExcluyendo ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {correlacionPeso.filasPesoEstimado.length > 0 && (
+            <>
+              <h3>{t.correlacionPesoTablaEstimadoTitulo}</h3>
+              <p style={{ color: "#555", fontStyle: "italic" }}>{t.correlacionPesoAvisoEstimado}</p>
+              <div style={{ overflowX: "auto" }}>
+                <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+                  <thead>
+                    <tr>
+                      <th>{t.colTicker}</th>
+                      <th>{t.correlacionPesoColPeso}</th>
+                      <th>{t.correlacionPesoColCorrBruta}</th>
+                      <th>{t.correlacionPesoColCorrExcl}</th>
+                      <th>{t.correlacionPesoColBetaBruta}</th>
+                      <th>{t.correlacionPesoColBetaExcl}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {correlacionPeso.filasPesoEstimado.map((f) => (
+                      <tr key={f.ticker}>
+                        <td>{tickerVisible(f.ticker)} — {f.nombre}</td>
+                        <td>{f.pesoPorcentaje}%</td>
+                        <td>{f.correlacionBruta ?? "-"}</td>
+                        <td>{f.correlacionExcluyendo ?? "-"}</td>
+                        <td>{f.betaBruta ?? "-"}</td>
+                        <td>{f.betaExcluyendo ?? "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {(() => {
+            const opciones = {
+              titulo: t.correlacionPesoTitulo,
+              subtitulo: correlacionPeso.nombreIndice,
+              columnas: [t.colTicker, t.correlacionPesoColPeso, t.correlacionPesoColCorrBruta, t.correlacionPesoColCorrExcl, t.correlacionPesoColBetaBruta, t.correlacionPesoColBetaExcl],
+              filas: correlacionPeso.filasPesoReal.map((f) => [
+                `${tickerVisible(f.ticker)} — ${f.nombre}`,
+                `${f.pesoPorcentaje}%`,
+                f.correlacionBruta ?? "-",
+                f.correlacionExcluyendo ?? "-",
+                f.betaBruta ?? "-",
+                f.betaExcluyendo ?? "-",
+              ]),
+              nombreArchivo: `correlacion-peso-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
+        </div>
       )}
     </MenuLayout>
   );
