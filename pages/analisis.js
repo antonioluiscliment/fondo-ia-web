@@ -41,13 +41,14 @@ export default function Analisis() {
   const [correlacionPeso, setCorrelacionPeso] = useState(null);
   const [cargandoCorrelacionPeso, setCargandoCorrelacionPeso] = useState(false);
   const [errorCorrelacionPeso, setErrorCorrelacionPeso] = useState(null);
+  const [ventanaCorrelacionPeso, setVentanaCorrelacionPeso] = useState(120);
 
   async function realizarCorrelacionPeso() {
     setCargandoCorrelacionPeso(true);
     setErrorCorrelacionPeso(null);
     setCorrelacionPeso(null);
     try {
-      const resp = await fetch(`/api/correlacionPesoIndice?indice=${indiceId}`);
+      const resp = await fetch(`/api/correlacionPesoIndice?indice=${indiceId}&ventana=${ventanaCorrelacionPeso}`);
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
       setCorrelacionPeso(json);
@@ -680,6 +681,17 @@ export default function Analisis() {
 
       <h2>{t.correlacionPesoTitulo}</h2>
       <p>{t.correlacionPesoDesc}</p>
+
+      <p style={{ margin: "12px 0 4px" }}>
+        <label>
+          {t.correlacionPesoEtiquetaVentana}{" "}
+          <select value={ventanaCorrelacionPeso} onChange={(e) => setVentanaCorrelacionPeso(Number(e.target.value))}>
+            <option value={60}>60</option>
+            <option value={120}>120</option>
+            <option value={180}>180</option>
+          </select>
+        </label>
+      </p>
 
       <button onClick={realizarCorrelacionPeso} disabled={cargandoCorrelacionPeso}>
         {cargandoCorrelacionPeso ? t.correlacionPesoBotonCargando : t.correlacionPesoBoton}
