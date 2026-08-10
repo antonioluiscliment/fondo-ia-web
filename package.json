@@ -8,12 +8,13 @@
     "start": "next start"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
+    "mammoth": "^1.8.0",
     "next": "14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "yahoo-finance2": "^4.0.0",
-    "mammoth": "^1.8.0",
-    "jspdf": "^2.5.2",
-    "jspdf-autotable": "^3.8.4"
+    "yahoo-finance2": "^4.0.0"
   }
 }
