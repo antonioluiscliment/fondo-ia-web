@@ -20,7 +20,8 @@
 // siempre marcado como "estimado", nunca mezclado sin distinguir con
 // los 10 de peso real.
 
-import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerDatosAlineados, obtenerIncrementosIndice, calcularIncrementosSerie } from "../../lib/motor";
+import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerDatosAlineados, obtenerIncrementosIndice } from "../../lib/motor";
+import { calcularIncrementosSerie } from "../../lib/multifactorComun";
 import { obtenerIndice } from "../../lib/indices";
 import { obtenerHoldingsEtf } from "../../lib/holdingsEtfComun";
 import { calcularCorrelacionPearson, calcularBeta, calcularIndiceExcluyendo, estimarPesosRestantes, PONDERADOS_POR_PRECIO } from "../../lib/pesosIndiceComun";
