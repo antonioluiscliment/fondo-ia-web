@@ -730,6 +730,37 @@ export default function Analisis() {
             </table>
           </div>
 
+          <details style={{ marginTop: 8 }}>
+            <summary style={{ cursor: "pointer", color: "#555" }}>{t.correlacionPesoVerDetalle}</summary>
+            {correlacionPeso.filasPesoReal.map((f) => (
+              <div key={f.ticker} style={{ marginTop: 12 }}>
+                <p style={{ fontWeight: "bold", marginBottom: 4 }}>{tickerVisible(f.ticker)} — {f.nombre}</p>
+                <div style={{ overflowX: "auto", maxHeight: 300, overflowY: "auto" }}>
+                  <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85em" }}>
+                    <thead>
+                      <tr>
+                        <th>{t.colFecha}</th>
+                        <th>{t.correlacionPesoColIncrComponente}</th>
+                        <th>{t.correlacionPesoColIncrIndice}</th>
+                        <th>{t.correlacionPesoColIncrIndiceExcl}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {f.detallePares.map((p) => (
+                        <tr key={p.fecha}>
+                          <td>{p.fecha}</td>
+                          <td>{p.incrementoComponente !== null ? `${p.incrementoComponente}%` : "-"}</td>
+                          <td>{p.incrementoIndice !== null ? `${p.incrementoIndice}%` : "-"}</td>
+                          <td>{p.incrementoIndiceExcluyendo !== null ? `${p.incrementoIndiceExcluyendo.toFixed(4)}%` : "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </details>
+
           {correlacionPeso.filasPesoEstimado.length > 0 && (
             <>
               <h3>{t.correlacionPesoTablaEstimadoTitulo}</h3>
