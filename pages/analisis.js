@@ -43,8 +43,7 @@ export default function Analisis() {
   const [errorCorrelacionPeso, setErrorCorrelacionPeso] = useState(null);
   const [ventanaCorrelacionPeso, setVentanaCorrelacionPeso] = useState(120);
 
-  const [persistencia, setPersistencia] = useState(null);
-  const [cargandoPersistencia, setCargandoPersistencia] = useState(false);
+  const [persistencia, setPersistencia] = useState(null);  const [cargandoPersistencia, setCargandoPersistencia] = useState(false);
   const [errorPersistencia, setErrorPersistencia] = useState(null);
   const [periodoPersistencia, setPeriodoPersistencia] = useState(180);
 
@@ -61,6 +60,31 @@ export default function Analisis() {
       setErrorPersistencia(e.message);
     } finally {
       setCargandoPersistencia(false);
+    }
+  }
+
+  const [volatilidad, setVolatilidad] = useState(null);
+  const [cargandoVolatilidad, setCargandoVolatilidad] = useState(false);
+  const [errorVolatilidad, setErrorVolatilidad] = useState(null);
+  const [periodoVolatilidad, setPeriodoVolatilidad] = useState(180);
+  const [longitudVolatilidad, setLongitudVolatilidad] = useState(5);
+  const [extremoVolatilidad, setExtremoVolatilidad] = useState(15);
+
+  async function realizarVolatilidad() {
+    setCargandoVolatilidad(true);
+    setErrorVolatilidad(null);
+    setVolatilidad(null);
+    try {
+      const resp = await fetch(
+        `/api/volatilidadExtremos?indice=${indiceId}&periodo=${periodoVolatilidad}&longitud=${longitudVolatilidad}&extremo=${extremoVolatilidad}`
+      );
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setVolatilidad(json);
+    } catch (e) {
+      setErrorVolatilidad(e.message);
+    } finally {
+      setCargandoVolatilidad(false);
     }
   }
 
@@ -1062,6 +1086,127 @@ export default function Analisis() {
                 `${f.aciertosPeoresAzarMedio ?? "-"} ± ${f.aciertosPeoresAzarDesviacion ?? "-"}`,
               ]),
               nombreArchivo: `persistencia-orden-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.volatilidadTitulo}</h2>
+      <p>{t.volatilidadDesc}</p>
+
+      <p style={{ margin: "12px 0 4px" }}>
+        <label>
+          {t.volatilidadEtiquetaPeriodo}{" "}
+          <select value={periodoVolatilidad} onChange={(e) => setPeriodoVolatilidad(Number(e.target.value))}>
+            <option value={60}>60</option>
+            <option value={120}>120</option>
+            <option value={180}>180</option>
+            <option value={250}>250</option>
+          </select>
+        </label>{" "}
+        <label>
+          {t.volatilidadEtiquetaLongitud}{" "}
+          <select value={longitudVolatilidad} onChange={(e) => setLongitudVolatilidad(Number(e.target.value))}>
+            <option value={5}>5</option>
+            <option value={8}>8</option>
+          </select>
+        </label>{" "}
+        <label>
+          {t.volatilidadEtiquetaExtremo}{" "}
+          <select value={extremoVolatilidad} onChange={(e) => setExtremoVolatilidad(Number(e.target.value))}>
+            <option value={15}>15%</option>
+            <option value={20}>20%</option>
+          </select>
+        </label>
+      </p>
+
+      <button onClick={realizarVolatilidad} disabled={cargandoVolatilidad}>
+        {cargandoVolatilidad ? t.volatilidadBotonCargando : t.volatilidadBoton}
+      </button>
+
+      {errorVolatilidad && <p style={{ color: "crimson" }}>{t.error}: {errorVolatilidad}</p>}
+
+      {volatilidad && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{volatilidad.nombreIndice}</h3>
+          <p style={{ margin: "4px 0" }}>
+            {t.volatilidadCabecera(volatilidad.periodoSesiones, volatilidad.numVentanasUsadas, volatilidad.longitud, volatilidad.plazasPorExtremo, volatilidad.porcentajeExtremo)}
+          </p>
+          <p style={{ margin: "4px 0", fontWeight: "bold" }}>{t.volatilidadEsperadoAzar(volatilidad.esperadoTotal)}</p>
+
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>{t.colTicker}</th>
+                  <th>{t.volatilidadColTotal}</th>
+                  <th>{t.volatilidadColSobreAzar}</th>
+                  <th>{t.volatilidadColCabeza}</th>
+                  <th>{t.volatilidadColCola}</th>
+                  <th>{t.volatilidadColReparto}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {volatilidad.filas.map((f, i) => {
+                  // Un reparto muy desequilibrado (lejos del 50%) es
+                  // lo interesante de verdad: indica sesgo
+                  // direccional, no volatilidad pura. Se resalta a
+                  // partir de 70/30 en cualquiera de los dos sentidos.
+                  const sesgado = f.porcentajeCabeza !== null && (f.porcentajeCabeza >= 70 || f.porcentajeCabeza <= 30);
+                  return (
+                    <tr key={f.ticker}>
+                      <td>{i + 1}</td>
+                      <td>{tickerVisible(f.ticker)} — {f.nombre}</td>
+                      <td style={{ fontWeight: "bold" }}>{f.total}</td>
+                      <td>{f.vecesSobreAzar !== null ? `${f.vecesSobreAzar}x` : "-"}</td>
+                      <td>{f.cabeza}</td>
+                      <td>{f.cola}</td>
+                      <td style={{ background: sesgado ? "#fff3cd" : "transparent", fontWeight: sesgado ? "bold" : "normal" }}>
+                        {f.porcentajeCabeza !== null ? `${f.porcentajeCabeza}%` : "-"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <p style={{ color: "#555", fontStyle: "italic", marginTop: 8 }}>{t.volatilidadAviso}</p>
+
+          {(() => {
+            const opciones = {
+              titulo: t.volatilidadTitulo,
+              subtitulo: volatilidad.nombreIndice,
+              columnas: [
+                "#",
+                t.colTicker,
+                t.volatilidadColTotal,
+                t.volatilidadColSobreAzar,
+                t.volatilidadColCabeza,
+                t.volatilidadColCola,
+                t.volatilidadColReparto,
+              ],
+              filas: volatilidad.filas.map((f, i) => [
+                i + 1,
+                `${tickerVisible(f.ticker)} — ${f.nombre}`,
+                f.total,
+                f.vecesSobreAzar !== null ? `${f.vecesSobreAzar}x` : "-",
+                f.cabeza,
+                f.cola,
+                f.porcentajeCabeza !== null ? `${f.porcentajeCabeza}%` : "-",
+              ]),
+              nombreArchivo: `volatilidad-${indice.id}.pdf`,
             };
             return (
               <>
