@@ -22,25 +22,47 @@ try {
 
 export const PERIODOS_PERMITIDOS = [120, 180, 250];
 export const PERIODO_DEFECTO = 180;
-// Por encima de este nº de componentes, el nº de ejemplos de
-// entrenamiento (sesiones × valores) crece hasta hacer el
-// entrenamiento demasiado lento para una sola petición.
-export const MAX_TICKERS = 60;
+// El coste del entrenamiento no depende del nº de valores por sí
+// solo, sino de cuántos EJEMPLOS genera la combinación de valores ×
+// sesiones — cada sesión aporta un ejemplo por valor. Medido: unos
+// 12.000 ejemplos rondan los 8 segundos, y 17.500 se van a 12,
+// demasiado para una sola petición. Con este tope, un índice grande
+// sigue siendo utilizable eligiendo un periodo más corto, en vez de
+// quedar excluido por completo (que es lo que hacía la versión
+// anterior de esta comprobación, que miraba solo el nº de valores).
+export const MAX_EJEMPLOS_ESTIMADOS = 13000;
+
+// Ejemplos que generará aproximadamente esta combinación: el tramo de
+// entrenamiento es alrededor del 70% de las sesiones utilizables.
+function estimarEjemplos(numTickers, periodo) {
+  const sesionesUtiles = Math.max(0, periodo - 8 - 5);
+  return Math.round(sesionesUtiles * 0.7 * numTickers);
+}
 
 export default async function handler(req, res) {
   try {
     if (errorInicializacion) throw errorInicializacion;
 
     const indice = obtenerIndice(req.query.indice);
-    if (indice.tickers.length > MAX_TICKERS) {
-      throw new Error(
-        `${indice.nombre.es} tiene ${indice.tickers.length} valores — por encima del límite de ${MAX_TICKERS} de esta herramienta: con tantos componentes, el entrenamiento tardaría demasiado. Elige un índice más pequeño.`
-      );
-    }
 
     const periodo = req.query.periodo !== undefined ? Number(req.query.periodo) : PERIODO_DEFECTO;
     if (!PERIODOS_PERMITIDOS.includes(periodo)) {
       throw new Error(`El parámetro 'periodo' debe ser uno de: ${PERIODOS_PERMITIDOS.join(", ")}.`);
+    }
+
+    const ejemplosEstimados = estimarEjemplos(indice.tickers.length, periodo);
+    if (ejemplosEstimados > MAX_EJEMPLOS_ESTIMADOS) {
+      // Buscar el periodo más largo que sí cabría, para poder
+      // sugerirlo en vez de dejar al usuario sin alternativa.
+      const periodoViable = [...PERIODOS_PERMITIDOS]
+        .sort((a, b) => b - a)
+        .find((p) => estimarEjemplos(indice.tickers.length, p) <= MAX_EJEMPLOS_ESTIMADOS);
+      const sugerencia = periodoViable
+        ? ` Prueba con un periodo de ${periodoViable} sesiones.`
+        : " Este índice tiene demasiados componentes para esta herramienta en cualquier periodo.";
+      throw new Error(
+        `${indice.nombre.es} con ${periodo} sesiones generaría unos ${ejemplosEstimados} ejemplos de entrenamiento, por encima del límite de ${MAX_EJEMPLOS_ESTIMADOS} — el entrenamiento tardaría demasiado.${sugerencia}`
+      );
     }
 
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, periodo, indice.tickers);
