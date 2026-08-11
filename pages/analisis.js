@@ -910,6 +910,7 @@ export default function Analisis() {
 
       {persistencia && (
         <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{persistencia.nombreIndice}</h3>
           <p style={{ margin: "4px 0" }}>{t.persistenciaCabecera(persistencia.periodoSesiones, persistencia.candidatosValidos)}</p>
 
           <div style={{ overflowX: "auto" }}>
@@ -921,8 +922,9 @@ export default function Analisis() {
                   <th>{t.persistenciaColSpearman}</th>
                   <th>{t.persistenciaColAzar}</th>
                   <th>{t.persistenciaColMejores}</th>
+                  <th>{t.persistenciaColAzarMejores}</th>
                   <th>{t.persistenciaColPeores}</th>
-                  <th>{t.persistenciaColEsperadoAzar}</th>
+                  <th>{t.persistenciaColAzarPeores}</th>
                 </tr>
               </thead>
               <tbody>
@@ -932,19 +934,22 @@ export default function Analisis() {
                   // habitual para "esto probablemente no es
                   // casualidad", aunque con pocas comparaciones hay
                   // que leerlo con cautela igualmente.
-                  const destacado =
-                    f.spearmanMedio !== null && f.azarMedio !== null && f.azarDesviacion
-                      ? Math.abs(f.spearmanMedio - f.azarMedio) > 2 * f.azarDesviacion
-                      : false;
+                  const superaAzar = (real, azarMedio, azarDesv) =>
+                    real !== null && azarMedio !== null && azarDesv ? Math.abs(real - azarMedio) > 2 * azarDesv : false;
+                  const destacaSpearman = superaAzar(f.spearmanMedio, f.azarMedio, f.azarDesviacion);
+                  const destacaMejores = superaAzar(f.aciertosMejoresMedio, f.aciertosMejoresAzarMedio, f.aciertosMejoresAzarDesviacion);
+                  const destacaPeores = superaAzar(f.aciertosPeoresMedio, f.aciertosPeoresAzarMedio, f.aciertosPeoresAzarDesviacion);
+                  const estiloDestacado = (activo) => ({ fontWeight: activo ? "bold" : "normal", background: activo ? "#e6f4ea" : "transparent" });
                   return (
-                    <tr key={f.longitud} style={{ background: destacado ? "#e6f4ea" : "transparent" }}>
+                    <tr key={f.longitud}>
                       <td>{f.longitud}</td>
                       <td>{f.numComparaciones}</td>
-                      <td style={{ fontWeight: destacado ? "bold" : "normal" }}>{f.spearmanMedio ?? "-"}</td>
+                      <td style={estiloDestacado(destacaSpearman)}>{f.spearmanMedio ?? "-"}</td>
                       <td>{f.azarMedio ?? "-"} ± {f.azarDesviacion ?? "-"}</td>
-                      <td>{f.aciertosMejoresMedio ?? "-"}</td>
-                      <td>{f.aciertosPeoresMedio ?? "-"}</td>
-                      <td>{f.coincidenciasEsperadasAzar ?? "-"}</td>
+                      <td style={estiloDestacado(destacaMejores)}>{f.aciertosMejoresMedio ?? "-"}</td>
+                      <td>{f.aciertosMejoresAzarMedio ?? "-"} ± {f.aciertosMejoresAzarDesviacion ?? "-"}</td>
+                      <td style={estiloDestacado(destacaPeores)}>{f.aciertosPeoresMedio ?? "-"}</td>
+                      <td>{f.aciertosPeoresAzarMedio ?? "-"} ± {f.aciertosPeoresAzarDesviacion ?? "-"}</td>
                     </tr>
                   );
                 })}
@@ -953,6 +958,47 @@ export default function Analisis() {
           </div>
 
           <p style={{ color: "#555", fontStyle: "italic", marginTop: 8 }}>{t.persistenciaAviso}</p>
+
+          <h3>{t.persistenciaActualesTitulo(persistencia.actuales.cuantos)}</h3>
+          <p style={{ color: "#555" }}>{t.persistenciaActualesDesc}</p>
+          {["mejores", "peores"].map((grupo) => (
+            <div key={grupo} style={{ marginTop: 12 }}>
+              <p style={{ fontWeight: "bold", marginBottom: 4 }}>
+                {grupo === "mejores" ? t.persistenciaActualesMejores : t.persistenciaActualesPeores}
+              </p>
+              <div style={{ overflowX: "auto" }}>
+                <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+                  <thead>
+                    <tr>
+                      <th>{t.colTicker}</th>
+                      {persistencia.horizontesActuales.map((h) => (
+                        <th key={h}>{t.persistenciaColHorizonte(h)}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {persistencia.actuales[grupo].map((f) => (
+                      <tr key={f.ticker}>
+                        <td>{tickerVisible(f.ticker)} — {f.nombre}</td>
+                        {persistencia.horizontesActuales.map((h) => (
+                          <td key={h}>
+                            {f.posiciones[h] !== null ? (
+                              <>
+                                <strong>{f.posiciones[h]}</strong>
+                                <span style={{ color: "#666", fontSize: "0.85em" }}> ({f.rentabilidades[h] >= 0 ? "+" : ""}{f.rentabilidades[h]}%)</span>
+                              </>
+                            ) : (
+                              "-"
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
 
           {(() => {
             const opciones = {
@@ -964,8 +1010,9 @@ export default function Analisis() {
                 t.persistenciaColSpearman,
                 t.persistenciaColAzar,
                 t.persistenciaColMejores,
+                t.persistenciaColAzarMejores,
                 t.persistenciaColPeores,
-                t.persistenciaColEsperadoAzar,
+                t.persistenciaColAzarPeores,
               ],
               filas: persistencia.filas.map((f) => [
                 f.longitud,
@@ -973,8 +1020,9 @@ export default function Analisis() {
                 f.spearmanMedio ?? "-",
                 `${f.azarMedio ?? "-"} ± ${f.azarDesviacion ?? "-"}`,
                 f.aciertosMejoresMedio ?? "-",
+                `${f.aciertosMejoresAzarMedio ?? "-"} ± ${f.aciertosMejoresAzarDesviacion ?? "-"}`,
                 f.aciertosPeoresMedio ?? "-",
-                f.coincidenciasEsperadasAzar ?? "-",
+                `${f.aciertosPeoresAzarMedio ?? "-"} ± ${f.aciertosPeoresAzarDesviacion ?? "-"}`,
               ]),
               nombreArchivo: `persistencia-orden-${indice.id}.pdf`,
             };
