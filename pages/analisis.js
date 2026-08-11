@@ -959,6 +959,43 @@ export default function Analisis() {
 
           <p style={{ color: "#555", fontStyle: "italic", marginTop: 8 }}>{t.persistenciaAviso}</p>
 
+          <h3>{t.persistenciaAparicionesTitulo}</h3>
+          <p style={{ color: "#555" }}>{t.persistenciaAparicionesDesc}</p>
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.persistenciaColVentana}</th>
+                  <th>{t.persistenciaColConcentracionCabeza}</th>
+                  <th>{t.persistenciaColTopCabeza}</th>
+                  <th>{t.persistenciaColConcentracionCola}</th>
+                  <th>{t.persistenciaColTopCola}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {persistencia.filas.map((f) => {
+                  const formatearTop = (top) =>
+                    top && top.length > 0
+                      ? top.map((v) => `${tickerVisible(v.ticker)} (${v.veces})`).join(", ")
+                      : "-";
+                  const formatearConcentracion = (ap) =>
+                    ap && ap.concentracionTop5 !== null
+                      ? `${ap.concentracionTop5}% / ${ap.concentracionUniforme}%`
+                      : "-";
+                  return (
+                    <tr key={f.longitud}>
+                      <td>{f.longitud}</td>
+                      <td>{formatearConcentracion(f.aparicionesCabeza)}</td>
+                      <td style={{ fontSize: "0.9em" }}>{formatearTop(f.aparicionesCabeza && f.aparicionesCabeza.top)}</td>
+                      <td>{formatearConcentracion(f.aparicionesCola)}</td>
+                      <td style={{ fontSize: "0.9em" }}>{formatearTop(f.aparicionesCola && f.aparicionesCola.top)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
           <h3>{t.persistenciaActualesTitulo(persistencia.actuales.cuantos)}</h3>
           <p style={{ color: "#555" }}>{t.persistenciaActualesDesc}</p>
           {["mejores", "peores"].map((grupo) => (
