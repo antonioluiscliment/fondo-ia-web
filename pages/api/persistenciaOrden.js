@@ -19,7 +19,7 @@
 
 import { getYahooFinanceInstance, mensajeErrorAmigable, obtenerDatosAlineados } from "../../lib/motor";
 import { obtenerIndice } from "../../lib/indices";
-import { analizarLongitud, coincidenciasEsperadasPorAzar, LONGITUDES_VENTANA } from "../../lib/persistenciaOrdenComun";
+import { analizarLongitud, coincidenciasEsperadasPorAzar, calcularPosicionesActuales, LONGITUDES_VENTANA, HORIZONTES_ACTUALES } from "../../lib/persistenciaOrdenComun";
 
 let yahooFinance;
 let errorInicializacion = null;
@@ -68,12 +68,26 @@ export default async function handler(req, res) {
       };
     });
 
+    // Foto de hoy: los mejores y peores de la última sesión, con su
+    // número de orden en cada horizonte — la versión "de ahora mismo"
+    // de la misma pregunta que responde la tabla de persistencia.
+    const cuantosExtremos = Math.max(2, Math.round(tickersValidos.length * 0.1));
+    const actuales = calcularPosicionesActuales(tickersValidos, precioPorTicker, numSesiones, cuantosExtremos);
+    const conNombre = (lista) => lista.map((f) => ({ ...f, nombre: indice.nombresEmpresas[f.ticker] }));
+
     res.status(200).json({
       indice: indice.id,
       nombreIndice: indice.nombre.es,
       periodoSesiones: numSesiones,
       candidatosValidos: tickersValidos.length,
       filas,
+      horizontesActuales: HORIZONTES_ACTUALES,
+      actuales: {
+        totalOrdenados: actuales.totalOrdenados,
+        cuantos: cuantosExtremos,
+        mejores: conNombre(actuales.mejores),
+        peores: conNombre(actuales.peores),
+      },
     });
   } catch (error) {
     res.status(500).json({ error: mensajeErrorAmigable(error) });
