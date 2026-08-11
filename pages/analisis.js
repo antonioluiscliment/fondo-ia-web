@@ -43,6 +43,27 @@ export default function Analisis() {
   const [errorCorrelacionPeso, setErrorCorrelacionPeso] = useState(null);
   const [ventanaCorrelacionPeso, setVentanaCorrelacionPeso] = useState(120);
 
+  const [persistencia, setPersistencia] = useState(null);
+  const [cargandoPersistencia, setCargandoPersistencia] = useState(false);
+  const [errorPersistencia, setErrorPersistencia] = useState(null);
+  const [periodoPersistencia, setPeriodoPersistencia] = useState(180);
+
+  async function realizarPersistencia() {
+    setCargandoPersistencia(true);
+    setErrorPersistencia(null);
+    setPersistencia(null);
+    try {
+      const resp = await fetch(`/api/persistenciaOrden?indice=${indiceId}&periodo=${periodoPersistencia}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setPersistencia(json);
+    } catch (e) {
+      setErrorPersistencia(e.message);
+    } finally {
+      setCargandoPersistencia(false);
+    }
+  }
+
   async function realizarCorrelacionPeso() {
     setCargandoCorrelacionPeso(true);
     setErrorCorrelacionPeso(null);
@@ -851,6 +872,111 @@ export default function Analisis() {
                 f.betaExcluyendoE3 ?? "-",
               ]),
               nombreArchivo: `correlacion-peso-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.persistenciaTitulo}</h2>
+      <p>{t.persistenciaDesc}</p>
+
+      <p style={{ margin: "12px 0 4px" }}>
+        <label>
+          {t.persistenciaEtiquetaPeriodo}{" "}
+          <select value={periodoPersistencia} onChange={(e) => setPeriodoPersistencia(Number(e.target.value))}>
+            <option value={60}>60</option>
+            <option value={120}>120</option>
+            <option value={180}>180</option>
+            <option value={250}>250</option>
+          </select>
+        </label>
+      </p>
+
+      <button onClick={realizarPersistencia} disabled={cargandoPersistencia}>
+        {cargandoPersistencia ? t.persistenciaBotonCargando : t.persistenciaBoton}
+      </button>
+
+      {errorPersistencia && <p style={{ color: "crimson" }}>{t.error}: {errorPersistencia}</p>}
+
+      {persistencia && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <p style={{ margin: "4px 0" }}>{t.persistenciaCabecera(persistencia.periodoSesiones, persistencia.candidatosValidos)}</p>
+
+          <div style={{ overflowX: "auto" }}>
+            <table border="1" cellPadding="6" style={{ borderCollapse: "collapse", width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>{t.persistenciaColVentana}</th>
+                  <th>{t.persistenciaColComparaciones}</th>
+                  <th>{t.persistenciaColSpearman}</th>
+                  <th>{t.persistenciaColAzar}</th>
+                  <th>{t.persistenciaColMejores}</th>
+                  <th>{t.persistenciaColPeores}</th>
+                  <th>{t.persistenciaColEsperadoAzar}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {persistencia.filas.map((f) => {
+                  // Se resalta cuando el resultado real se aleja del
+                  // azar más de 2 desviaciones típicas — el umbral
+                  // habitual para "esto probablemente no es
+                  // casualidad", aunque con pocas comparaciones hay
+                  // que leerlo con cautela igualmente.
+                  const destacado =
+                    f.spearmanMedio !== null && f.azarMedio !== null && f.azarDesviacion
+                      ? Math.abs(f.spearmanMedio - f.azarMedio) > 2 * f.azarDesviacion
+                      : false;
+                  return (
+                    <tr key={f.longitud} style={{ background: destacado ? "#e6f4ea" : "transparent" }}>
+                      <td>{f.longitud}</td>
+                      <td>{f.numComparaciones}</td>
+                      <td style={{ fontWeight: destacado ? "bold" : "normal" }}>{f.spearmanMedio ?? "-"}</td>
+                      <td>{f.azarMedio ?? "-"} ± {f.azarDesviacion ?? "-"}</td>
+                      <td>{f.aciertosMejoresMedio ?? "-"}</td>
+                      <td>{f.aciertosPeoresMedio ?? "-"}</td>
+                      <td>{f.coincidenciasEsperadasAzar ?? "-"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <p style={{ color: "#555", fontStyle: "italic", marginTop: 8 }}>{t.persistenciaAviso}</p>
+
+          {(() => {
+            const opciones = {
+              titulo: t.persistenciaTitulo,
+              subtitulo: persistencia.nombreIndice,
+              columnas: [
+                t.persistenciaColVentana,
+                t.persistenciaColComparaciones,
+                t.persistenciaColSpearman,
+                t.persistenciaColAzar,
+                t.persistenciaColMejores,
+                t.persistenciaColPeores,
+                t.persistenciaColEsperadoAzar,
+              ],
+              filas: persistencia.filas.map((f) => [
+                f.longitud,
+                f.numComparaciones,
+                f.spearmanMedio ?? "-",
+                `${f.azarMedio ?? "-"} ± ${f.azarDesviacion ?? "-"}`,
+                f.aciertosMejoresMedio ?? "-",
+                f.aciertosPeoresMedio ?? "-",
+                f.coincidenciasEsperadasAzar ?? "-",
+              ]),
+              nombreArchivo: `persistencia-orden-${indice.id}.pdf`,
             };
             return (
               <>
