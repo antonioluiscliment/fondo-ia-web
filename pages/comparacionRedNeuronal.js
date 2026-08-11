@@ -25,6 +25,27 @@ export default function ComparacionRedNeuronal() {
   const [error, setError] = useState(null);
   const [sesionesTest, setSesionesTest] = useState(SESIONES_TEST_DEFECTO);
 
+  const [clasificacion, setClasificacion] = useState(null);
+  const [cargandoClasificacion, setCargandoClasificacion] = useState(false);
+  const [errorClasificacion, setErrorClasificacion] = useState(null);
+  const [periodoClasificacion, setPeriodoClasificacion] = useState(180);
+
+  async function realizarClasificacion() {
+    setCargandoClasificacion(true);
+    setErrorClasificacion(null);
+    setClasificacion(null);
+    try {
+      const resp = await fetch(`/api/clasificacionIndice?indice=${indiceId}&periodo=${periodoClasificacion}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setClasificacion(json);
+    } catch (e) {
+      setErrorClasificacion(e.message);
+    } finally {
+      setCargandoClasificacion(false);
+    }
+  }
+
   async function realizar() {
     setCargando(true);
     setError(null);
@@ -181,6 +202,125 @@ export default function ComparacionRedNeuronal() {
                 [t.redVsRidgeCorrelacionTitulo, `${t.redVsRidgeNumPares(resultado.correlacion.numPares)} — ${t.redVsRidgeSolape(resultado.correlacion.solapeMedio, resultado.correlacion.solapeMaximo)} — ${t.redVsRidgeSpearman(resultado.correlacion.spearmanMedio)}`],
               ],
               nombreArchivo: `red-vs-ridge-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.clasificacionTitulo}</h2>
+      <p>{t.clasificacionDesc}</p>
+
+      <p style={{ margin: "12px 0 4px" }}>
+        <label>
+          {t.clasificacionEtiquetaPeriodo}{" "}
+          <select value={periodoClasificacion} onChange={(e) => setPeriodoClasificacion(Number(e.target.value))}>
+            <option value={120}>120</option>
+            <option value={180}>180</option>
+            <option value={250}>250</option>
+          </select>
+        </label>
+      </p>
+
+      <button onClick={realizarClasificacion} disabled={cargandoClasificacion}>
+        {cargandoClasificacion ? t.clasificacionBotonCargando : t.clasificacionBoton}
+      </button>
+
+      {errorClasificacion && <p style={{ color: "crimson" }}>{t.error}: {errorClasificacion}</p>}
+
+      {clasificacion && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{clasificacion.nombreIndice}</h3>
+          <p style={{ margin: "4px 0" }}>
+            {t.clasificacionParametros(clasificacion.parametros.ventanaEntrada, clasificacion.parametros.horizonte, clasificacion.parametros.numVariables)}
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            {t.clasificacionReparto(clasificacion.reparto.sesionesEntrenamiento, clasificacion.reparto.ejemplosEntrenamiento, clasificacion.reparto.huecoSesiones, clasificacion.reparto.sesionesPrueba)}
+          </p>
+
+          <h3>{t.clasificacionEvaluacionTitulo}</h3>
+          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse" }}>
+            <tbody>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaAciertos}</th>
+                <td style={{ fontWeight: "bold", background: clasificacion.evaluacion.porcentajeAciertos > 55 ? "#e6f4ea" : "transparent" }}>
+                  {clasificacion.evaluacion.porcentajeAciertos}%
+                </td>
+              </tr>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaAciertosSeguros}</th>
+                <td>{clasificacion.evaluacion.porcentajeAciertosSeguros}%</td>
+              </tr>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaRentDestacados(clasificacion.parametros.numDestacados)}</th>
+                <td>{clasificacion.evaluacion.rentDestacadosMedia}%</td>
+              </tr>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaRentMedia}</th>
+                <td>{clasificacion.evaluacion.rentMediaIndice}%</td>
+              </tr>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaSuperaMedia}</th>
+                <td>
+                  {clasificacion.evaluacion.pasosSuperaMedia} / {clasificacion.evaluacion.numPasos} (
+                  {((clasificacion.evaluacion.pasosSuperaMedia / clasificacion.evaluacion.numPasos) * 100).toFixed(1)}%)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p style={{ color: "#555", fontStyle: "italic", marginTop: 8 }}>{t.clasificacionAvisoLineaBase}</p>
+
+          <h3>{t.clasificacionHoyTitulo}</h3>
+          <p style={{ color: "#555" }}>{t.clasificacionHoyDesc}</p>
+          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+            {["arriba", "abajo"].map((grupo) => (
+              <div key={grupo} style={{ flex: 1, minWidth: 260 }}>
+                <p style={{ fontWeight: "bold" }}>{grupo === "arriba" ? t.clasificacionGrupoArriba : t.clasificacionGrupoAbajo}</p>
+                <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9em" }}>
+                  <thead>
+                    <tr>
+                      <th>{t.colTicker}</th>
+                      <th>{t.clasificacionColProbabilidad}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clasificacion.clasificacionHoy
+                      .filter((c) => c.grupo === grupo)
+                      .map((c) => (
+                        <tr key={c.ticker} style={{ background: c.destacado ? "#e6f4ea" : "transparent" }}>
+                          <td style={{ fontWeight: c.destacado ? "bold" : "normal" }}>
+                            {tickerVisible(c.ticker)} — {c.nombre}
+                            {c.destacado && " ★"}
+                          </td>
+                          <td>{c.probabilidad}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+
+          {(() => {
+            const opciones = {
+              titulo: t.clasificacionTitulo,
+              subtitulo: clasificacion.nombreIndice,
+              columnas: [t.colTicker, t.clasificacionColProbabilidad, t.clasificacionColGrupo],
+              filas: clasificacion.clasificacionHoy.map((c) => [
+                `${tickerVisible(c.ticker)} — ${c.nombre}${c.destacado ? " ★" : ""}`,
+                c.probabilidad,
+                c.grupo === "arriba" ? t.clasificacionGrupoArriba : t.clasificacionGrupoAbajo,
+              ]),
+              nombreArchivo: `clasificacion-${indice.id}.pdf`,
             };
             return (
               <>
