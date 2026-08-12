@@ -3,7 +3,7 @@ import MenuLayout from "../components/MenuLayout";
 import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
-import { descargarTablaPdf } from "../lib/pdfComun";
+import { descargarTablaPdf, descargarMultiplesTablasPdf, compartirMultiplesTablasPdf } from "../lib/pdfComun";
 
 // Grupo 2: Comprobaciones — herramientas de consulta y auditoría.
 // Este grupo irá creciendo con el desarrollo de la aplicación.
@@ -43,6 +43,12 @@ export default function Comprobaciones() {
   // en el nuevo índice: se reinicia al primero de la lista nueva.
   useEffect(() => {
     setTicker(tickers[0]);
+    // El selector del explorador (más abajo) también tiene que
+    // reiniciarse: si no, al cambiar de índice se quedaría apuntando
+    // a un valor del índice anterior, que ya no pertenece al actual.
+    setTickerExplorador(tickers[0]);
+    setExplorador(null);
+    setErrorExplorador(null);
   }, [indiceId]);
 
   const [numeroSesionConsulta, setNumeroSesionConsulta] = useState(20);
@@ -706,13 +712,45 @@ export default function Comprobaciones() {
             .filter((r) => r.disponible)
             .sort((a, b) => b.numCampos - a.numCampos)
             .map((r) => (
-              <details key={r.modulo}>
-                <summary style={{ cursor: "pointer", margin: "6px 0" }}>
+              <div key={r.modulo} style={{ borderBottom: "1px solid #ddd", paddingBottom: 10, marginBottom: 10 }}>
+                <p style={{ margin: "6px 0" }}>
                   <strong>{r.modulo}</strong>{" "}
                   <span style={{ color: "#666", fontSize: "0.9em" }}>({t.exploradorNumCampos(r.numCampos)})</span>
-                </summary>
-                <pre style={estiloBloqueDatos}>{JSON.stringify(r.datos, null, 2)}</pre>
-              </details>
+                </p>
+                {r.muestra && (
+                  <>
+                    <p style={{ margin: "4px 0", color: "#555", fontSize: "0.85em" }}>
+                      {t.exploradorMuestraInfo(r.muestra.filas.length, r.muestra.totalRegistros, r.muestra.nombreLista)}
+                    </p>
+                    <div style={{ overflowX: "auto" }}>
+                      <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", fontSize: "0.8em" }}>
+                        <thead>
+                          <tr>
+                            {r.muestra.columnas.map((c) => (
+                              <th key={c} style={{ whiteSpace: "nowrap" }}>{c}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {r.muestra.filas.map((fila, i) => (
+                            <tr key={i}>
+                              {fila.map((celda, j) => (
+                                <td key={j} style={{ whiteSpace: "nowrap" }}>{celda}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+                <details>
+                  <summary style={{ cursor: "pointer", color: "#666", fontSize: "0.85em", marginTop: 6 }}>
+                    {t.exploradorVerBruto}
+                  </summary>
+                  <pre style={estiloBloqueDatos}>{JSON.stringify(r.datos, null, 2)}</pre>
+                </details>
+              </div>
             ))}
 
           {explorador.resultados.some((r) => !r.disponible) && (
@@ -726,6 +764,32 @@ export default function Comprobaciones() {
               </p>
             </>
           )}
+
+          {(() => {
+            // Un PDF con una tabla por módulo: cada una con sus
+            // propias columnas, que varían mucho de un módulo a otro.
+            const secciones = explorador.resultados
+              .filter((r) => r.disponible && r.muestra)
+              .sort((a, b) => b.numCampos - a.numCampos)
+              .map((r) => ({
+                subtitulo: `${r.modulo} (${t.exploradorNumCampos(r.numCampos)})`,
+                columnas: r.muestra.columnas,
+                filas: r.muestra.filas,
+              }));
+            const opciones = {
+              titulo: `${t.exploradorTitulo} — ${tickerVisible(explorador.ticker)}`,
+              secciones,
+              nombreArchivo: `datos-${explorador.ticker}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarMultiplesTablasPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} compartirFn={compartirMultiplesTablasPdf} />
+              </>
+            );
+          })()}
         </div>
       )}
     </MenuLayout>
