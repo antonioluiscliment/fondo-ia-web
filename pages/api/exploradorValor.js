@@ -99,6 +99,98 @@ function contarCampos(valor) {
   return 1;
 }
 
+// Cuántos registros se muestran en la tabla de muestra de cada
+// módulo. El volcado en bruto sigue estando disponible aparte; esta
+// tabla existe para poder juzgar de un vistazo QUÉ contiene cada
+// módulo, sin tener que leer un JSON de miles de líneas (por ejemplo,
+// upgradeDowngradeHistory puede traer casi 3.000 campos: la tabla
+// muestra que son recomendaciones de analistas con fecha, firma y
+// calificación anterior y nueva).
+const REGISTROS_MUESTRA = 8;
+
+// Convierte un valor suelto en algo legible en una celda de tabla.
+function aTexto(v) {
+  if (v === null || v === undefined) return "";
+  if (v instanceof Date) return v.toISOString().slice(0, 10);
+  if (typeof v === "object") return Array.isArray(v) ? `[${v.length} elementos]` : "{...}";
+  if (typeof v === "number") {
+    // Las cifras muy grandes (ingresos, activos) se abrevian para que
+    // la tabla siga siendo legible.
+    if (Math.abs(v) >= 1e9) return (v / 1e9).toFixed(2) + " mil M";
+    if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(2) + " M";
+    return String(v);
+  }
+  return String(v);
+}
+
+// Busca dentro de un módulo la lista de registros que lo caracteriza
+// y la convierte en una tabla (columnas + filas). Los módulos de
+// Yahoo suelen ser un objeto con UNA propiedad que es un array de
+// registros (p. ej. balanceSheetHistory.balanceSheetStatements), así
+// que se localiza ese array; si el módulo es directamente un array,
+// se usa tal cual; y si es un objeto de campos sueltos sin ningún
+// array, se tabula como pares campo/valor.
+function extraerMuestra(contenido) {
+  if (contenido === null || contenido === undefined) return null;
+
+  let registros = null;
+  let nombreLista = null;
+
+  if (Array.isArray(contenido)) {
+    registros = contenido;
+  } else if (typeof contenido === "object") {
+    let mejor = null;
+    for (const [clave, valor] of Object.entries(contenido)) {
+      if (Array.isArray(valor) && valor.length > 0 && (mejor === null || valor.length > mejor.length)) {
+        mejor = valor;
+        nombreLista = clave;
+      }
+    }
+    if (mejor) {
+      registros = mejor;
+    } else {
+      // Sin ningún array dentro: tabla de campo / valor.
+      const filas = Object.entries(contenido)
+        .filter(([, v]) => v !== null && v !== undefined && typeof v !== "object")
+        .map(([k, v]) => [k, aTexto(v)]);
+      if (filas.length === 0) return null;
+      return { tipo: "campos", columnas: ["Campo", "Valor"], filas: filas.slice(0, 30), totalRegistros: filas.length };
+    }
+  } else {
+    return null;
+  }
+
+  if (!registros || registros.length === 0) return null;
+
+  // Registros que son objetos: una columna por cada campo que
+  // aparezca en los primeros registros.
+  const muestra = registros.slice(0, REGISTROS_MUESTRA);
+  if (typeof muestra[0] !== "object" || muestra[0] === null) {
+    return {
+      tipo: "lista",
+      nombreLista,
+      columnas: ["Valor"],
+      filas: muestra.map((v) => [aTexto(v)]),
+      totalRegistros: registros.length,
+    };
+  }
+
+  const columnas = [];
+  for (const registro of muestra) {
+    for (const clave of Object.keys(registro)) {
+      if (!columnas.includes(clave)) columnas.push(clave);
+    }
+  }
+
+  return {
+    tipo: "registros",
+    nombreLista,
+    columnas,
+    filas: muestra.map((registro) => columnas.map((c) => aTexto(registro[c]))),
+    totalRegistros: registros.length,
+  };
+}
+
 export default async function handler(req, res) {
   try {
     if (errorInicializacion) throw errorInicializacion;
@@ -124,6 +216,7 @@ export default async function handler(req, res) {
           modulo,
           disponible: contenido !== null && contenido !== undefined,
           numCampos: contarCampos(contenido),
+          muestra: extraerMuestra(contenido),
           datos: recortar(contenido),
         });
       } catch (e) {
