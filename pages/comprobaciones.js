@@ -17,6 +17,27 @@ export default function Comprobaciones() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
+  const [tickerExplorador, setTickerExplorador] = useState(tickers[0]);
+  const [explorador, setExplorador] = useState(null);
+  const [cargandoExplorador, setCargandoExplorador] = useState(false);
+  const [errorExplorador, setErrorExplorador] = useState(null);
+
+  async function realizarExplorador() {
+    setCargandoExplorador(true);
+    setErrorExplorador(null);
+    setExplorador(null);
+    try {
+      const resp = await fetch(`/api/exploradorValor?indice=${indiceId}&ticker=${encodeURIComponent(tickerExplorador)}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setExplorador(json);
+    } catch (e) {
+      setErrorExplorador(e.message);
+    } finally {
+      setCargandoExplorador(false);
+    }
+  }
+
   // Si se cambia de índice (en el marco exterior persistente) mientras
   // se está en esta página, el ticker elegido puede dejar de existir
   // en el nuevo índice: se reinicia al primero de la lista nueva.
@@ -641,6 +662,85 @@ export default function Comprobaciones() {
           </>
         );
       })()}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.exploradorTitulo}</h2>
+      <p>{t.exploradorDesc}</p>
+
+      <p style={{ margin: "12px 0 4px" }}>
+        <label>
+          {t.exploradorEtiquetaTicker}{" "}
+          <select value={tickerExplorador} onChange={(e) => setTickerExplorador(e.target.value)}>
+            {tickers.map((tk) => (
+              <option key={tk} value={tk}>
+                {tickerVisible(tk)} — {indice.nombresEmpresas[tk]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </p>
+
+      <button onClick={realizarExplorador} disabled={cargandoExplorador}>
+        {cargandoExplorador ? t.exploradorBotonCargando : t.exploradorBoton}
+      </button>
+
+      {errorExplorador && <p style={{ color: "crimson" }}>{t.error}: {errorExplorador}</p>}
+
+      {explorador && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{tickerVisible(explorador.ticker)}</h3>
+          <p>{t.exploradorResumen(explorador.modulosDisponibles, explorador.modulosTotales)}</p>
+
+          {explorador.quote && (
+            <details>
+              <summary style={{ cursor: "pointer", fontWeight: "bold", margin: "8px 0" }}>
+                {t.exploradorDatosCotizacion}
+              </summary>
+              <pre style={estiloBloqueDatos}>{JSON.stringify(explorador.quote, null, 2)}</pre>
+            </details>
+          )}
+
+          <p style={{ fontWeight: "bold", marginTop: 16 }}>{t.exploradorModulosConDatos}</p>
+          {explorador.resultados
+            .filter((r) => r.disponible)
+            .sort((a, b) => b.numCampos - a.numCampos)
+            .map((r) => (
+              <details key={r.modulo}>
+                <summary style={{ cursor: "pointer", margin: "6px 0" }}>
+                  <strong>{r.modulo}</strong>{" "}
+                  <span style={{ color: "#666", fontSize: "0.9em" }}>({t.exploradorNumCampos(r.numCampos)})</span>
+                </summary>
+                <pre style={estiloBloqueDatos}>{JSON.stringify(r.datos, null, 2)}</pre>
+              </details>
+            ))}
+
+          {explorador.resultados.some((r) => !r.disponible) && (
+            <>
+              <p style={{ fontWeight: "bold", marginTop: 16 }}>{t.exploradorModulosSinDatos}</p>
+              <p style={{ color: "#666", fontSize: "0.9em" }}>
+                {explorador.resultados
+                  .filter((r) => !r.disponible)
+                  .map((r) => r.modulo)
+                  .join(", ")}
+              </p>
+            </>
+          )}
+        </div>
+      )}
     </MenuLayout>
   );
 }
+
+const estiloBloqueDatos = {
+  background: "#f5f5f2",
+  border: "1px solid #ccc",
+  borderRadius: 4,
+  padding: 10,
+  overflowX: "auto",
+  maxHeight: 400,
+  overflowY: "auto",
+  fontSize: "0.8em",
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
+};
