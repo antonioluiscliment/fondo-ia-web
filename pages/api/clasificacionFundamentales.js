@@ -36,7 +36,6 @@ try {
 }
 
 export const SESIONES_TRIMESTRE = 63;
-export const MAX_TICKERS = 40;
 const VENTANA_BETA = 20;
 
 const MODULOS_NECESARIOS = [
@@ -95,11 +94,6 @@ export default async function handler(req, res) {
     if (errorInicializacion) throw errorInicializacion;
 
     const indice = obtenerIndice(req.query.indice);
-    if (indice.tickers.length > MAX_TICKERS) {
-      throw new Error(
-        `${indice.nombre.es} tiene ${indice.tickers.length} valores — por encima del límite de ${MAX_TICKERS} de esta herramienta. Elige un índice más pequeño.`
-      );
-    }
 
     const { fechas, datos } = await obtenerDatosAlineados(yahooFinance, SESIONES_TRIMESTRE, indice.tickers);
     const { cierres: cierresIndice } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
