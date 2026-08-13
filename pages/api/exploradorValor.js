@@ -106,7 +106,35 @@ function contarCampos(valor) {
 // upgradeDowngradeHistory puede traer casi 3.000 campos: la tabla
 // muestra que son recomendaciones de analistas con fecha, firma y
 // calificación anterior y nueva).
-const REGISTROS_MUESTRA = 8;
+const REGISTROS_MUESTRA = 10;
+
+// Módulos que se muestran COMPLETOS, sin recortar a la muestra: los
+// tres que han resultado de interés para estudiar la clasificación
+// por fundamentales. Los dos primeros son pequeños de por sí; el
+// tercero (upgradeDowngradeHistory) puede traer cientos de registros,
+// pero es precisamente el más prometedor porque CADA REGISTRO LLEVA
+// SU FECHA — a diferencia del resto de fundamentales, que Yahoo solo
+// da con el valor de hoy, esto sí permitiría un backtest histórico
+// sin sesgo de anticipación.
+const MODULOS_COMPLETOS = [
+  "earningsTrend",
+  "recommendationTrend",
+  "upgradeDowngradeHistory",
+  "incomeStatementHistoryQuarterly",
+  "earningsHistory",
+  "cashflowStatementHistory",
+  "cashflowStatementHistoryQuarterly",
+  // Los dos de balance: lo que de verdad interesa para seleccionar
+  // cifras y ratios — se muestran completos, con la fecha de cada
+  // ejercicio como una columna más de la tabla (ver extraerMuestra).
+  "balanceSheetHistory",
+  "balanceSheetHistoryQuarterly",
+];
+
+// Tope de seguridad para los módulos completos: aunque se quieran
+// enteros, un valor con un historial desmesurado podría generar una
+// respuesta demasiado grande para el navegador.
+const MAX_REGISTROS_COMPLETO = 500;
 
 // Convierte un valor suelto en algo legible en una celda de tabla.
 function aTexto(v) {
@@ -130,7 +158,7 @@ function aTexto(v) {
 // que se localiza ese array; si el módulo es directamente un array,
 // se usa tal cual; y si es un objeto de campos sueltos sin ningún
 // array, se tabula como pares campo/valor.
-function extraerMuestra(contenido) {
+function extraerMuestra(contenido, limiteRegistros = REGISTROS_MUESTRA) {
   if (contenido === null || contenido === undefined) return null;
 
   let registros = null;
@@ -162,9 +190,7 @@ function extraerMuestra(contenido) {
 
   if (!registros || registros.length === 0) return null;
 
-  // Registros que son objetos: una columna por cada campo que
-  // aparezca en los primeros registros.
-  const muestra = registros.slice(0, REGISTROS_MUESTRA);
+  const muestra = registros.slice(0, limiteRegistros);
   if (typeof muestra[0] !== "object" || muestra[0] === null) {
     return {
       tipo: "lista",
@@ -216,7 +242,8 @@ export default async function handler(req, res) {
           modulo,
           disponible: contenido !== null && contenido !== undefined,
           numCampos: contarCampos(contenido),
-          muestra: extraerMuestra(contenido),
+          muestra: extraerMuestra(contenido, MODULOS_COMPLETOS.includes(modulo) ? MAX_REGISTROS_COMPLETO : REGISTROS_MUESTRA),
+          completo: MODULOS_COMPLETOS.includes(modulo),
           datos: recortar(contenido),
         });
       } catch (e) {
