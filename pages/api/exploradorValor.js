@@ -158,6 +158,31 @@ function aTexto(v) {
 // que se localiza ese array; si el módulo es directamente un array,
 // se usa tal cual; y si es un objeto de campos sueltos sin ningún
 // array, se tabula como pares campo/valor.
+// Aplana un registro: si un campo es a su vez un objeto (no un array,
+// no una fecha), se descompone en columnas "campo.subcampo" en vez de
+// colapsarse a "{...}" — así se ve el contenido real de esos campos
+// anidados (p. ej. earningsEstimate.avg, earningsEstimate.low,
+// earningsEstimate.high, earningsEstimate.numberOfAnalysts), que es
+// precisamente donde vive buena parte de la información en módulos
+// como earningsTrend. Los campos que ya son un array no se aplanan
+// (se muestran como resumen "[N elementos]"): desplegarlos convertiría
+// cada fila en una tabla propia. Profundidad limitada a 2 niveles,
+// para no generar un número desmesurado de columnas si algún módulo
+// anida más de lo esperado.
+function aplanar(registro, prefijo = "", profundidad = 0) {
+  const plano = {};
+  for (const [clave, valor] of Object.entries(registro)) {
+    const nombreCompleto = prefijo ? `${prefijo}.${clave}` : clave;
+    const esObjetoPlano = valor !== null && typeof valor === "object" && !(valor instanceof Date) && !Array.isArray(valor);
+    if (esObjetoPlano && profundidad < 2) {
+      Object.assign(plano, aplanar(valor, nombreCompleto, profundidad + 1));
+    } else {
+      plano[nombreCompleto] = valor;
+    }
+  }
+  return plano;
+}
+
 function extraerMuestra(contenido, limiteRegistros = REGISTROS_MUESTRA) {
   if (contenido === null || contenido === undefined) return null;
 
@@ -201,8 +226,10 @@ function extraerMuestra(contenido, limiteRegistros = REGISTROS_MUESTRA) {
     };
   }
 
+  const muestraAplanada = muestra.map((registro) => aplanar(registro));
+
   const columnas = [];
-  for (const registro of muestra) {
+  for (const registro of muestraAplanada) {
     for (const clave of Object.keys(registro)) {
       if (!columnas.includes(clave)) columnas.push(clave);
     }
@@ -212,7 +239,7 @@ function extraerMuestra(contenido, limiteRegistros = REGISTROS_MUESTRA) {
     tipo: "registros",
     nombreLista,
     columnas,
-    filas: muestra.map((registro) => columnas.map((c) => aTexto(registro[c]))),
+    filas: muestraAplanada.map((registro) => columnas.map((c) => aTexto(registro[c]))),
     totalRegistros: registros.length,
   };
 }
