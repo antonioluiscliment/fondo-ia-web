@@ -716,11 +716,18 @@ export default function Comprobaciones() {
                 <p style={{ margin: "6px 0" }}>
                   <strong>{r.modulo}</strong>{" "}
                   <span style={{ color: "#666", fontSize: "0.9em" }}>({t.exploradorNumCampos(r.numCampos)})</span>
+                  {r.completo && (
+                    <span style={{ background: "#e6f4ea", color: "#1e6b3a", fontSize: "0.75em", padding: "1px 6px", borderRadius: 10, marginLeft: 6 }}>
+                      {t.exploradorEtiquetaCompleto}
+                    </span>
+                  )}
                 </p>
                 {r.muestra && (
                   <>
                     <p style={{ margin: "4px 0", color: "#555", fontSize: "0.85em" }}>
-                      {t.exploradorMuestraInfo(r.muestra.filas.length, r.muestra.totalRegistros, r.muestra.nombreLista)}
+                      {r.completo && r.muestra.filas.length === r.muestra.totalRegistros
+                        ? t.exploradorCompletoInfo(r.muestra.totalRegistros, r.muestra.nombreLista)
+                        : t.exploradorMuestraInfo(r.muestra.filas.length, r.muestra.totalRegistros, r.muestra.nombreLista)}
                     </p>
                     <div style={{ overflowX: "auto" }}>
                       <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", fontSize: "0.8em" }}>
