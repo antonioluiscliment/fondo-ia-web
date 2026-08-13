@@ -120,10 +120,12 @@ const MODULOS_COMPLETOS = [
   "earningsTrend",
   "recommendationTrend",
   "upgradeDowngradeHistory",
+  "incomeStatementHistory",
   "incomeStatementHistoryQuarterly",
   "earningsHistory",
   "cashflowStatementHistory",
   "cashflowStatementHistoryQuarterly",
+  "indexTrend",
   // Los dos de balance: lo que de verdad interesa para seleccionar
   // cifras y ratios — se muestran completos, con la fecha de cada
   // ejercicio como una columna más de la tabla (ver extraerMuestra).
