@@ -30,6 +30,26 @@ export default function ComparacionRedNeuronal() {
   const [errorClasificacion, setErrorClasificacion] = useState(null);
   const [periodoClasificacion, setPeriodoClasificacion] = useState(180);
 
+  const [clasifFund, setClasifFund] = useState(null);
+  const [cargandoClasifFund, setCargandoClasifFund] = useState(false);
+  const [errorClasifFund, setErrorClasifFund] = useState(null);
+
+  async function realizarClasifFund() {
+    setCargandoClasifFund(true);
+    setErrorClasifFund(null);
+    setClasifFund(null);
+    try {
+      const resp = await fetch(`/api/clasificacionFundamentales?indice=${indiceId}`);
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setClasifFund(json);
+    } catch (e) {
+      setErrorClasifFund(e.message);
+    } finally {
+      setCargandoClasifFund(false);
+    }
+  }
+
   async function realizarClasificacion() {
     setCargandoClasificacion(true);
     setErrorClasificacion(null);
@@ -321,6 +341,114 @@ export default function ComparacionRedNeuronal() {
                 c.grupo === "arriba" ? t.clasificacionGrupoArriba : t.clasificacionGrupoAbajo,
               ]),
               nombreArchivo: `clasificacion-${indice.id}.pdf`,
+            };
+            return (
+              <>
+                <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+                  {t.descargarPdfBoton}
+                </button>
+                <BotonCompartirPdf opciones={opciones} />
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>{t.clasifFundTitulo}</h2>
+      <p>{t.clasifFundDesc}</p>
+
+      <button onClick={realizarClasifFund} disabled={cargandoClasifFund}>
+        {cargandoClasifFund ? t.clasifFundBotonCargando : t.clasifFundBoton}
+      </button>
+
+      {errorClasifFund && <p style={{ color: "crimson" }}>{t.error}: {errorClasifFund}</p>}
+
+      {clasifFund && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "12px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{clasifFund.nombreIndice}</h3>
+          <p style={{ margin: "4px 0" }}>
+            {t.clasifFundParametros(clasifFund.periodoSesiones, clasifFund.parametros.numVariablesBase, clasifFund.parametros.numVariables)}
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            {t.clasificacionReparto(clasifFund.reparto.sesionesEntrenamiento, clasifFund.reparto.ejemplosEntrenamiento, clasifFund.reparto.huecoSesiones, clasifFund.reparto.sesionesPrueba)}
+          </p>
+
+          <h3>{t.clasificacionEvaluacionTitulo}</h3>
+          <table border="1" cellPadding="6" style={{ borderCollapse: "collapse" }}>
+            <tbody>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaAciertos}</th>
+                <td style={{ fontWeight: "bold", background: clasifFund.evaluacion.porcentajeAciertos > 55 ? "#e6f4ea" : "transparent" }}>
+                  {clasifFund.evaluacion.porcentajeAciertos}%
+                </td>
+              </tr>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaAciertosSeguros}</th>
+                <td>{clasifFund.evaluacion.porcentajeAciertosSeguros}%</td>
+              </tr>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaRentDestacados(clasifFund.parametros.numDestacados)}</th>
+                <td>{clasifFund.evaluacion.rentDestacadosMedia}%</td>
+              </tr>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaRentMedia}</th>
+                <td>{clasifFund.evaluacion.rentMediaIndice}%</td>
+              </tr>
+              <tr>
+                <th style={{ textAlign: "left" }}>{t.clasificacionFilaSuperaMedia}</th>
+                <td>
+                  {clasifFund.evaluacion.pasosSuperaMedia} / {clasifFund.evaluacion.numPasos} (
+                  {((clasifFund.evaluacion.pasosSuperaMedia / clasifFund.evaluacion.numPasos) * 100).toFixed(1)}%)
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p style={{ color: "#555", fontStyle: "italic", marginTop: 8 }}>{t.clasificacionAvisoLineaBase}</p>
+
+          <h3>{t.clasificacionHoyTitulo}</h3>
+          <p style={{ color: "#555" }}>{t.clasificacionHoyDesc}</p>
+          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+            {["arriba", "abajo"].map((grupo) => (
+              <div key={grupo} style={{ flex: 1, minWidth: 260 }}>
+                <p style={{ fontWeight: "bold" }}>{grupo === "arriba" ? t.clasificacionGrupoArriba : t.clasificacionGrupoAbajo}</p>
+                <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9em" }}>
+                  <thead>
+                    <tr>
+                      <th>{t.colTicker}</th>
+                      <th>{t.clasificacionColProbabilidad}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clasifFund.clasificacionHoy
+                      .filter((c) => c.grupo === grupo)
+                      .map((c) => (
+                        <tr key={c.ticker} style={{ background: c.destacado ? "#e6f4ea" : "transparent" }}>
+                          <td style={{ fontWeight: c.destacado ? "bold" : "normal" }}>
+                            {tickerVisible(c.ticker)} — {c.nombre}
+                            {c.destacado && " ★"}
+                          </td>
+                          <td>{c.probabilidad}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
+
+          {(() => {
+            const opciones = {
+              titulo: t.clasifFundTitulo,
+              subtitulo: clasifFund.nombreIndice,
+              columnas: [t.colTicker, t.clasificacionColProbabilidad, t.clasificacionColGrupo],
+              filas: clasifFund.clasificacionHoy.map((c) => [
+                `${tickerVisible(c.ticker)} — ${c.nombre}${c.destacado ? " ★" : ""}`,
+                c.probabilidad,
+                c.grupo === "arriba" ? t.clasificacionGrupoArriba : t.clasificacionGrupoAbajo,
+              ]),
+              nombreArchivo: `clasificacion-fundamental-${indice.id}.pdf`,
             };
             return (
               <>
