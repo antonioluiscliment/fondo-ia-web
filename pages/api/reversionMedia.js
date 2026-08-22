@@ -11,21 +11,25 @@ import { obtenerIndice } from "../../lib/indices";
 
 export default async function handler(req, res) {
   try {
-    const { indice: indiceId, ventanaFormacion, ventanaTest, solapado, nPeores, nExclusion } = req.query;
+    const { indice: indiceId, ventanaFormacion, ventanaTest, solapado, nPeores, nExclusion, profundidad } = req.query;
 
     const indice = obtenerIndice(indiceId);
     if (!indice) {
       return res.status(400).json({ error: "Índice no reconocido." });
     }
 
+    const yahooFinance = getYahooFinanceInstance();
+
     const profundidadPedida = Number(profundidad) || REVERSION_PROFUNDIDAD_DEFECTO;
     const profundidadFinal = Math.min(Math.max(profundidadPedida, 1), REVERSION_PROFUNDIDAD_DEFECTO);
 
     const { fechas, datos, excluidos } = await obtenerDatosAlineados(
-    yahooFinance,
-    profundidadFinal,
-    indice.tickers
-  );
+      yahooFinance,
+      profundidadFinal,
+      indice.tickers
+    );
+
+    // ... el resto del archivo sigue exactamente igual que antes
 
     // OJO: ajustar "indice.simboloIndice" al nombre real del campo en
     // lib/indices.js si es distinto (p.ej. indiceYahoo, tickerIndice...).
