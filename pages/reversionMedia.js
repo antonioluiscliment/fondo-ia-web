@@ -2,8 +2,7 @@ import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
-import { REVERSION_VENTANAS_PRESET, REVERSION_MAX_PEORES, REVERSION_MAX_EXCLUSION } from "../lib/motor";
-
+import { REVERSION_VENTANAS_PRESET, REVERSION_MAX_PEORES, REVERSION_MAX_EXCLUSION } from "../lib/reversionMediaConstantes";
 export default function ReversionMedia() {
   const { t, idioma, indiceId } = useAppConfig();
   const indice = obtenerIndice(indiceId);
