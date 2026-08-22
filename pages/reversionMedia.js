@@ -161,6 +161,4 @@ export default function ReversionMedia() {
       )}
     </MenuLayout>
   );
-        }
-  );
 }
