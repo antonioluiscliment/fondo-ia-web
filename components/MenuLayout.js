@@ -13,12 +13,14 @@ import { descargarHtmlPdf, compartirHtmlPdf } from "../lib/pdfComun";
 // documentación técnica, generada a partir de los comentarios del
 // código — ver /PLAN/documentacion.html y pages/api/documentacion.js),
 // Observaciones, Historia, Experiencia, y Presentación.
+
 const ENLACES = [
   { href: "/comprobaciones", labelKey: "menuComprobaciones" },
   { href: "/parametrosTecnicos", labelKey: "menuParametrosTecnicos" },
   { href: "/", labelKey: "menuSeleccionTecnica" },
   { href: "/seleccionAlternativa", labelKey: "menuSeleccionAlternativa" },
   { href: "/analisis", labelKey: "menuAnalisis" },
+  { href: "/reversionMedia", labelKey: "menuReversionMedia" },
   { href: "/anomaliasFlujoBajo", labelKey: "menuAnomaliasFlujoBajo" },
   { href: "/comparacionRedNeuronal", labelKey: "menuComparacionRedNeuronal" },
 ];
