@@ -20,6 +20,8 @@ export default async function handler(req, res) {
 
     const yahooFinance = getYahooFinanceInstance();
 
+    // Profundidad del backtest: configurable por el usuario, con
+    // REVERSION_PROFUNDIDAD_DEFECTO (240) como techo máximo validado.
     const profundidadPedida = Number(profundidad) || REVERSION_PROFUNDIDAD_DEFECTO;
     const profundidadFinal = Math.min(Math.max(profundidadPedida, 1), REVERSION_PROFUNDIDAD_DEFECTO);
 
@@ -29,10 +31,8 @@ export default async function handler(req, res) {
       indice.tickers
     );
 
-    // ... el resto del archivo sigue exactamente igual que antes
-
-    // OJO: ajustar "indice.simboloIndice" al nombre real del campo en
-    // lib/indices.js si es distinto (p.ej. indiceYahoo, tickerIndice...).
+    // OJO: ajustar "indice.simboloIndice" si el campo tuviera otro
+    // nombre en lib/indices.js (ya confirmado que se llama así).
     const { cierres } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
     const cierresIndiceAlineados = alinearCierresIndice(fechas, cierres);
 
