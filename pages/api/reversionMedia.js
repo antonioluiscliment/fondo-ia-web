@@ -18,12 +18,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Índice no reconocido." });
     }
 
-    const yahooFinance = getYahooFinanceInstance();
+    const profundidadPedida = Number(profundidad) || REVERSION_PROFUNDIDAD_DEFECTO;
+    const profundidadFinal = Math.min(Math.max(profundidadPedida, 1), REVERSION_PROFUNDIDAD_DEFECTO);
+
     const { fechas, datos, excluidos } = await obtenerDatosAlineados(
-      yahooFinance,
-      REVERSION_PROFUNDIDAD_DEFECTO,
-      indice.tickers
-    );
+    yahooFinance,
+    profundidadFinal,
+    indice.tickers
+  );
 
     // OJO: ajustar "indice.simboloIndice" al nombre real del campo en
     // lib/indices.js si es distinto (p.ej. indiceYahoo, tickerIndice...).
