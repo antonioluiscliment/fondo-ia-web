@@ -1,0 +1,272 @@
+import { useState } from "react";
+import MenuLayout from "./MenuLayout";
+import BotonCompartirPdf from "./BotonCompartirPdf";
+import { useAppConfig } from "../lib/appConfig";
+import { obtenerIndice, tickerVisible } from "../lib/indices";
+import { descargarTablaPdf } from "../lib/pdfComun";
+import {
+  REVERSION_VENTANAS_PRESET,
+  REVERSION_MAX_PEORES,
+  REVERSION_MAX_EXCLUSION,
+  REVERSION_PROFUNDIDAD_PRESET,
+  REVERSION_PROFUNDIDAD_DEFECTO,
+} from "../lib/reversionMediaConstantes";
+
+// Componente compartido por las 3 variantes del módulo de reversión a
+// la media (precio / volumen / flujo de dinero). "criterio" decide el
+// título, la descripción y qué magnitud pide a la API; el resto
+// (controles, tablas, PDF/compartir) es idéntico en las tres.
+const SUFIJOS = { precio: "Precio", volumen: "Volumen", flujo: "Flujo" };
+
+export default function ReversionMediaPagina({ criterio }) {
+  const { t, idioma, indiceId } = useAppConfig();
+  const indice = obtenerIndice(indiceId);
+  const { nombresEmpresas } = indice;
+  const nombreIndice = indice.nombre[idioma];
+  const sufijo = SUFIJOS[criterio] || "Precio";
+
+  const [ventanaFormacion, setVentanaFormacion] = useState(5);
+  const [ventanaTest, setVentanaTest] = useState(5);
+  const [testIgualFormacion, setTestIgualFormacion] = useState(true);
+  const [solapado, setSolapado] = useState(false);
+  const [nPeores, setNPeores] = useState(3);
+  const [nExclusion, setNExclusion] = useState(0);
+  const [modo, setModo] = useState("peores");
+  const [profundidad, setProfundidad] = useState(REVERSION_PROFUNDIDAD_DEFECTO);
+
+  const [resultado, setResultado] = useState(null);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
+
+  async function calcular() {
+    setCargando(true);
+    setError(null);
+    setResultado(null);
+    try {
+      const vTest = testIgualFormacion ? ventanaFormacion : ventanaTest;
+      const resp = await fetch(
+        `/api/reversionMedia?indice=${indiceId}&ventanaFormacion=${ventanaFormacion}&ventanaTest=${vTest}&solapado=${solapado}&nPeores=${nPeores}&nExclusion=${nExclusion}&profundidad=${profundidad}&modo=${modo}&criterio=${criterio}`
+      );
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.error || "Error desconocido");
+      setResultado(json);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  return (
+    <MenuLayout>
+      <h2>{t[`reversionMediaTitulo${sufijo}`]}</h2>
+      <p>{t[`reversionMediaDesc${sufijo}`]}</p>
+      <p style={{ color: "#7a5c00", background: "#fff3cd", border: "1px solid #cc9a06", borderRadius: 6, padding: 12 }}>
+        {t.reversionMediaAvisoComposicion}
+      </p>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "12px 24px", margin: "16px 0" }}>
+        <label>
+          {t.reversionMediaEtiquetaProfundidad}{" "}
+          <select value={profundidad} onChange={(e) => setProfundidad(Number(e.target.value))}>
+            {REVERSION_PROFUNDIDAD_PRESET.map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          {t.reversionMediaEtiquetaFormacion}{" "}
+          <select value={ventanaFormacion} onChange={(e) => setVentanaFormacion(Number(e.target.value))}>
+            {REVERSION_VENTANAS_PRESET.map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={testIgualFormacion}
+            onChange={(e) => setTestIgualFormacion(e.target.checked)}
+          />{" "}
+          {t.reversionMediaEtiquetaTest} {testIgualFormacion ? `(= ${ventanaFormacion})` : ""}
+        </label>
+        {!testIgualFormacion && (
+          <select value={ventanaTest} onChange={(e) => setVentanaTest(Number(e.target.value))}>
+            {REVERSION_VENTANAS_PRESET.map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        )}
+
+        <label>
+          {t.reversionMediaEtiquetaModo}{" "}
+          <select value={modo} onChange={(e) => setModo(e.target.value)}>
+            <option value="peores">{t.reversionMediaModoPeores}</option>
+            <option value="mejores">{t.reversionMediaModoMejores}</option>
+          </select>
+        </label>
+
+        <label>
+          {t.reversionMediaEtiquetaPeores}{" "}
+          <select value={nPeores} onChange={(e) => setNPeores(Number(e.target.value))}>
+            {Array.from({ length: REVERSION_MAX_PEORES }, (_, i) => i + 1).map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          {t.reversionMediaEtiquetaExclusion}{" "}
+          <select value={nExclusion} onChange={(e) => setNExclusion(Number(e.target.value))}>
+            {Array.from({ length: REVERSION_MAX_EXCLUSION + 1 }, (_, i) => i).map((v) => (
+              <option key={v} value={v}>{v}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <input type="checkbox" checked={solapado} onChange={(e) => setSolapado(e.target.checked)} />{" "}
+          {t.reversionMediaEtiquetaSolapado}
+        </label>
+      </div>
+
+      <button onClick={calcular} disabled={cargando}>
+        {cargando ? t.reversionMediaBotonCargando : t.reversionMediaBoton}
+      </button>
+
+      {error && <p style={{ color: "crimson" }}>{t.error}: {error}</p>}
+
+      {resultado && resultado.nCiclos <= 1 && (
+        <p style={{ background: "#ffe0e0", border: "1px solid crimson", borderRadius: 6, padding: 12, color: "crimson", marginTop: 12 }}>
+          {t.reversionMediaAvisoPocosCiclos}
+        </p>
+      )}
+
+      {resultado && (
+        <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16, fontSize: "0.9em" }}>
+          <thead>
+            <tr>
+              <th>{t.reversionMediaColCiclo}</th>
+              <th>{t.reversionMediaColFechasFormacion}</th>
+              <th>{t.reversionMediaColFechasTest}</th>
+              <th>{t.reversionMediaColTicker}</th>
+              <th>{t.reversionMediaColRentabilidadValor}</th>
+              <th>{t.reversionMediaColRentabilidadIndice}</th>
+              <th>{t.reversionMediaColDiferencia}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {resultado.ciclos.flatMap((c) =>
+              c.valores.map((v, i) => (
+                <tr key={`${c.ciclo}-${v.ticker}`}>
+                  {i === 0 && (
+                    <>
+                      <td rowSpan={c.valores.length}>{c.ciclo}</td>
+                      <td rowSpan={c.valores.length}>{c.fechaInicioFormacion} → {c.fechaFinFormacion}</td>
+                      <td rowSpan={c.valores.length}>{c.fechaInicioTest} → {c.fechaFinTest}</td>
+                    </>
+                  )}
+                  <td>{tickerVisible(v.ticker)} — {nombresEmpresas[v.ticker]}</td>
+                  <td style={{ color: v.rentabilidadTest >= 0 ? "green" : "crimson" }}>{v.rentabilidadTest}%</td>
+                  <td style={{ color: v.rentabilidadIndiceTest >= 0 ? "green" : "crimson" }}>{v.rentabilidadIndiceTest}%</td>
+                  <td style={{ color: v.diferencia >= 0 ? "green" : "crimson", fontWeight: "bold" }}>{v.diferencia}%</td>
+                </tr>
+              ))
+            )}
+            {resultado.ciclos.length > 0 && (() => {
+              const todos = resultado.ciclos.flatMap((c) => c.valores);
+              const sumaValor = todos.reduce((s, v) => s + (v.rentabilidadTest !== null ? v.rentabilidadTest : 0), 0);
+              const sumaIndice = todos.reduce((s, v) => s + (v.rentabilidadIndiceTest !== null ? v.rentabilidadIndiceTest : 0), 0);
+              const sumaDiferencia = todos.reduce((s, v) => s + (v.diferencia !== null ? v.diferencia : 0), 0);
+              const nCiclos = resultado.ciclos.length;
+              const divisor = nCiclos * nPeores;
+              const mediaValor = divisor > 0 ? sumaValor / divisor : 0;
+              const mediaIndice = divisor > 0 ? sumaIndice / divisor : 0;
+              const mediaDiferencia = divisor > 0 ? sumaDiferencia / divisor : 0;
+              return (
+                <>
+                  <tr style={{ fontWeight: "bold", background: "#f0f0f0" }}>
+                    <td colSpan={4}>{t.reversionMediaFilaTotal}</td>
+                    <td style={{ color: sumaValor >= 0 ? "green" : "crimson" }}>{sumaValor.toFixed(3)}%</td>
+                    <td style={{ color: sumaIndice >= 0 ? "green" : "crimson" }}>{sumaIndice.toFixed(3)}%</td>
+                    <td style={{ color: sumaDiferencia >= 0 ? "green" : "crimson" }}>{sumaDiferencia.toFixed(3)}%</td>
+                  </tr>
+                  <tr style={{ fontWeight: "bold", background: "#e8e8e8" }}>
+                    <td colSpan={4}>{t.reversionMediaFilaTotalPorValor}</td>
+                    <td style={{ color: mediaValor >= 0 ? "green" : "crimson" }}>{mediaValor.toFixed(3)}%</td>
+                    <td style={{ color: mediaIndice >= 0 ? "green" : "crimson" }}>{mediaIndice.toFixed(3)}%</td>
+                    <td style={{ color: mediaDiferencia >= 0 ? "green" : "crimson" }}>{mediaDiferencia.toFixed(3)}%</td>
+                  </tr>
+                </>
+              );
+            })()}
+          </tbody>
+        </table>
+      )}
+
+      {resultado && resultado.ciclos.length > 0 && (() => {
+        const opciones = {
+          titulo: t[`reversionMediaTitulo${sufijo}`],
+          subtitulo: nombreIndice,
+          columnas: [
+            t.reversionMediaColCiclo,
+            t.reversionMediaColFechasFormacion,
+            t.reversionMediaColFechasTest,
+            t.reversionMediaColTicker,
+            t.reversionMediaColRentabilidadValor,
+            t.reversionMediaColRentabilidadIndice,
+            t.reversionMediaColDiferencia,
+          ],
+          filas: resultado.ciclos.flatMap((c) =>
+            c.valores.map((v) => [
+              c.ciclo,
+              `${c.fechaInicioFormacion} → ${c.fechaFinFormacion}`,
+              `${c.fechaInicioTest} → ${c.fechaFinTest}`,
+              `${tickerVisible(v.ticker)} — ${nombresEmpresas[v.ticker]}`,
+              `${v.rentabilidadTest}%`,
+              `${v.rentabilidadIndiceTest}%`,
+              `${v.diferencia}%`,
+            ])
+          ),
+          nombreArchivo: `reversion-media-${criterio}-${indice.id}.pdf`,
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
+
+      {resultado && resultado.pendiente && (
+        <div style={{ border: "1px solid #999", borderRadius: 6, padding: 16, margin: "24px 0 16px", background: "#fff8f3" }}>
+          <h3 style={{ marginTop: 0 }}>{t.reversionMediaPendienteTitulo}</h3>
+          <p>{t.reversionMediaPendienteDesc}</p>
+          <p>
+            <em>{resultado.pendiente.fechaInicioFormacion} → {resultado.pendiente.fechaFinFormacion}</em>
+          </p>
+          <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9em" }}>
+            <thead>
+              <tr>
+                <th>{t.reversionMediaColTicker}</th>
+                <th>{t.reversionMediaColPuntuacion}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resultado.pendiente.valores.map((v) => (
+                <tr key={v.ticker}>
+                  <td>{tickerVisible(v.ticker)} — {nombresEmpresas[v.ticker]}</td>
+                  <td>{v.puntuacionFormacion}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </MenuLayout>
+  );
+}
