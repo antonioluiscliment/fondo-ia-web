@@ -11,7 +11,7 @@ import { obtenerIndice } from "../../lib/indices";
 
 export default async function handler(req, res) {
   try {
-    const { indice: indiceId, ventanaFormacion, ventanaTest, solapado, nPeores, nExclusion, profundidad, modo } = req.query;
+    const { indice: indiceId, ventanaFormacion, ventanaTest, solapado, nPeores, nExclusion, profundidad, modo, criterio } = req.query;
 
     const indice = obtenerIndice(indiceId);
     if (!indice) {
@@ -20,8 +20,6 @@ export default async function handler(req, res) {
 
     const yahooFinance = getYahooFinanceInstance();
 
-    // Profundidad del backtest: configurable por el usuario, con
-    // REVERSION_PROFUNDIDAD_DEFECTO (240) como techo máximo validado.
     const profundidadPedida = Number(profundidad) || REVERSION_PROFUNDIDAD_DEFECTO;
     const profundidadFinal = Math.min(Math.max(profundidadPedida, 1), REVERSION_PROFUNDIDAD_DEFECTO);
 
@@ -31,8 +29,17 @@ export default async function handler(req, res) {
       indice.tickers
     );
 
-    const { cierres } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
-    const cierresIndiceAlineados = alinearCierresIndice(fechas, cierres);
+    const criterioFinal = ["precio", "volumen", "flujo"].includes(criterio) ? criterio : "precio";
+
+    // Para volumen y flujo, el "índice" de referencia se reconstruye
+    // agregando los propios componentes (ver construirSerieIndiceAgregada
+    // en motor.js) — no hace falta pedir nada externo a Yahoo. Solo el
+    // criterio de precio necesita el índice de referencia real.
+    let cierresIndiceAlineados = null;
+    if (criterioFinal === "precio") {
+      const { cierres } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
+      cierresIndiceAlineados = alinearCierresIndice(fechas, cierres);
+    }
 
     const resultado = calcularReversionMedia(fechas, datos, cierresIndiceAlineados, {
       ventanaFormacion: Number(ventanaFormacion),
@@ -41,6 +48,7 @@ export default async function handler(req, res) {
       nPeores: Number(nPeores) || 3,
       nExclusion: Number(nExclusion) || 0,
       modo: modo === "mejores" ? "mejores" : "peores",
+      criterio: criterioFinal,
     });
 
     res.status(200).json({
