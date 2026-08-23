@@ -4,6 +4,7 @@ import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible, INDICES } from "../lib/indices";
 import { descargarTablaPdf, descargarMultiplesTablasPdf, compartirMultiplesTablasPdf } from "../lib/pdfComun";
+import { ResponsiveContainer, ComposedChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Area, Line } from "recharts";
 
 // Grupo 4: Análisis — de momento solo el análisis de correlación con
 // el índice, usando los parámetros ajustados en "Formas de
@@ -14,6 +15,15 @@ import { descargarTablaPdf, descargarMultiplesTablasPdf, compartirMultiplesTabla
 // Orden en el que se muestran los métodos en la tabla (agrupando cada
 // criterio con su antítesis), y su nombre traducido.
 const ORDEN_METODOS = ["precio", "precioBajo", "volumen", "volumenBajo", "flujo", "flujoBajo", "aleatorio"];
+const COLOR_METODO = {
+  precio: "#1f77b4",
+  precioBajo: "#aec7e8",
+  volumen: "#2ca02c",
+  volumenBajo: "#98df8a",
+  flujo: "#d62728",
+  flujoBajo: "#ff9896",
+  aleatorio: "#7f7f7f",
+};
 function NOMBRE_METODO(t) {
   return {
     precio: t.metodoPrecio,
@@ -277,6 +287,65 @@ export default function Analisis() {
               </tbody>
             </table>
           </div>
+
+          {(() => {
+            const duraciones = [...new Set(analisisCorrelacion.filas.map((f) => f.duracion))].sort((a, b) => a - b);
+            const datosGrafico = duraciones.map((duracion) => {
+              const punto = { duracion };
+              ORDEN_METODOS.forEach((metodo) => {
+                const fila = analisisCorrelacion.filas.find((f) => f.duracion === duracion && f.metodo === metodo);
+                if (fila && fila.rentabilidadCarteraRango) {
+                  punto[`${metodo}_rango`] = [fila.rentabilidadCarteraRango.min, fila.rentabilidadCarteraRango.max];
+                  punto[`${metodo}_media`] = fila.rentabilidadCarteraMedia;
+                }
+              });
+              return punto;
+            });
+            return (
+              <div style={{ marginTop: 24 }}>
+                <h3>{t.analisisCorrelacionGraficoTitulo}</h3>
+                <ResponsiveContainer width="100%" height={420}>
+                  <ComposedChart data={datosGrafico} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="duracion" label={{ value: t.colDuracion, position: "insideBottom", offset: -5 }} />
+                    <YAxis label={{ value: "%", angle: -90, position: "insideLeft" }} />
+                    <Tooltip
+                      formatter={(value) =>
+                        Array.isArray(value) ? `${value[0].toFixed(2)}% – ${value[1].toFixed(2)}%` : `${value.toFixed(2)}%`
+                      }
+                    />
+                    <Legend />
+                    {ORDEN_METODOS.map((metodo) => (
+                      <Area
+                        key={`${metodo}_rango`}
+                        type="monotone"
+                        dataKey={`${metodo}_rango`}
+                        name={NOMBRE_METODO(t)[metodo]}
+                        stroke={COLOR_METODO[metodo]}
+                        fill={COLOR_METODO[metodo]}
+                        fillOpacity={0.15}
+                        connectNulls
+                      />
+                    ))}
+                    {ORDEN_METODOS.map((metodo) => (
+                      <Line
+                        key={`${metodo}_media`}
+                        type="monotone"
+                        dataKey={`${metodo}_media`}
+                        name={`${NOMBRE_METODO(t)[metodo]} (media)`}
+                        stroke={COLOR_METODO[metodo]}
+                        dot={false}
+                        strokeWidth={2}
+                        legendType="none"
+                        connectNulls
+                      />
+                    ))}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            );
+          })()}
+
           {(() => {
             const filasOrdenadas = [...analisisCorrelacion.filas].sort(
               (a, b) => a.duracion - b.duracion || ORDEN_METODOS.indexOf(a.metodo) - ORDEN_METODOS.indexOf(b.metodo)
