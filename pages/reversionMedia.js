@@ -173,13 +173,26 @@ export default function ReversionMedia() {
               const sumaValor = todos.reduce((s, v) => s + (v.rentabilidadTest !== null ? v.rentabilidadTest : 0), 0);
               const sumaIndice = todos.reduce((s, v) => s + (v.rentabilidadIndiceTest !== null ? v.rentabilidadIndiceTest : 0), 0);
               const sumaDiferencia = todos.reduce((s, v) => s + (v.diferencia !== null ? v.diferencia : 0), 0);
+              const nCiclos = resultado.ciclos.length;
+              const divisor = nCiclos * nPeores;
+              const mediaValor = divisor > 0 ? sumaValor / divisor : 0;
+              const mediaIndice = divisor > 0 ? sumaIndice / divisor : 0;
+              const mediaDiferencia = divisor > 0 ? sumaDiferencia / divisor : 0;
               return (
-                <tr style={{ fontWeight: "bold", background: "#f0f0f0" }}>
-                  <td colSpan={4}>{t.reversionMediaFilaTotal}</td>
-                  <td style={{ color: sumaValor >= 0 ? "green" : "crimson" }}>{sumaValor.toFixed(3)}%</td>
-                  <td style={{ color: sumaIndice >= 0 ? "green" : "crimson" }}>{sumaIndice.toFixed(3)}%</td>
-                  <td style={{ color: sumaDiferencia >= 0 ? "green" : "crimson" }}>{sumaDiferencia.toFixed(3)}%</td>
-                </tr>
+                <>
+                  <tr style={{ fontWeight: "bold", background: "#f0f0f0" }}>
+                    <td colSpan={4}>{t.reversionMediaFilaTotal}</td>
+                    <td style={{ color: sumaValor >= 0 ? "green" : "crimson" }}>{sumaValor.toFixed(3)}%</td>
+                    <td style={{ color: sumaIndice >= 0 ? "green" : "crimson" }}>{sumaIndice.toFixed(3)}%</td>
+                    <td style={{ color: sumaDiferencia >= 0 ? "green" : "crimson" }}>{sumaDiferencia.toFixed(3)}%</td>
+                  </tr>
+                  <tr style={{ fontWeight: "bold", background: "#e8e8e8" }}>
+                    <td colSpan={4}>{t.reversionMediaFilaTotalPorValor}</td>
+                    <td style={{ color: mediaValor >= 0 ? "green" : "crimson" }}>{mediaValor.toFixed(3)}%</td>
+                    <td style={{ color: mediaIndice >= 0 ? "green" : "crimson" }}>{mediaIndice.toFixed(3)}%</td>
+                    <td style={{ color: mediaDiferencia >= 0 ? "green" : "crimson" }}>{mediaDiferencia.toFixed(3)}%</td>
+                  </tr>
+                </>
               );
             })()}
           </tbody>
