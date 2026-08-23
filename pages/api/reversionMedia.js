@@ -11,7 +11,7 @@ import { obtenerIndice } from "../../lib/indices";
 
 export default async function handler(req, res) {
   try {
-    const { indice: indiceId, ventanaFormacion, ventanaTest, solapado, nPeores, nExclusion, profundidad } = req.query;
+    const { indice: indiceId, ventanaFormacion, ventanaTest, solapado, nPeores, nExclusion, profundidad, modo } = req.query;
 
     const indice = obtenerIndice(indiceId);
     if (!indice) {
@@ -31,8 +31,6 @@ export default async function handler(req, res) {
       indice.tickers
     );
 
-    // OJO: ajustar "indice.simboloIndice" si el campo tuviera otro
-    // nombre en lib/indices.js (ya confirmado que se llama así).
     const { cierres } = await obtenerIncrementosIndice(yahooFinance, fechas, indice.simboloIndice);
     const cierresIndiceAlineados = alinearCierresIndice(fechas, cierres);
 
@@ -42,6 +40,7 @@ export default async function handler(req, res) {
       solapado: solapado === "true",
       nPeores: Number(nPeores) || 3,
       nExclusion: Number(nExclusion) || 0,
+      modo: modo === "mejores" ? "mejores" : "peores",
     });
 
     res.status(200).json({
