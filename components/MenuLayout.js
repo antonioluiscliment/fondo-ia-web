@@ -22,9 +22,14 @@ const ENLACES = [
   { href: "/analisis", labelKey: "menuAnalisis" },
   { href: "/anomaliasFlujoBajo", labelKey: "menuAnomaliasFlujoBajo" },
   { href: "/comparacionRedNeuronal", labelKey: "menuComparacionRedNeuronal" },
-  { href: "/reversionMediaPrecio", labelKey: "menuReversionMediaPrecio" },
-  { href: "/reversionMediaVolumen", labelKey: "menuReversionMediaVolumen" },
-  { href: "/reversionMediaFlujo", labelKey: "menuReversionMediaFlujo" },
+  {
+    labelKey: "menuReversionMedia",
+    children: [
+      { href: "/reversionMediaPrecio", labelKey: "menuReversionMediaPrecio", descKey: "menuReversionMediaPrecioDesc" },
+      { href: "/reversionMediaVolumen", labelKey: "menuReversionMediaVolumen", descKey: "menuReversionMediaVolumenDesc" },
+      { href: "/reversionMediaFlujo", labelKey: "menuReversionMediaFlujo", descKey: "menuReversionMediaFlujoDesc" },
+    ],
+  },
 ];
 
 // Icono de tres rayas (hamburguesa), dibujado a mano con <span> para no
@@ -79,6 +84,7 @@ export default function MenuLayout({ children }) {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [infoAbierto, setInfoAbierto] = useState(false);
   const router = useRouter();
+  const [submenuAbierto, setSubmenuAbierto] = useState(null);
 
   // Especificaciones / historia / observaciones: antes vivían en la
   // página "Características generales"; ahora, al ser contenido que
@@ -287,6 +293,66 @@ export default function MenuLayout({ children }) {
           }}
         >
           {ENLACES.map((enlace) => {
+            // Elemento con submenú ("Reversión a la media"): no navega
+            // a ningún sitio por sí mismo, solo despliega/repliega sus
+            // hijos dentro del mismo panel, cada uno con una breve
+            // explicación del ratio que usa.
+            if (enlace.children) {
+              const desplegado = submenuAbierto === enlace.labelKey;
+              const algunHijoActivo = enlace.children.some((hijo) => router.pathname === hijo.href);
+              return (
+                <div key={enlace.labelKey}>
+                  <button
+                    onClick={() => setSubmenuAbierto(desplegado ? null : enlace.labelKey)}
+                    style={{
+                      display: "flex",
+                      width: "100%",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px 16px",
+                      border: "none",
+                      background: algunHijoActivo ? "#2d6a2d" : "transparent",
+                      color: algunHijoActivo ? "#fff" : "#222",
+                      borderBottom: "1px solid #eee",
+                      fontWeight: algunHijoActivo ? "bold" : "normal",
+                      fontSize: "1em",
+                      textAlign: "left",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span>{t[enlace.labelKey]}</span>
+                    <span>{desplegado ? "▲" : "▼"}</span>
+                  </button>
+                  {desplegado &&
+                    enlace.children.map((hijo) => {
+                      const activo = router.pathname === hijo.href;
+                      return (
+                        <Link
+                          key={hijo.href}
+                          href={hijo.href}
+                          onClick={() => setMenuAbierto(false)}
+                          style={{
+                            display: "block",
+                            padding: "10px 16px 10px 32px",
+                            textDecoration: "none",
+                            color: activo ? "#fff" : "#222",
+                            background: activo ? "#2d6a2d" : "#fff0e6",
+                            borderBottom: "1px solid #eee",
+                          }}
+                        >
+                          <div style={{ fontWeight: activo ? "bold" : "normal" }}>{t[hijo.labelKey]}</div>
+                          {hijo.descKey && (
+                            <div style={{ fontSize: "0.8em", color: activo ? "#e6f0e6" : "#666", marginTop: 2 }}>
+                              {t[hijo.descKey]}
+                            </div>
+                          )}
+                        </Link>
+                      );
+                    })}
+                </div>
+              );
+            }
+
             const activo = router.pathname === enlace.href;
             return (
               <Link
