@@ -46,22 +46,6 @@ export default function ReversionMedia() {
     }
   }
 
-  // Resumen calculado en el cliente a partir de las mismas filas que
-  // ya muestra la tabla (no requiere ninguna llamada adicional).
-  let resumen = null;
-  if (resultado) {
-    const observaciones = resultado.ciclos.flatMap((c) => c.valores);
-    const nObs = observaciones.length;
-    if (nObs > 0) {
-      const nPositivos = observaciones.filter((v) => v.diferencia !== null && v.diferencia > 0).length;
-      const pctPositivos = Number(((nPositivos / nObs) * 100).toFixed(1));
-      const diferenciaMedia = Number(
-        (observaciones.reduce((s, v) => s + (v.diferencia !== null ? v.diferencia : 0), 0) / nObs).toFixed(3)
-      );
-      resumen = { nObs, pctPositivos, diferenciaMedia };
-    }
-  }
-
   return (
     <MenuLayout>
       <h2>{t.reversionMediaTitulo}</h2>
@@ -141,17 +125,6 @@ export default function ReversionMedia() {
         </p>
       )}
 
-      {resumen && (
-        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "16px 0" }}>
-          <h3 style={{ marginTop: 0 }}>{t.reversionMediaResumenTitulo}</h3>
-          <p>{t.reversionMediaResumenObservaciones(resumen.nObs)}</p>
-          <p>{t.reversionMediaResumenPositivos(resumen.pctPositivos)}</p>
-          <p style={{ fontWeight: "bold", color: resumen.diferenciaMedia >= 0 ? "green" : "crimson" }}>
-            {t.reversionMediaResumenDiferenciaMedia(resumen.diferenciaMedia)}
-          </p>
-        </div>
-      )}
-
       {resultado && resultado.pendiente && (
         <div style={{ border: "1px solid #999", borderRadius: 6, padding: 16, margin: "16px 0", background: "#fff8f3" }}>
           <h3 style={{ marginTop: 0 }}>{t.reversionMediaPendienteTitulo}</h3>
@@ -209,6 +182,20 @@ export default function ReversionMedia() {
                 </tr>
               ))
             )}
+            {resultado.ciclos.length > 0 && (() => {
+              const todos = resultado.ciclos.flatMap((c) => c.valores);
+              const sumaValor = todos.reduce((s, v) => s + (v.rentabilidadTest !== null ? v.rentabilidadTest : 0), 0);
+              const sumaIndice = todos.reduce((s, v) => s + (v.rentabilidadIndiceTest !== null ? v.rentabilidadIndiceTest : 0), 0);
+              const sumaDiferencia = todos.reduce((s, v) => s + (v.diferencia !== null ? v.diferencia : 0), 0);
+              return (
+                <tr style={{ fontWeight: "bold", background: "#f0f0f0" }}>
+                  <td colSpan={4}>{t.reversionMediaFilaTotal}</td>
+                  <td style={{ color: sumaValor >= 0 ? "green" : "crimson" }}>{sumaValor.toFixed(3)}%</td>
+                  <td style={{ color: sumaIndice >= 0 ? "green" : "crimson" }}>{sumaIndice.toFixed(3)}%</td>
+                  <td style={{ color: sumaDiferencia >= 0 ? "green" : "crimson" }}>{sumaDiferencia.toFixed(3)}%</td>
+                </tr>
+              );
+            })()}
           </tbody>
         </table>
       )}
