@@ -315,31 +315,44 @@ export default function Analisis() {
                       }
                     />
                     <Legend />
-                    {ORDEN_METODOS.map((metodo) => (
-                      <Area
-                        key={`${metodo}_rango`}
-                        type="monotone"
-                        dataKey={`${metodo}_rango`}
-                        name={NOMBRE_METODO(t)[metodo]}
-                        stroke={COLOR_METODO[metodo]}
-                        fill={COLOR_METODO[metodo]}
-                        fillOpacity={0.15}
-                        connectNulls
-                      />
-                    ))}
-                    {ORDEN_METODOS.map((metodo) => (
-                      <Line
-                        key={`${metodo}_media`}
-                        type="monotone"
-                        dataKey={`${metodo}_media`}
-                        name={`${NOMBRE_METODO(t)[metodo]} (media)`}
-                        stroke={COLOR_METODO[metodo]}
-                        dot={false}
-                        strokeWidth={2}
-                        legendType="none"
-                        connectNulls
-                      />
-                    ))}
+                    {[...ORDEN_METODOS]
+                      .sort((a, b) => (a === "flujoBajo" ? 1 : b === "flujoBajo" ? -1 : 0))
+                      .map((metodo) => {
+                        const resaltado = metodo === "flujoBajo";
+                        return (
+                          <Area
+                            key={`${metodo}_rango`}
+                            type="monotone"
+                            dataKey={`${metodo}_rango`}
+                            name={NOMBRE_METODO(t)[metodo]}
+                            stroke={COLOR_METODO[metodo]}
+                            fill={COLOR_METODO[metodo]}
+                            fillOpacity={resaltado ? 0.4 : 0.05}
+                            strokeOpacity={resaltado ? 1 : 0.25}
+                            strokeWidth={resaltado ? 2 : 1}
+                            connectNulls
+                          />
+                        );
+                      })}
+                    {[...ORDEN_METODOS]
+                      .sort((a, b) => (a === "flujoBajo" ? 1 : b === "flujoBajo" ? -1 : 0))
+                      .map((metodo) => {
+                        const resaltado = metodo === "flujoBajo";
+                        return (
+                          <Line
+                            key={`${metodo}_media`}
+                            type="monotone"
+                            dataKey={`${metodo}_media`}
+                            name={`${NOMBRE_METODO(t)[metodo]} (media)`}
+                            stroke={COLOR_METODO[metodo]}
+                            strokeOpacity={resaltado ? 1 : 0.3}
+                            dot={false}
+                            strokeWidth={resaltado ? 3 : 1}
+                            legendType="none"
+                            connectNulls
+                          />
+                        );
+                      })}
                   </ComposedChart>
                 </ResponsiveContainer>
               </div>
