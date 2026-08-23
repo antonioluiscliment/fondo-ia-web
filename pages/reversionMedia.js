@@ -46,6 +46,22 @@ export default function ReversionMedia() {
     }
   }
 
+  // Resumen calculado en el cliente a partir de las mismas filas que
+  // ya muestra la tabla (no requiere ninguna llamada adicional).
+  let resumen = null;
+  if (resultado) {
+    const observaciones = resultado.ciclos.flatMap((c) => c.valores);
+    const nObs = observaciones.length;
+    if (nObs > 0) {
+      const nPositivos = observaciones.filter((v) => v.diferencia !== null && v.diferencia > 0).length;
+      const pctPositivos = Number(((nPositivos / nObs) * 100).toFixed(1));
+      const diferenciaMedia = Number(
+        (observaciones.reduce((s, v) => s + (v.diferencia !== null ? v.diferencia : 0), 0) / nObs).toFixed(3)
+      );
+      resumen = { nObs, pctPositivos, diferenciaMedia };
+    }
+  }
+
   return (
     <MenuLayout>
       <h2>{t.reversionMediaTitulo}</h2>
@@ -123,6 +139,43 @@ export default function ReversionMedia() {
         <p style={{ background: "#ffe0e0", border: "1px solid crimson", borderRadius: 6, padding: 12, color: "crimson", marginTop: 12 }}>
           {t.reversionMediaAvisoPocosCiclos}
         </p>
+      )}
+
+      {resumen && (
+        <div style={{ border: "2px solid #333", borderRadius: 6, padding: 16, margin: "16px 0" }}>
+          <h3 style={{ marginTop: 0 }}>{t.reversionMediaResumenTitulo}</h3>
+          <p>{t.reversionMediaResumenObservaciones(resumen.nObs)}</p>
+          <p>{t.reversionMediaResumenPositivos(resumen.pctPositivos)}</p>
+          <p style={{ fontWeight: "bold", color: resumen.diferenciaMedia >= 0 ? "green" : "crimson" }}>
+            {t.reversionMediaResumenDiferenciaMedia(resumen.diferenciaMedia)}
+          </p>
+        </div>
+      )}
+
+      {resultado && resultado.pendiente && (
+        <div style={{ border: "1px solid #999", borderRadius: 6, padding: 16, margin: "16px 0", background: "#fff8f3" }}>
+          <h3 style={{ marginTop: 0 }}>{t.reversionMediaPendienteTitulo}</h3>
+          <p>{t.reversionMediaPendienteDesc}</p>
+          <p>
+            <em>{resultado.pendiente.fechaInicioFormacion} → {resultado.pendiente.fechaFinFormacion}</em>
+          </p>
+          <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9em" }}>
+            <thead>
+              <tr>
+                <th>{t.reversionMediaColTicker}</th>
+                <th>{t.reversionMediaColPuntuacion}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resultado.pendiente.valores.map((v) => (
+                <tr key={v.ticker}>
+                  <td>{tickerVisible(v.ticker)} — {nombresEmpresas[v.ticker]}</td>
+                  <td>{v.puntuacionFormacion}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {resultado && (
