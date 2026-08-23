@@ -1,7 +1,9 @@
 import { useState } from "react";
 import MenuLayout from "../components/MenuLayout";
+import BotonCompartirPdf from "../components/BotonCompartirPdf";
 import { useAppConfig } from "../lib/appConfig";
 import { obtenerIndice, tickerVisible } from "../lib/indices";
+import { descargarTablaPdf } from "../lib/pdfComun";
 import {
   REVERSION_VENTANAS_PRESET,
   REVERSION_MAX_PEORES,
@@ -14,6 +16,7 @@ export default function ReversionMedia() {
   const { t, idioma, indiceId } = useAppConfig();
   const indice = obtenerIndice(indiceId);
   const { nombresEmpresas } = indice;
+  const nombreIndice = indice.nombre[idioma];
 
   const [ventanaFormacion, setVentanaFormacion] = useState(5);
   const [ventanaTest, setVentanaTest] = useState(5);
@@ -125,32 +128,6 @@ export default function ReversionMedia() {
         </p>
       )}
 
-      {resultado && resultado.pendiente && (
-        <div style={{ border: "1px solid #999", borderRadius: 6, padding: 16, margin: "16px 0", background: "#fff8f3" }}>
-          <h3 style={{ marginTop: 0 }}>{t.reversionMediaPendienteTitulo}</h3>
-          <p>{t.reversionMediaPendienteDesc}</p>
-          <p>
-            <em>{resultado.pendiente.fechaInicioFormacion} → {resultado.pendiente.fechaFinFormacion}</em>
-          </p>
-          <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9em" }}>
-            <thead>
-              <tr>
-                <th>{t.reversionMediaColTicker}</th>
-                <th>{t.reversionMediaColPuntuacion}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {resultado.pendiente.valores.map((v) => (
-                <tr key={v.ticker}>
-                  <td>{tickerVisible(v.ticker)} — {nombresEmpresas[v.ticker]}</td>
-                  <td>{v.puntuacionFormacion}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
       {resultado && (
         <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", marginTop: 16, fontSize: "0.9em" }}>
           <thead>
@@ -198,6 +175,68 @@ export default function ReversionMedia() {
             })()}
           </tbody>
         </table>
+      )}
+
+      {resultado && resultado.ciclos.length > 0 && (() => {
+        const opciones = {
+          titulo: t.reversionMediaTitulo,
+          subtitulo: nombreIndice,
+          columnas: [
+            t.reversionMediaColCiclo,
+            t.reversionMediaColFechasFormacion,
+            t.reversionMediaColFechasTest,
+            t.reversionMediaColTicker,
+            t.reversionMediaColRentabilidadValor,
+            t.reversionMediaColRentabilidadIndice,
+            t.reversionMediaColDiferencia,
+          ],
+          filas: resultado.ciclos.flatMap((c) =>
+            c.valores.map((v) => [
+              c.ciclo,
+              `${c.fechaInicioFormacion} → ${c.fechaFinFormacion}`,
+              `${c.fechaInicioTest} → ${c.fechaFinTest}`,
+              `${tickerVisible(v.ticker)} — ${nombresEmpresas[v.ticker]}`,
+              `${v.rentabilidadTest}%`,
+              `${v.rentabilidadIndiceTest}%`,
+              `${v.diferencia}%`,
+            ])
+          ),
+          nombreArchivo: `reversion-media-${indice.id}.pdf`,
+        };
+        return (
+          <>
+            <button onClick={() => descargarTablaPdf(opciones)} style={{ marginTop: 12 }}>
+              {t.descargarPdfBoton}
+            </button>
+            <BotonCompartirPdf opciones={opciones} />
+          </>
+        );
+      })()}
+
+      {resultado && resultado.pendiente && (
+        <div style={{ border: "1px solid #999", borderRadius: 6, padding: 16, margin: "24px 0 16px", background: "#fff8f3" }}>
+          <h3 style={{ marginTop: 0 }}>{t.reversionMediaPendienteTitulo}</h3>
+          <p>{t.reversionMediaPendienteDesc}</p>
+          <p>
+            <em>{resultado.pendiente.fechaInicioFormacion} → {resultado.pendiente.fechaFinFormacion}</em>
+          </p>
+          <table border="1" cellPadding="4" style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9em" }}>
+            <thead>
+              <tr>
+                <th>{t.reversionMediaColTicker}</th>
+                <th>{t.reversionMediaColPuntuacion}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {resultado.pendiente.valores.map((v) => (
+                <tr key={v.ticker}>
+                  <td>{tickerVisible(v.ticker)} — {nombresEmpresas[v.ticker]}</td>
+                  <td>{v.puntuacionFormacion}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </MenuLayout>
   );
