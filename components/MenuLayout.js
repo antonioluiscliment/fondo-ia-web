@@ -22,7 +22,9 @@ const ENLACES = [
   { href: "/analisis", labelKey: "menuAnalisis" },
   { href: "/anomaliasFlujoBajo", labelKey: "menuAnomaliasFlujoBajo" },
   { href: "/comparacionRedNeuronal", labelKey: "menuComparacionRedNeuronal" },
-  { href: "/reversionMedia", labelKey: "menuReversionMedia" },
+  { href: "/reversionMediaPrecio", labelKey: "menuReversionMediaPrecio" },
+  { href: "/reversionMediaVolumen", labelKey: "menuReversionMediaVolumen" },
+  { href: "/reversionMediaFlujo", labelKey: "menuReversionMediaFlujo" },
 ];
 
 // Icono de tres rayas (hamburguesa), dibujado a mano con <span> para no
