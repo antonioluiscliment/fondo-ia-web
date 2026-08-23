@@ -24,6 +24,7 @@ export default function ReversionMedia() {
   const [solapado, setSolapado] = useState(false);
   const [nPeores, setNPeores] = useState(3);
   const [nExclusion, setNExclusion] = useState(0);
+  const [modo, setModo] = useState("peores");
   const [profundidad, setProfundidad] = useState(REVERSION_PROFUNDIDAD_DEFECTO);
 
   const [resultado, setResultado] = useState(null);
@@ -37,7 +38,7 @@ export default function ReversionMedia() {
     try {
       const vTest = testIgualFormacion ? ventanaFormacion : ventanaTest;
       const resp = await fetch(
-        `/api/reversionMedia?indice=${indiceId}&ventanaFormacion=${ventanaFormacion}&ventanaTest=${vTest}&solapado=${solapado}&nPeores=${nPeores}&nExclusion=${nExclusion}&profundidad=${profundidad}`
+        `/api/reversionMedia?indice=${indiceId}&ventanaFormacion=${ventanaFormacion}&ventanaTest=${vTest}&solapado=${solapado}&nPeores=${nPeores}&nExclusion=${nExclusion}&profundidad=${profundidad}&modo=${modo}`
       );
       const json = await resp.json();
       if (!resp.ok) throw new Error(json.error || "Error desconocido");
@@ -91,6 +92,14 @@ export default function ReversionMedia() {
             ))}
           </select>
         )}
+
+        <label>
+          {t.reversionMediaEtiquetaModo}{" "}
+          <select value={modo} onChange={(e) => setModo(e.target.value)}>
+            <option value="peores">{t.reversionMediaModoPeores}</option>
+            <option value="mejores">{t.reversionMediaModoMejores}</option>
+          </select>
+        </label>
 
         <label>
           {t.reversionMediaEtiquetaPeores}{" "}
